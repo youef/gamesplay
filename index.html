@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>فواز وزياد – اليوم الوطني 96</title>
+<style>
+:root{--bg:#0e3b2b;--panel:#10251def;--fg:#fff;--ac:#ffd54a;--g:#1f9d55}
+@media (prefers-color-scheme:dark){:root{--bg:#0e3b2b;--panel:#10251def;--fg:#fff}}
+:root[data-theme=dark]{--bg:#0e3b2b}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,Tahoma,sans-serif;touch-action:none;overscroll-behavior:none}
+canvas#c{position:fixed;left:0;top:0}
+#ui{position:fixed;inset:0;direction:ltr;pointer-events:none}
+.pc{position:absolute}
+.camsense{position:absolute;inset:0;pointer-events:auto;z-index:0;touch-action:none;cursor:grab}
+.camctl{position:absolute;right:8px;top:calc(56px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;pointer-events:auto;z-index:2}
+.camctl button{width:40px;height:40px;border-radius:12px;border:1px solid #fff6;background:#0009;color:#fff;font-size:16px;touch-action:none}
+.camctl button:active{background:var(--g)}
+.joy{position:absolute;left:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:#ffffff22;border:2px solid #fff6;pointer-events:auto;touch-action:none;z-index:2}
+.joy i{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:#fffc}
+.btns{position:absolute;right:14px;bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;pointer-events:auto;z-index:2}
+.b{width:70px;height:70px;border-radius:50%;border:2px solid #fff9;background:#1f9d55cc;color:#fff;font:700 13px system-ui;touch-action:none}
+.b:first-child{background:#e67e22cc}
+.hud{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));font-size:12px;background:#000a;padding:3px 10px;border-radius:10px;white-space:nowrap;direction:rtl;z-index:2}
+#vg{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 55%,#0008 100%)}
+#dv{position:fixed;background:#fff;opacity:.8;display:none;z-index:2}
+#top{position:fixed;top:max(8px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:#000b;border:1px solid var(--ac);border-radius:14px;padding:5px 14px;text-align:center;font-size:13px;z-index:3;max-width:70vw}
+#toast{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--g);padding:6px 16px;border-radius:20px;font-weight:700;opacity:0;transition:.3s;z-index:3;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#cd{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:900 clamp(48px,14vw,110px) system-ui;color:#ffd54a;text-shadow:0 6px 24px #000,0 0 30px #000a;pointer-events:none;z-index:6;opacity:0;transition:.2s}
+#mini{position:fixed;left:8px;top:max(8px,env(safe-area-inset-top,0px));width:110px;height:178px;border-radius:14px;border:2px solid #fff8;z-index:3;opacity:.92}
+#mb{position:fixed;right:8px;top:max(8px,env(safe-area-inset-top,0px));z-index:3;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;max-width:56vw}
+#mb button{font-size:18px;width:38px;height:38px;border-radius:11px;border:1px solid #fff6;background:#000b;color:#fff}
+#menu{position:fixed;inset:0;display:flex;background:#000b;align-items:center;justify-content:center;z-index:9}
+.card{background:var(--panel);border:2px solid var(--ac);border-radius:18px;padding:16px;width:min(620px,94vw);max-height:90vh;overflow:auto;touch-action:pan-y;line-height:1.7}
+.card h2{margin:0 0 6px;color:var(--ac)}.card h3{margin:10px 0 4px;font-size:15px}
+.o{margin:3px;padding:8px 12px;border-radius:12px;border:1px solid #fff5;background:#ffffff18;color:#fff;font:600 14px system-ui}
+.o.on{background:var(--g)}.o.go{background:var(--ac);color:#000;font-size:18px;padding:12px 28px}
+.sm{font-size:13px;opacity:.9;line-height:1.8}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.row{border:1px solid #fff4;border-radius:12px;padding:8px;margin:6px 0;background:#ffffff10}
+</style></head><body>
+<canvas id="c"></canvas><div id="ui"></div><div id="dv"></div><div id="vg"></div>
+<div id="top"><b id="mny"></b><div id="ms"></div></div><div id="toast"></div><div id="cd"></div>
+<canvas id="mini" width="110" height="178"></canvas>
+<div id="mb">
+ <button data-t="shop" title="المتجر">🛍</button>
+ <button data-t="prop" title="العقارات">🏠</button>
+ <button data-t="decor" title="الديكور">🌿</button>
+ <button data-t="build" title="البناء">🔨</button>
+ <button data-t="wallet" title="المحفظة">💼</button>
+ <button data-t="race" title="السباق">🏁</button>
+ <button data-t="set" title="الإعدادات">⚙️</button>
+</div>
+<div id="menu"><div class="card" id="card"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/wallet.js"></script>
+<script src="js/vehicles.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/decor.js"></script>
+<script src="js/buildings.js"></script>
+<script src="js/world.js"></script>
+<script src="js/north.js"></script>
+<script src="js/items.js"></script>
+<script src="js/player.js"></script>
+<script src="js/race.js"></script>
+<script src="js/properties.js"></script>
+<script src="js/minimap.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body></html>

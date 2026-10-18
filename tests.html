@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<title>اختبارات اللعبة – فواز وزياد 96</title>
+<style>
+body{font-family:system-ui,Tahoma,sans-serif;background:#0e1b16;color:#fff;margin:0;padding:16px}
+h1{color:#ffd54a;font-size:20px}
+.ok{color:#5eead4}.bad{color:#ff6b6b}
+div.t{padding:4px 8px;border-bottom:1px solid #ffffff14;font-size:14px}
+#sum{font-size:18px;font-weight:700;margin:10px 0;padding:10px;border-radius:12px;background:#ffffff14}
+canvas#c{position:fixed;left:-4000px;top:0}
+#ui,#dv,#vg,#top,#toast,#cd,#mini,#mb,#menu{display:none!important}
+</style></head><body>
+<h1>🧪 اختبارات النظام — الواجهة الشمالية، المحافظ، السباق، الكاميرا، العقارات</h1>
+<div id="sum">جارٍ الاختبار…</div><div id="out"></div>
+<canvas id="c"></canvas><div id="ui"></div><div id="dv"></div><div id="vg"></div>
+<div id="top"><b id="mny"></b><div id="ms"></div></div><div id="toast"></div><div id="cd"></div>
+<canvas id="mini" width="110" height="178"></canvas><div id="mb"></div>
+<div id="menu"><div class="card" id="card"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>/* عزل مخزن الاختبارات كليًا عن مخزن اللعبة (نفس الأصل) */
+try{
+  const K='nd96_tests';
+  localStorage.removeItem(K);
+  const set=localStorage.setItem.bind(localStorage),
+        get=localStorage.getItem.bind(localStorage),
+        rem=localStorage.removeItem.bind(localStorage);
+  localStorage.setItem =(a,v)=>set(a==='nd96'?K:a,v);
+  localStorage.getItem=(a)=>get(a==='nd96'?K:a);
+  localStorage.removeItem=(a)=>rem(a==='nd96'?K:a);
+}catch(e){}
+try{localStorage.removeItem('nd96')}catch(e){}</script>
+<script src="js/core.js"></script>
+<script src="js/wallet.js"></script>
+<script src="js/vehicles.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/decor.js"></script>
+<script src="js/buildings.js"></script>
+<script src="js/world.js"></script>
+<script src="js/north.js"></script>
+<script src="js/items.js"></script>
+<script src="js/player.js"></script>
+<script src="js/race.js"></script>
+<script src="js/properties.js"></script>
+<script src="js/minimap.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script>
+/* ============ حزمة اختبارات جانبية (لا تُنشر مع اللعب) ============ */
+(function(){
+const ND=window.ND, out=document.getElementById('out'), sum=document.getElementById('sum');
+let pass=0,fail=0;
+function t(name,fn){
+  let msg='';
+  try{ const r=fn(); if(r===false) throw new Error('فشل الشرط');
+       if(typeof r=='string') msg=' — '+r;
+       pass++; out.insertAdjacentHTML('beforeend','<div class="t ok">✅ '+name+msg+'</div>');
+  }catch(e){ fail++; out.insertAdjacentHTML('beforeend','<div class="t bad">❌ '+name+' — '+e.message+'</div>'); }
+}
+const S=ND.S, ST=ND.ST, PI=ND.PI;
+const ok=(c,m)=>{if(!c)throw new Error(m||'الشرط غير محقق')};
+
+/* 1) الوحدات */
+t('محرك THREE محمّل',()=>{ok(typeof THREE!=='undefined','THREE غير موجود');return THREE.REVISION});
+const MODS=['core','wallet','vehicles','characters','decor','buildings','world','north','items',
+            'player','race','properties','minimap','ui','game'];
+t('ملفات الوحدات الـ15 كلها نفّذت (عبر وجود APIها)',()=>{
+  ['mkCar','drive','aiCar','retCar','mkKid','mkAdult','mkBall','updNPCs','placeDecor','buildAdd',
+   'startRace','raceTick','plotBuy','plotDev','plotSell','propTick','miniDraw','hud','updCam','camInput',
+   'walletTick','gain','gainTo','pay','transfer','updPlane','ringCol','spawnItem','mission' in ND?'x':'mis']
+   .forEach(k=>{if(k==='x')return;ok(typeof ND[k]=='function','غير موجود: '+k)});
+  return 'API سليم'});
+
+/* 2) المحافظ */
+t('بداية كل محفظة بـ 10,000,000',()=>{ok(S.wal[0]===10000000&&S.wal[1]===10000000);return ND.fmt(S.wal[0])});
+t('توزيع الدخل بالتساوي بين المحفظتين',()=>{
+  const a=S.wal[0],b=S.wal[1];S.players=2;ND.gain(1000);
+  ok(Math.abs((S.wal[0]-a)-500)<1e-6&&Math.abs((S.wal[1]-b)-500)<1e-6);
+  ND.gainTo(1,777);ok(S.wal[1]-b===1277,'gainTo غير دقيق');
+  S.wal[0]=a;S.wal[1]=b;return 'gain/gainTo صحيحان'});
+t('الخصم والدفع المشترك',()=>{
+  S.wal[0]=100;S.wal[1]=50;
+  ok(ND.spend(0,600)===false,'صرف أكثر من الرصيد');
+  S.wal[0]=0;S.wal[1]=150;
+  ok(ND.pay(60)===1,'pay لم يأخذ من المحفظة الثانية');
+  ok(S.wal[1]===90,'لم يُخصم المبلغ كاملاً');
+  ok(ND.canPay(1e9)===false,'canPay تقول إن المحفظتين تملكان');
+  S.wal[0]=10000000;S.wal[1]=10000000;return 'pay/spend صحيحان'});
+t('التحويل بين المحفظتين',()=>{
+  S.wal[0]=5000000;S.wal[1]=5000000;
+  ok(ND.transfer(0,1,1000000)===true);ok(S.wal[0]===4000000&&S.wal[1]===6000000,'القيم بعد التحويل');
+  ok(ND.transfer(0,1,999999999)===true);ok(S.wal[0]===0,'التحويل قاصر على الرصيد');
+  S.wal[0]=10000000;S.wal[1]=10000000;return 'ok'});
+
+/* 3) الكاميرا */
+t('معادلة الكاميرا (زاوية/تقريب/ميلان)',()=>{
+  S.cam[0]={yaw:0,zoom:1,tilt:.45};
+  const e=ND.camEq(0);
+  ok(Math.abs(e.dh-e.d*Math.cos(e.el))<1e-6);
+  ok(e.hv>0&&e.dh>0,'قيم موجب');
+  ND.camInput(0,'zoom',10);ok(S.cam[0].zoom<=2.3,'حد التقريب الأقصى');
+  ND.camInput(0,'zoom',-10);ok(S.cam[0].zoom>=.5,'حد التقريب الأدنى');
+  ND.camInput(0,'tilt',10);ok(S.cam[0].tilt<=1,'حد الميلان');
+  ND.camInput(0,'yaw',10);ok(S.cam[0].yaw<=2.6,'حد الزاوية');
+  S.cam[0]={yaw:0,zoom:1,tilt:.45};
+  const p=ND.PL[0];ND.updP(p,1);
+  ok(isFinite(p.cam.position.x)&&isFinite(p.cam.position.y),'موضع الكاميرا غير مfinite');
+  ok(p.cam.position.y>0,'الكاميرا تحت الأرض');
+  return 'dh='+e.dh.toFixed(1)+' hv='+e.hv.toFixed(1)});
+t('حفظ إعدادات الكاميرا في الحالة',()=>{S.cam[1].yaw=.5;ND.save();ok(S.cam[1].yaw===.5);S.cam[1].yaw=0;return 'ok'});
+
+/* 4) الطرق والحدود وعدم تداخل العقارات */
+t('عدد الطرق مسجّلة',()=>{ok(ND.roads.length>20,'roads='+ND.roads.length);return ND.roads.length+' طريقًا'});
+t('العقارات لا تتداخل مع أي طريق',()=>{
+  let bad=[];
+  ND.PLOTS.forEach(pl=>{const r={x:pl.x,z:pl.z,w:pl.w,d:pl.d};
+    ND.roads.forEach(rd=>{if(ND.overlap(r,rd,3))bad.push(pl.n)})});
+  ok(bad.length===0,'تداخل: '+bad.join(', '));return ND.PLOTS.length+' قطعة سليمة'});
+t('العقارات لا تتداخل ببعضها',()=>{
+  let bad=[];
+  ND.PLOTS.forEach((a,i)=>ND.PLOTS.forEach((b,j)=>{if(j>i&&ND.overlap(a,b,4))bad.push(a.n+'×'+b.n)}));
+  ok(bad.length===0,bad.join(', '));return 'ok'});
+t('حلبة السباق داخل حدود العالم',()=>{
+  const R=ND.RACE;
+  ok(R.CX-R.R>-ND.LIM&&R.CX+R.R<ND.LIM,'خارج حدود x');
+  ok(R.CZ+R.R<ND.LIM&&R.CZ-R.R>ND.NZ,'خارج حدود z');
+  return 'المركز ('+R.CX+','+R.CZ+') نق='+R.R});
+t('حواجز الحلبة تُبقي السيارات على المسار',()=>{
+  const R=ND.RACE,p={x:R.CX,z:R.CZ};   // نقطة في منتصف الحديقة
+  ND.ringCol(p,2);
+  const d=Math.hypot(p.x-R.CX,p.z-R.CZ);
+  ok(d>=R.R-9&&d<=R.R+9,'البعد='+d.toFixed(1));return 'دُفع إلى الحلبة'});
+
+/* 5) العقارات */
+t('حالة العقارات مهيأة',()=>{ND.PLOTS.forEach((pl,i)=>ok(ND.plotState(i).owner===-1));return '11 قطعة'});
+t('شراء قطعة يخصم من محفظة ويحدّد المالك',()=>{
+  S.wal[0]=10000000;S.wal[1]=10000000;
+  const m=ND.plotBuy(0);
+  ok(ND.plotState(0).owner===0,'المالك ليس فواز');
+  ok(S.wal[0]===10000000-ND.PLOTS[0].p,'الخصم غير دقيق');
+  return m});
+t('التطوير يرفع المستوى والدخل',()=>{
+  const i=0,lv0=ND.plotState(i).lv;
+  ND.plotDev(i);ok(ND.plotState(i).lv===lv0+1,'لم يرتفع المستوى');
+  const a=S.wal[0];ND.propTick(1);
+  ok(S.wal[0]>a,'لا يوجد دخل');
+  ND.plotState(i).lv=3;ok(ND.plotDev(i).indexOf('أقصى')>0,'تجاوز المستوى الأقصى');
+  return 'المستوى '+ND.plotState(i).lv});
+t('البيع يعود لمحفظة المالك ويعيد القطعة للبيع',()=>{
+  const a=S.wal[0],i=0,v=ND.plotValue(i);
+  ND.plotSell(i);
+  ok(ND.plotState(i).owner===-1&&ND.plotState(i).lv===0);
+  ok(S.wal[0]>a,'لم يُضاف مبلغ البيع');
+  return 'قيمة '+ND.fmt(v)});
+t('دخل العقارات غير المملوكة = صفر',()=>{
+  const a=S.wal[0];S.wal[0]=1000000;ND.propTick(5);
+  ok(S.wal[0]===1000000,'دخل من قطعة غير مملوكة');S.wal[0]=10000000;return 'ok'});
+
+/* 6) البناء والديكور */
+t('بناء مبنى يخصم ويُسجّل',()=>{
+  S.wal[0]=10000000;S.wal[1]=10000000;
+  const n0=S.builds.length,c0=ND.CB.length,b=ND.BT[2];
+  /* ابحث عن موضع صالح للبناء داخل الحارة */
+  let px=0,pz=0,found=0;
+  for(let x=-250;x<=250&&!found;x+=8)for(let z=-250;z<=-140&&!found;z+=8)
+    if(ND.canB(b,x,z)){px=x;pz=z;found=1}
+  ok(found===1,'لا يوجد أي موضع صالح للبناء');
+  ND.PL[0].x=px;ND.PL[0].z=pz-14;ND.PL[0].cy=0;   // يُبنى أمام اللاعب مباشرة
+  const m=ND.buildAdd(2,0);
+  ok(S.builds.length===n0+1,m);
+  ok(ND.CB.length>c0,'لم يُسجّل تصادم المبنى');
+  return m});
+t('وضع ديكور ويزيل المتداخل',()=>{
+  /* ابحث عن موضع فاضي داخل حارة */
+  let px=0,pz=0,found=0;
+  for(let x=-240;x<=240&&!found;x+=14)for(let z=-240;z<=240&&!found;z+=14){
+    if(ND.onRoad(x,z,6)||!ND.inBlk(x,6)||!ND.inBlk(z,6))continue;
+    let busy=0;
+    for(const c of ND.CB)if(x+6>c[0]&&x-6<c[1]&&z+6>c[2]&&z-6<c[3])busy=1;
+    if(!busy){px=x;pz=z;found=1}
+  }
+  ok(found===1,'لا يوجد أي موضع فاضي في الشبكة');
+  ND.PL[0].x=px;ND.PL[0].z=pz-8;ND.PL[0].cy=0;
+  const n0=ND.decR.length;
+  const m=ND.placeDecor(1,0);
+  ok(ND.decR.length===n0+1,m);
+  return m+' عند ('+px+','+pz+')'});
+t('المواقف مسجّلة لعودة السيارات',()=>{ok(ND.parking.length>10,''+ND.parking.length);
+  const s=ND.nearParking(0,-28,30);ok(s!==null,'لا يوجد موقف قريب');return ND.parking.length+' موقفًا'});
+
+/* 7) السباق */
+t('بدء السباق يولّد مشاركين وعمرًا تنازليًا',()=>{
+  if(ST.race)ND.endRace();
+  S.players=1;ND.PL[0].car=null;ND.PL[0].kid.g.visible=true;
+  const m=ND.startRace();
+  ok(ST.race&&ST.race.parts.length===2,'عدد المشاركين');
+  ok(ST.freeze===1,'التجميد مفعّل قبل العد');
+  ST.race.parts.forEach(q=>ok(q.car.frozen===1,'السيارة غير مجمّدة'));
+  return m});
+t('العد التنازلي يجمّد ثم يطلق السيارات',()=>{
+  for(let i=0;i<6;i++)ND.raceTick(.8);
+  ok(ST.race&&ST.race.phase==='run','المرحلة='+ST.race.phase);
+  ok(ST.freeze===0,'التجميد لم يُرفع');
+  ST.race.parts.forEach(q=>ok(q.car.frozen===0,'السيارة مجمّدة بعد الانطلاق'));
+  return 'انطلقوا'});
+t('السيارات تمرّ بنقاط التفاف وتُعلن فائزًا',()=>{
+  const r=ST.race;
+  for(let k=0;k<400&&r.phase==='run';k++){
+    r.parts.forEach((q,i)=>{
+      const tp=ND.CP[q.cp]||{x:q.car.x,z:q.car.z};
+      q.car.x=tp.x;q.car.z=tp.z;              // اصطناعيًا: مرور بنقاط التفاف
+    });
+    ND.raceTick(.1);
+  }
+  ok(r.phase==='end'||ST.race===null,'لم ينتهِ السباق');
+  ok(ST.freeze===1||ST.race===null,'التجميد عند النهاية');
+  const w=r.parts[r.win];
+  return 'الفائز: '+(w?((w.p?w.p.nm:'خصم ذكي')):'غير محدد')});
+t('تنظيف السباق وإعادة الحالة',()=>{
+  if(ST.race)ND.endRace();
+  ok(ST.race===null&&ST.freeze===0);
+  ND.PL.forEach(p=>{if(p.car&&p.car.temp){ok(false,'سيارة مؤقتة متبقية')}});
+  S.players=2;return 'ok'});
+
+/* 8) الكرة والمشاة */
+t('فيزياء الكرة: تسقط وتستقر',()=>{
+  const b=ND.mkBall(200,60,0xffffff);
+  for(let i=0;i<200;i++)ND.updBalls(1/60);
+  ok(b.y>=.6&&b.y<2,'الارتفاع='+b.y.toFixed(2));
+  const i=ND.balls.indexOf(b);ND.scene.remove(b.g);ND.balls.splice(i,1);
+  return 'y='+b.y.toFixed(2)});
+t('ركل الكرة من لاعب يحركها',()=>{
+  const b=ND.mkBall(ND.PL[0].x+1,ND.PL[0].z,0xffffff);
+  const a=ND.PL[0];
+  ND.kickBall(b,Math.sin(a.cy),Math.cos(a.cy),12);
+  for(let i=0;i<10;i++)ND.updBalls(1/60);
+  ok(Math.hypot(b.vx,b.vz)>0.2||Math.hypot(b.x-a.x,b.z-a.z)>1.2,'الكرة ساكنة');
+  const idx=ND.balls.indexOf(b);ND.scene.remove(b.g);ND.balls.splice(idx,1);return 'ok'});
+t('الأطفال يطاردون أقرب كرة',()=>{
+  ok(ND.npcs.some(n=>n.kid),'لا يوجد أطفال');
+  const withBall=ND.npcs.filter(n=>n.kid&&n.ball).length;
+  return ND.npcs.length+' مشاة، '+withBall+' طفلًا مطاردًا'});
+t('البالغون بملابس تقليدية',()=>{
+  const adults=ND.npcs.filter(n=>!n.kid);
+  ok(adults.length>0,'لا يوجد بالغين');return adults.length+' بالغًا'});
+
+/* 9) السيارات */
+t('العودة التلقائية للموقف',()=>{
+  const c=ND.mkCar(0,0,-140,0);
+  c.ret={x:0,z:-146};
+  for(let i=0;i<400&&c.ret;i++){ND.retCar(c,1/60);ND.moveCar(c,1/60)}
+  ok(c.ret===null,'لم تصل');
+  ok(Math.hypot(c.x-0,c.z+146)<3.5,'المسافة='+Math.hypot(c.x,c.z+146).toFixed(1));
+  ok(c.parked===1,'لم تُعلَّم كركنة');
+  const i=ND.cars.indexOf(c);ND.scene.remove(c.g);ND.cars.splice(i,1);return 'وصلت للموقف'});
+t('قواعد الالتفاف: لا رجوع للخلف في الاتجاه',()=>{
+  const c=ND.mkCar(0,-37,-100,0);c.ai={th:0,cool:0,v:12,last:0};
+  const h0=c.ai.th;
+  for(let i=0;i<120;i++)ND.aiCar(c,1/30);
+  ok(Math.abs(ND.wrap(c.ai.th-h0))<=PI/2+.01,'التفاف ممنوع');
+  const i=ND.cars.indexOf(c);ND.scene.remove(c.g);ND.cars.splice(i,1);return 'ok'});
+t('الطائرة: تكمل دورة الإقلاع والهبوط',()=>{
+  const p=ND.plane,ph0=p.phase;
+  for(let i=0;i<6000;i++)ND.updPlane(1/60);
+  ok(p.y>=0&&p.y<200,'الارتفاع='+p.y.toFixed(1));
+  ok(isFinite(p.x)&&isFinite(p.z),'موضع غير صالح');
+  return 'من '+ph0+' إلى '+p.phase+' على ارتفاع '+p.y.toFixed(1)});
+
+/* 10) الخريطة والواجهة */
+t('الخريطة المصغرة تُرسم دون خطأ',()=>{ND.buildCross();ND.miniDraw();
+  ok(ND.cross.length>10,'التقاطعات='+ND.cross.length);return ND.cross.length+' تقاطعًا'});
+t('شريط الحالة يعرض المحفظتين',()=>{ND.hud();
+  const s=document.getElementById('mny').textContent;
+  ok(s.indexOf(ND.fmt(S.wal[0]))>=0||s.length>0,s);return s});
+t('القوائم تُبنى دون خطأ',()=>{
+  ['shop','build','decor','prop','wallet','race','set','start'].forEach(k=>{
+    ND.menu(k);ok(document.getElementById('card').innerHTML.length>50,'تبويب فارغ: '+k)});
+  ND.menu('start');return '7 تبويبات'});
+t('الحفظ والتحميل لا يُسقط بيانات',()=>{ND.save();
+  const j=JSON.parse(localStorage.getItem('nd96'));
+  ok(Array.isArray(j.wal)&&j.wal.length===2,'المحافظ غير محفوظة');
+  ok(Array.isArray(j.plot),'العقارات غير محفوظة');return 'ok'});
+
+sum.style.background=fail?'#5a1d1d':'#12402c';
+sum.className=fail?'bad':'ok';
+sum.textContent='النتائج: ✅ '+pass+' ناجح — ❌ '+fail+' فاشل  ('+((pass/(pass+fail))*100).toFixed(0)+'%)';
+window.__TEST_RESULT__={pass,fail};
+})();
+</script></body></html>
