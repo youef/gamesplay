@@ -22,16 +22,17 @@ function shadowBlob(g,s){const m=new THREE.Mesh(ND.SH,ND.blobM);m.rotation.x=-PI
   m.position.y=.05;m.scale.set(s,s,1);g.add(m)}
 
 /* ---------- طفل ---------- */
-ND.mkKid=function(c,gh,nm,col){
+ND.mkKid=function(c,gh,nm,col,x=0,z=0){
   const g=new THREE.Group();
-  box(.95,1.5,.55,c,0,1.3,0,g);box(.75,.75,.75,SK,0,2.45,0,g);face(g,2.45);
+  box(.95,1.5,.55,c,0,1.3,0,g);box(.75,.8,.75,SK,0,2.48,0,g);face(g,2.48);
   if(gh){const m=gh==1?new THREE.MeshLambertMaterial({map:ND.GHT}):M(0xffffff);
-    box(.85,.3,.85,m,0,2.95,0,g);box(.85,.7,.25,m,0,2.5,-.45,g)}
-  else box(.8,.25,.8,[0xc0392b,0x2980b9,0xf1c40f,0x1f7a3d][c%4],0,2.9,0,g);
-  const o=limbs(g,c,gh);shadowBlob(g,1.2);
-  if(nm){const l=ND.lab(nm,col,.9);l.position.y=4.2;g.add(l)}
-  g.scale.setScalar(.75);ND.scene.add(g);
-  o.g=g;o.kid=1;return o};
+    box(.88,.34,.88,m,0,2.98,0,g);box(.88,.74,.28,m,0,2.52,-.48,g)}
+  else box(.82,.26,.82,[0xc0392b,0x2980b9,0xf1c40f,0x1f7a3d][c%4],0,2.92,0,g);
+  const o=limbs(g,c,gh);shadowBlob(g,1.1);
+  if(nm){const l=ND.lab(nm,col,.9);l.position.y=4.3;g.add(l)}
+  g.scale.setScalar(.8);g.position.set(x,0,z);
+  ND.stat(g,x,0,z,false);ND.scene.add(g);
+  o.g=g;o.x=x;o.y=0;o.z=z;o.vx=0;vz=0;o.kid=1;return o};
 
 /* ---------- بالغ بملابس تقليدية (ثوب + غترة/شماغ + عقال) ---------- */
 ND.mkAdult=function(opt){

@@ -104,8 +104,9 @@ ND.updP=function(p,dt){
     p.sp=0;
     const f=[Math.sin(p.cy),Math.cos(p.cy)],r=[-Math.cos(p.cy),Math.sin(p.cy)];
     const mx=f[0]*iy+r[0]*ix,mz=f[1]*iy+r[1]*ix,m=Math.hypot(mx,mz);
-    if(m>.1){const s=Math.min(m,1)*7.5*dt;p.x+=mx/m*s;p.z+=mz/m*s;
-      p.ry+=wrap(Math.atan2(mx,mz)-p.ry)*Math.min(1,14*dt)}
+    if(m>.1){const want=Math.min(m,1);const ts=Math.min(1,dt*8);p.av=p.av+(want-p.av)*ts;const s=p.av*7.5*dt;p.x+=mx/m*s;p.z+=mz/m*s;
+      p.ry+=wrap(Math.atan2(mx,mz)-p.ry)*Math.min(1,18*dt)}
+    else{p.av*=Math.exp(-8*dt)}
     ND.push(p,.9);ND.constrain(p,.9);
     /* درج البيت وسطح الدور الأول */
     {const rx=p.x-ND.HCX,rz=p.z-ND.HCZ;

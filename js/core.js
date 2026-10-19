@@ -13,6 +13,24 @@ const $ = ND.$ = i => document.getElementById(i);
 ND.dist = (a,b,c,d)=>Math.hypot(a-c,b-d);
 ND.fmt  = n => Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
+/* ---------- هندسة ومواد مشتركة (تحسين الأداء) ---------- */
+ND.GEOM = {};
+ND.MAT  = {};
+ND.getGeom = (k,fn)=>{
+  if(ND.GEOM[k])return ND.GEOM[k];
+  const g=fn();ND.GEOM[k]=g;return g;
+};
+ND.getMat = (k,fn)=>{
+  if(ND.MAT[k])return ND.MAT[k];
+  const m=fn();ND.MAT[k]=m;return m;
+};
+ND.instMesh=(geom,mat,count)=>{
+  const im=new THREE.InstancedMesh(geom,mat,count);
+  im.frustumCulled=true;im.castShadow=true;im.receiveShadow=true;
+  return im;
+};
+ND.staticGroup = new THREE.Group();ND.staticGroup.name='staticWorld';
+
 /* ---------- الحالة المحفوظة ---------- */
 const S = ND.S = {
   players:2, split:'h', q:2, sound:1,
@@ -86,14 +104,17 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(800,16,12),new THREE.MeshBasic
 
 /* ---------- أدوات رسم ---------- */
 const BG=new THREE.BoxGeometry(1,1,1),mc={},mb={};
-ND.M=c=>mc[c]||(mc[c]=new THREE.MeshLambertMaterial({color:c}));
+ND.M=c=>mc[c]||(mc[c]=new THREE.MeshLambertMaterial({color:c,flatShading:true}));
 ND.B=c=>mb[c]||(mb[c]=new THREE.MeshBasicMaterial({color:c}));
 ND.box=(w,h,d,c,x,y,z,par)=>{
   const m=new THREE.Mesh(BG,typeof c=='number'?ND.M(c):c);
   m.scale.set(w,h,d);m.castShadow=m.receiveShadow=true;m.position.set(x,y,z);
-  if(par)par.add(m);else{m.matrixAutoUpdate=false;m.updateMatrix();scene.add(m)}return m};
-ND.stat=(m,x,y,z)=>{m.receiveShadow=true;m.castShadow=m.geometry.type!='PlaneGeometry';
-  m.position.set(x,y,z);m.matrixAutoUpdate=false;m.updateMatrix();scene.add(m);return m};
+  if(par)par.add(m);else{m.matrixAutoUpdate=false;m.updateMatrix();ND.staticGroup.add(m)}return m};
+ND.stat=(m,x,y,z,st=true)=>{
+  m.receiveShadow=true;m.castShadow=m.geometry.type!='PlaneGeometry';
+  m.position.set(x,y,z);m.matrixAutoUpdate=false;m.updateMatrix();
+  if(st)ND.staticGroup.add(m);else scene.add(m);
+  return m};
 ND.lab=(t,c,s,dt)=>{
   const k=ND.cv(256,64,(g,w,h)=>{g.font='bold 36px sans-serif';g.textAlign='center';
     g.fillStyle='#0009';g.fillRect(0,8,w,48);g.fillStyle=c;g.fillText(t,w/2,45)});
@@ -123,13 +144,16 @@ ND.roads=[];
 ND.roadMat=ND.tex(ND.cv(32,128,(g,w,h)=>{
   g.fillStyle='#3a3d44';g.fillRect(0,0,w,h);
   g.fillStyle='#e8e8e8';g.fillRect(0,0,2,h);g.fillRect(w-2,0,2,h);
-  g.fillStyle='#f4d03f';g.fillRect(w/2-1,0,2,64)}));
+  g.fillStyle='#f4d03f';g.fillRect(w/2-1,0,2,Math.min(96,L))}));
 /* ry=0 → طريق يمتد محور z | ry=PI/2 → طريق يمتد محور x */
 ND.road=(x,z,L,ry)=>{
   const g=new THREE.PlaneGeometry(14,L),uv=g.attributes.uv;
-  for(let i=0;i<uv.count;i++)uv.setY(i,uv.getY(i)*L/20);
+  if(uv){
+    for(let i=0;i<uv.count;i++)uv.setY(i,uv.getY(i)*L/20);
+    g.attributes.uv.needsUpdate=true;
+  }
   const m=new THREE.Mesh(g,ND.roadMat);m.rotation.set(-PI/2,0,ry||0);
-  ND.stat(m,x,.05,z);
+  ND.stat(m,x,.02,z);
   ND.roads.push({x,z,w:ry?L:14,d:ry?14:L});
   return m};
 ND.onRoad=(x,z,m)=>{m=(m==null?3:m);for(const r of ND.roads)

@@ -1,0 +1,14 @@
+{
+  "name": "فواز وزياد – اليوم الوطني 96",
+  "short_name": "ND96",
+  "description": "لعبة ثلاثية الأبعاد مفتوحة للمدينة + الواجهة الشمالية",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f3d2e",
+  "theme_color": "#0f3d2e",
+  "orientation": "landscape",
+  "icons": [
+    {"src":"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192'><rect rx='24' ry='24' width='192' height='192' fill='%230f3d2e'/><text x='50%' y='55%' font-size='84' text-anchor='middle' fill='white' font-family='Arial'>🇸🇦</text></svg>","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
+    {"src":"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'><rect rx='56' ry='56' width='512' height='512' fill='%230f3d2e'/><text x='50%' y='56%' font-size='210' text-anchor='middle' fill='white' font-family='Arial'>🇸🇦</text></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

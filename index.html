@@ -1,6 +1,9 @@
 <!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0f3d2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
 <title>فواز وزياد – اليوم الوطني 96</title>
 <style>
 :root{--bg:#0e3b2b;--panel:#10251def;--fg:#fff;--ac:#ffd54a;--g:#1f9d55}
@@ -37,6 +40,15 @@ canvas#c{position:fixed;left:0;top:0}
 .sm{font-size:13px;opacity:.9;line-height:1.8}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
 .row{border:1px solid #fff4;border-radius:12px;padding:8px;margin:6px 0;background:#ffffff10}
+@media (max-aspect-ratio:4/5) and (max-width:920px){
+  .split{grid-template-columns:1fr;grid-template-rows:50vh 50vh}
+  .camctl{bottom:12px;gap:10px;scale:1.15;transform-origin:bottom right}
+  .camsense{width:190px;height:190px}
+  .camz{width:108px;height:108px}
+  .joy{width:210px;height:210px}
+  .act{width:118px;height:118px}
+  #mini{width:94px;height:152px;bottom:10px;right:10px}
+}
 </style></head><body>
 <canvas id="c"></canvas><div id="ui"></div><div id="dv"></div><div id="vg"></div>
 <div id="top"><b id="mny"></b><div id="ms"></div></div><div id="toast"></div><div id="cd"></div>
@@ -67,4 +79,9 @@ canvas#c{position:fixed;left:0;top:0}
 <script src="js/minimap.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
 </body></html>
