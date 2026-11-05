@@ -117,7 +117,21 @@ const DIST={n:"ضاحية الملك فهد",x:-410,z:30,w:240,d:150};
 const CITY={n:"طريق عرعر",x:-615,z:32};
 const AIR={n:"مطار عرعر",x:500,z:-330,w:210,d:115};
 const COL=[];
-if(typeof THREE==="undefined"){$("ld").textContent="تعذر تحميل محرك Three.js. تأكد من الاتصال بالإنترنت وأعد فتح الصفحة."}else{document.fonts.load("800 40px Tajawal").catch(()=>{}).then(init)}
+// V3.6: recover when the primary Three.js CDN is blocked or unavailable.
+function startCampus(){
+ const fontReady=document.fonts&&document.fonts.load?document.fonts.load("800 40px Tajawal").catch(()=>{}):Promise.resolve();
+ Promise.resolve(fontReady).then(()=>{try{init()}catch(err){console.error("Campus initialization failed",err);$("ld").textContent="تعذر تشغيل الرسوم ثلاثية الأبعاد على هذا الجهاز. تحقق من دعم WebGL ثم أعد تحميل الصفحة."}});
+}
+function loadThreeFallback(){
+ if(typeof THREE!=="undefined"){startCampus();return}
+ $("ld").textContent="تعذر تحميل المحرك من المصدر الأول؛ جارٍ تجربة مصدر بديل…";
+ const fallback=document.createElement("script");
+ fallback.src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js";
+ fallback.onload=()=>{if(typeof THREE==="undefined"){$("ld").textContent="تعذر تشغيل محرك Three.js من المصدرين. تحقق من الاتصال بالإنترنت."}else startCampus()};
+ fallback.onerror=()=>{$("ld").textContent="تعذر تحميل محرك Three.js من المصدرين. تحقق من الاتصال بالإنترنت ثم أعد فتح الصفحة."};
+ document.head.appendChild(fallback);
+}
+loadThreeFallback();
 function init(){
 const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.4:2));R.shadowMap.enabled=true;
 const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
