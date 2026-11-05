@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جامعة الحدود الشمالية | لعبة استكشاف 3D للآيباد</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1e7;--fg:#1d2430;--card:#fffdf8;--line:#ded5c0;--acc:#0f8f86;--navy:#1d3a5f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171c24;--fg:#eef1f5;--card:#222a36;--line:#38425a;--acc:#35c2b6;--navy:#8fb4e6}}
+:root[data-theme="dark"]{--bg:#171c24;--fg:#eef1f5;--card:#222a36;--line:#38425a;--acc:#35c2b6;--navy:#8fb4e6}
+html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg);font-family:Tajawal,Tahoma,"Segoe UI",sans-serif;touch-action:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;gap:8px;padding:10px;overflow-x:auto;scrollbar-width:none;z-index:5}
+#bar button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--fg);font:700 14px Tajawal,Tahoma,sans-serif;padding:8px 14px;border-radius:20px;cursor:pointer}
+#bar button.g{background:var(--navy);color:#fff}
+#bar button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+#mini{position:fixed;left:10px;top:calc(62px + env(safe-area-inset-top,0px));width:112px;height:112px;border:2px solid var(--card);border-radius:10px;box-shadow:0 2px 10px #0004;z-index:4}
+#hint{position:fixed;left:50%;bottom:calc(148px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:14px;font-weight:700;font-size:15px;text-align:center;transition:opacity .6s;z-index:4;max-width:88vw}
+#ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-weight:800;font-size:20px;z-index:20}
+#enter{position:fixed;right:18px;bottom:calc(34px + env(safe-area-inset-bottom,0px));min-width:78px;height:78px;border-radius:50%;border:0;background:var(--acc);color:#fff;font:800 17px Tajawal,Tahoma,sans-serif;cursor:pointer;box-shadow:0 4px 14px #0005;display:none;z-index:6;padding:0 10px}
+#js{position:fixed;left:22px;bottom:calc(34px + env(safe-area-inset-bottom,0px));width:116px;height:116px;border-radius:50%;background:#1d243066;border:2px solid #fff8;display:none;z-index:6}
+#kn{position:absolute;left:33px;top:33px;width:50px;height:50px;border-radius:50%;background:#fffd;box-shadow:0 2px 8px #0006}
+@media (pointer:coarse){#js{display:block}}
+#panel{position:fixed;left:0;right:0;bottom:0;max-height:70vh;overflow:auto;background:var(--card);color:var(--fg);border-top:3px solid var(--acc);border-radius:20px 20px 0 0;padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .3s;z-index:8;max-width:640px;margin:0 auto}
+#panel.on{transform:none}
+#panel h2{margin:0 0 4px;font-size:22px;font-weight:800}
+#panel p.s{margin:0 0 12px;opacity:.75;font-size:14px}
+#panel details{border:1px solid var(--line);border-radius:12px;margin:8px 0;padding:10px 12px}
+#panel summary{font-weight:700;cursor:pointer;font-size:16px}
+#panel details p{margin:8px 0 0;font-size:14px;line-height:1.7;opacity:.85}
+#x{position:absolute;left:12px;top:12px;border:1px solid var(--line);background:none;color:var(--fg);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer}
+#tools{position:fixed;right:10px;top:calc(61px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:7px;z-index:6}
+#tools button,#leave,#roomBtns button{border:1px solid #ffffff80;border-radius:13px;background:#21364edb;color:#fff;font:700 14px Tajawal,Tahoma,sans-serif;padding:10px 13px;cursor:pointer;min-height:42px}
+#tools button.active{background:#0f8f86}
+#leave{position:fixed;right:15px;bottom:calc(25px + env(safe-area-inset-bottom,0px));z-index:7;display:none;background:#b44437}
+#interInfo{position:fixed;left:50%;transform:translateX(-50%);top:calc(63px + env(safe-area-inset-top,0px));width:min(340px,70vw);padding:8px 12px;text-align:center;background:#172b45df;color:white;border-radius:16px;z-index:6;display:none;pointer-events:none;font-size:14px}
+#roomBtns{position:fixed;right:10px;top:calc(140px + env(safe-area-inset-top,0px));width:min(210px,43vw);max-height:42vh;overflow-y:auto;z-index:6;display:none;flex-direction:column;gap:5px}
+#roomBtns button{text-align:right;background:#fffdf4;color:#23364b}
+#mini{cursor:pointer}
+#status{position:fixed;left:9px;bottom:calc(6px + env(safe-area-inset-bottom,0px));background:#18283caa;color:#fff;font-size:11px;padding:4px 8px;border-radius:9px;z-index:4}
+@media(max-width:700px){#bar button{font-size:12px;padding:8px 10px}#tools button{font-size:12px;padding:8px}#mini{top:calc(65px + env(safe-area-inset-top,0px));width:94px;height:94px}#tools{top:calc(176px + env(safe-area-inset-top,0px))}#enter{right:12px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}#roomBtns{top:calc(192px + env(safe-area-inset-top,0px))}}
+@media(prefers-reduced-motion:reduce){#panel{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ld">جارٍ تجهيز الحرم الجامعي…</div>
+<div id="bar"></div>
+<canvas id="mini" width="260" height="260"></canvas>
+<div id="hint">على الآيباد: حرّك العصا اليسرى للمشي، واسحب يمين الشاشة لتدوير الكاميرا، واضغط دخول قرب المباني</div>
+<div id="js"><div id="kn"></div></div>
+<div id="tools"><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button></div>
+<div id="interInfo"></div><div id="roomBtns"></div><button id="leave">خروج من المبنى ↩</button>
+<button id="enter">دخول</button><div id="status">نموذج استكشافي تقريبي • ليس مخططًا مساحيًا معتمدًا</div>
+<div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i);
+// ===== بيانات المباني والمعامل (عدّلها بحرية) =====
+const B=[
+{n:"كلية الطب",x:-70,z:-135,w:60,d:40,h:22,c:0xcfd8e4,ds:"s",labs:[["معمل التشريح","مجسمات ونماذج تشريحية للسنوات الأولى."],["معمل الأحياء الدقيقة","مزارع وفحوصات ميكروبية."],["معمل الفسيولوجيا","تجارب وظائف الأعضاء."],["مركز المهارات الإكلينيكية","محاكاة مهارات التمريض والفحص."]]},
+{n:"قسم الآداب",x:72,z:-138,w:60,d:38,h:20,c:0xe6d8bd,ds:"s",labs:[["معمل اللغات","تدريب سمعي ونطقي للغات."],["معمل الترجمة","برامج الترجمة والتفريغ."],["استوديو الإعلام","تسجيل ومونتاج صوتي ومرئي."]]},
+{n:"عمادة تقنية المعلومات",x:-145,z:-45,w:44,d:30,h:16,c:0xd3e0d9,ds:"s",labs:[["مختبر الحاسب 1","أجهزة للتدريب والاختبارات."],["مختبر الشبكات","أجهزة توجيه وتبديل للتطبيق العملي."],["مختبر الأمن السيبراني","بيئات اختبار معزولة."],["مختبر الذكاء الاصطناعي","أجهزة بمعالجات رسومية."]]},
+{n:"عمادة شؤون المكتبات",x:-145,z:50,w:40,d:28,h:14,c:0xe0d4c8,ds:"s",labs:[["قاعة الوسائط الرقمية","قواعد بيانات ومصادر إلكترونية."],["قاعات البحث الجماعي","غرف دراسة قابلة للحجز."]]},
+{n:"الكلية التطبيقية",x:-55,z:-45,w:48,d:30,h:16,c:0xd6dbe9,ds:"s",labs:[["معمل الحاسب","تدريب على التطبيقات المكتبية."],["معمل المحاسبة","أنظمة محاسبية للتدريب."],["ورشة مهارات مهنية","تدريب عملي للبرامج التطبيقية."]]},
+{n:"قسم الإدارة العامة",x:85,z:-40,w:52,d:30,h:16,c:0xe3dacb,ds:"s",labs:[["معمل الأنظمة الإدارية","برمجيات إدارة الأعمال."],["قاعة محاكاة الأعمال","ألعاب إدارية وحالات دراسية."]]},
+{n:"المبنى الترفيهي",x:0,z:168,w:56,d:26,h:12,c:0xcdb9a0,ds:"n",labs:[["النادي الرياضي","أجهزة لياقة وتمارين."],["صالة الألعاب","طاولات وألعاب جماعية."],["قاعة الأنشطة","فعاليات الطلاب والأندية."]]}];
+const ST={n:"الملعب",x:0,z:82,rx:70,rz:48,labs:[["المضمار","مضمار جري حول الملعب."],["الملعب الرئيسي","ملعب كرة قدم للمباريات والفعاليات."]]};
+const G=[{n:"بوابة 1 – الشمالية",x:0,z:-200,o:"h"},{n:"بوابة 2 – الشرقية",x:200,z:-88,o:"v"},{n:"بوابة 3 – الغربية",x:-200,z:-88,o:"v"},{n:"بوابة 4 – الجنوبية",x:-100,z:200,o:"h"}];
+const COL=[];
+if(typeof THREE==="undefined"){$("ld").textContent="تعذر تحميل محرك Three.js. تأكد من الاتصال بالإنترنت وأعد فتح الصفحة."}else{document.fonts.load("800 40px Tajawal").catch(()=>{}).then(init)}
+function init(){
+const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,1.5));R.shadowMap.enabled=true;
+const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
+const cam=new THREE.PerspectiveCamera(60,1,.5,1500);
+const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",rs);rs();
+S.add(new THREE.HemisphereLight(0xdff0ff,0xb59a6a,.8));
+const sun=new THREE.DirectionalLight(0xfff1d6,.85);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);const sc=sun.shadow.camera;sc.left=sc.bottom=-70;sc.right=sc.top=70;sc.far=320;S.add(sun,sun.target);
+const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
+const box=(w,h,d,m,x,y,z,sh)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=sh!==0;S.add(o);return o};
+const cvt=(w,h,f)=>{const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t};
+// الأرض
+const gt=cvt(128,128,(g,w,h)=>{g.fillStyle="#d8c093";g.fillRect(0,0,w,h);for(let i=0;i<500;i++){g.fillStyle=Math.random()<.5?"#c9ad7b":"#e6d2a8";g.fillRect(Math.random()*w,Math.random()*h,2,2)}});gt.repeat.set(300,300);
+const gp=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),new THREE.MeshLambertMaterial({map:gt}));gp.rotation.x=-Math.PI/2;gp.receiveShadow=true;S.add(gp);
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0xdccdaa));fl.rotation.x=-Math.PI/2;fl.position.y=.03;fl.receiveShadow=true;S.add(fl);
+// الطرق
+const dash=hz=>cvt(hz?64:16,hz?16:64,(g,w,h)=>{g.fillStyle="#41464d";g.fillRect(0,0,w,h);for(let i=0;i<120;i++){g.fillStyle="#4f555d";g.fillRect(Math.random()*w,Math.random()*h,1,1)}g.fillStyle="#e8e8e8";hz?g.fillRect(0,h/2-1,w/2,2):g.fillRect(w/2-1,0,2,h/2)});
+function road(x1,z1,x2,z2,w){const hz=z1===z2,len=hz?Math.abs(x2-x1):Math.abs(z2-z1),t=dash(hz);t.repeat.set(hz?len/8:1,hz?1:len/8);const m=new THREE.Mesh(new THREE.PlaneGeometry(hz?len:w,hz?w:len),new THREE.MeshLambertMaterial({map:t}));m.rotation.x=-Math.PI/2;m.position.set((x1+x2)/2,.06,(z1+z2)/2);m.receiveShadow=true;S.add(m)}
+[[-186,-186,186,-186],[-186,186,186,186],[-186,-186,-186,186],[186,-186,186,186],[-200,-88,200,-88],[0,-200,0,-88],[-100,-186,-100,200],[-200,-88,-320,-88],[200,-88,320,-88],[0,-200,0,-320],[-100,200,-100,320]].forEach(r=>road(r[0],r[1],r[2],r[3],8));
+// السور
+function wall(x1,z1,x2,z2){const w=Math.abs(x2-x1)+1.4,d=Math.abs(z2-z1)+1.4,cx=(x1+x2)/2,cz=(z1+z2)/2;box(w,4.2,d,mat(0xe6dcc6),cx,2.1,cz);box(w+.4,.4,d+.4,mat(0xb9a883),cx,4.4,cz);COL.push([cx-w/2,cz-d/2,cx+w/2,cz+d/2])}
+const wl=(a,b,f,hz)=>hz?wall(a,f,b,f):wall(f,a,f,b);
+wl(-200,-14,-200,1);wl(14,200,-200,1);wl(-200,-114,200,1);wl(-86,200,200,1);wl(-200,-102,-200,0);wl(-74,200,-200,0);wl(-200,-102,200,0);wl(-74,200,200,0);
+function lab(t,col,sz){const c=document.createElement("canvas"),g=c.getContext("2d"),f="800 44px Tajawal,Tahoma,sans-serif";g.font=f;const w=Math.ceil(g.measureText(t).width+60);c.width=w;c.height=84;g.font=f;g.fillStyle=col;g.beginPath();g.roundRect(0,0,w,84,42);g.fill();g.fillStyle="#fff";g.textAlign="center";g.textBaseline="middle";g.fillText(t,w/2,45);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(sz*w/84,sz,1);S.add(s);return s}
+// البوابات
+const pm=mat(0xb9a27c);
+G.forEach(g=>{const h=g.o==="h",ix=h?0:(g.x<0?1:-1),iz=h?(g.z<0?1:-1):0;g.ix=ix;g.iz=iz;
+[-1,1].forEach(s=>{const px=g.x+(h?s*14:0),pz=g.z+(h?0:s*14);box(3.2,8.5,3.2,pm,px,4.25,pz)});
+box(h?34:2.6,1.8,h?2.6:34,pm,g.x,8.4,g.z);
+const sg=lab(g.n,"#1d3a5f",2.6);sg.position.set(g.x,11,g.z);
+const bx=h?g.x+21:g.x+ix*7,bz=h?g.z+iz*7:g.z+21;box(5,3.2,5,mat(0xe9e0cc),bx,1.6,bz);box(5.2,.5,5.2,pm,bx,3.4,bz);COL.push([bx-2.5,bz-2.5,bx+2.5,bz+2.5])});
+// المباني
+const wtex=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.fillStyle="#2b4766";g.fillRect(10,12,44,34);g.fillStyle="#7fa6cc";g.fillRect(10,12,44,12);g.fillStyle="#cfcfcf";g.fillRect(0,56,64,8)});
+B.forEach(b=>{const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshLambertMaterial({map:t,color:b.c})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
+const m=new THREE.Mesh(new THREE.BoxGeometry(b.w,b.h,b.d),[mx,mx,mt,mt,mz,mz]);m.position.set(b.x,b.h/2,b.z);m.castShadow=m.receiveShadow=true;S.add(m);
+box(b.w+1,.8,b.d+1,mat(0x9a8f7d),b.x,b.h+.4,b.z);box(6,2,6,mat(0xaaaaaa),b.x-b.w/4,b.h+1.8,b.z);box(4,1.5,4,mat(0xaaaaaa),b.x+b.w/4,b.h+1.6,b.z+2);
+const sz=b.ds==="n"?-1:1,dz=b.z+sz*b.d/2,cm=mat(0xf0e8d8);
+box(12,.7,6,cm,b.x,5,dz+sz*3);box(.8,5,.8,cm,b.x-5,2.5,dz+sz*5.4);box(.8,5,.8,cm,b.x+5,2.5,dz+sz*5.4);
+box(5.5,3.6,.3,mat(0x1d4f7a,{emissive:0x0a2540}),b.x,1.8,dz+sz*.1,0);box(16,.3,8,mat(0xe9e0cc),b.x,.15,dz+sz*4,0);
+const s=lab(b.n,"#1d3a5f",3.6);s.position.set(b.x,b.h+6,b.z);
+COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
+// الملعب
+const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
+ell(ST.rx+16,ST.rz+16,0xc9bfa8,.1);ell(ST.rx,ST.rz,0xb04a3a,.2);ell(ST.rx-9,ST.rz-9,0x2f56a3,.3);ell(ST.rx-14,ST.rz-14,0x3f8a4a,.4);
+const wm=mat(0xffffff);[[0,-30,90,.5],[0,30,90,.5],[-45,0,.5,60],[45,0,.5,60],[0,0,.5,60]].forEach(l=>box(l[2]||.5,.1,l[3]||.5,wm,ST.x+l[0],.58,ST.z+l[1],0));
+box(110,6,6,mat(0xe7e2d6),ST.x,3,ST.z-ST.rz-20);COL.push([ST.x-55,ST.z-ST.rz-23,ST.x+55,ST.z-ST.rz-17]);
+[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
+const sl=lab("ملعب الجامعة","#b04a3a",3.6);sl.position.set(ST.x,12,ST.z);
+// نخيل وإنارة
+const trm=mat(0x8a6a45),lfm=mat(0x3f8a45);
+function palm(x,z){const h=5+Math.random()*3,g=new THREE.Group(),t=new THREE.Mesh(new THREE.CylinderGeometry(.25,.4,h,6),trm);t.position.y=h/2;t.castShadow=true;g.add(t);for(let i=0;i<7;i++){const p=new THREE.Group(),l=new THREE.Mesh(new THREE.BoxGeometry(.9,.12,4.6),lfm);l.position.set(0,h+.2,2);l.rotation.x=.45;p.rotation.y=i/7*6.283;p.add(l);g.add(p)}g.position.set(x,0,z);S.add(g)}
+const nearGate=(x,z)=>G.some(g=>Math.hypot(g.x-x,g.z-z)<26);
+for(let t=-190;t<=190;t+=17){[[t,-193],[t,193],[-193,t],[193,t]].forEach(p=>{if(!nearGate(p[0],p[1]))palm(p[0],p[1])})}
+B.forEach(b=>{const s=b.ds==="n"?-1:1;palm(b.x-13,b.z+s*(b.d/2+7));palm(b.x+13,b.z+s*(b.d/2+7))});
+const lpm=mat(0x333840),lhm=mat(0xfff2c0,{emissive:0xffe08a});
+for(let t=-180;t<=180;t+=30){[[t,-180],[t,180],[-180,t],[180,t]].forEach(p=>{box(.25,6,.25,lpm,p[0],3,p[1],0);box(1.2,.25,.25,lpm,p[0],6,p[1],0);const h=new THREE.Mesh(new THREE.SphereGeometry(.4,8,6),lhm);h.position.set(p[0]+.5,5.9,p[1]);S.add(h)})}
+// الشخصية
+const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
+const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
+const gtx=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.strokeStyle="#d33a35";g.lineWidth=3;for(let i=0;i<=64;i+=8){g.beginPath();g.moveTo(i,0);g.lineTo(i,64);g.moveTo(0,i);g.lineTo(64,i);g.stroke()}});gtx.repeat.set(2,2);const gm=new THREE.MeshLambertMaterial({map:gtx});
+const add=(g,m,x,y,z,p)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;(p||ch).add(o);return o};
+add(new Cy(.3,.47,1.28,20),wh,0,.76,0);add(new Sp(.31,16,12),wh,0,1.38,0).scale.set(1.15,.55,.7);add(new Cy(.07,.09,.12,10),skin,0,1.47,0);
+add(new Sp(.135,20,16),skin,0,1.62,0).scale.set(1,1.1,1);add(new Sp(.165,20,16),gm,0,1.68,-.01).scale.set(1.02,.85,1.08);
+add(new THREE.BoxGeometry(.34,.3,.1),gm,0,1.52,-.14);const ag=add(new THREE.TorusGeometry(.155,.016,8,24),dk,0,1.74,0);ag.rotation.x=Math.PI/2;
+[-1,1].forEach(s=>add(new Sp(.016,8,8),dk,s*.05,1.64,.125));add(new Sp(.025,8,8),skin,0,1.6,.14);add(new Sp(.09,12,10),mat(0x2b1d14),0,1.54,.07).scale.set(1,.7,.9);
+const arm=[],leg=[];
+[-1,1].forEach(s=>{let p=new THREE.Group();p.position.set(s*.37,1.4,0);ch.add(p);add(new Cy(.075,.06,.6,10),wh,0,-.3,0,p);add(new Sp(.055,10,8),skin,0,-.64,0,p);arm.push(p);
+p=new THREE.Group();p.position.set(s*.13,.45,0);ch.add(p);add(new THREE.BoxGeometry(.13,.08,.3),dk,0,-.42,.06,p);leg.push(p)});
+pl.position.set(0,0,-188);
+// التحكم
+const K={},joy={x:0,y:0};let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false;
+addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
+addEventListener("keyup",e=>K[e.code]=0);
+let dr=null;const cvs=$("c");
+cvs.addEventListener("pointerdown",e=>{dr={x:e.clientX,y:e.clientY};cvs.setPointerCapture(e.pointerId)});
+cvs.addEventListener("pointermove",e=>{if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=Math.max(.1,Math.min(1.2,pit+(e.clientY-dr.y)*.004));dr={x:e.clientX,y:e.clientY}});
+cvs.addEventListener("pointerup",()=>dr=null);cvs.addEventListener("wheel",e=>{dist=Math.max(5,Math.min(20,dist+e.deltaY*.01))});
+const js=$("js"),kn=$("kn");let jp=false;
+function jm(e){const r=js.getBoundingClientRect(),m=45;let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const l=Math.hypot(dx,dy);if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;kn.style.transform=`translate(${dx}px,${dy}px)`}
+js.addEventListener("pointerdown",e=>{js.setPointerCapture(e.pointerId);jp=true;jm(e)});js.addEventListener("pointermove",e=>{if(jp)jm(e)});
+const je=()=>{jp=false;joy.x=joy.y=0;kn.style.transform=""};js.addEventListener("pointerup",je);js.addEventListener("pointercancel",je);
+// الواجهة
+const hint=$("hint"),en=$("enter"),pn=$("panel"),pb=$("pb");
+const interior=new THREE.Group();interior.visible=false;S.add(interior);
+const addRoom=(geo,material,x,y,z)=>{const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.receiveShadow=true;interior.add(m);return m};
+const wallM=mat(0xe6e1d6),floorM=mat(0xc2b4a0),deskM=mat(0x957350),screenM=mat(0x29475e),chairM=mat(0x324356);
+function buildInterior(b){
+ while(interior.children.length)interior.remove(interior.children[0]);
+ const X=750,Z=0;addRoom(new THREE.BoxGeometry(72,.5,48),floorM,X,-.25,Z);
+ addRoom(new THREE.BoxGeometry(72,8,.6),wallM,X,4,-24);addRoom(new THREE.BoxGeometry(.6,8,48),wallM,X-36,4,Z);addRoom(new THREE.BoxGeometry(.6,8,48),wallM,X+36,4,Z);
+ addRoom(new THREE.BoxGeometry(72,8,.6),wallM,X,4,24);
+ addRoom(new THREE.BoxGeometry(72,.5,48),mat(0xfaf4e5),X,8,Z);
+ for(let i=0;i<5;i++){
+   const a=X-24+i*12;
+   addRoom(new THREE.BoxGeometry(8,.4,2.5),deskM,a,1,-7);
+   addRoom(new THREE.BoxGeometry(1.5,1.2,.14),screenM,a,1.8,-7);
+   addRoom(new THREE.BoxGeometry(1.4,.3,1.4),chairM,a,.5,-3.6);
+ }
+ for(let i=0;i<4;i++){const a=X-22+i*15;addRoom(new THREE.BoxGeometry(8,.4,2.5),deskM,a,1,10);addRoom(new THREE.BoxGeometry(1.5,1.2,.14),screenM,a,1.8,10)}
+ for(let i=0;i<4;i++){const light=new THREE.PointLight(0xffedc9,.6,45);light.position.set(X-24+i*16,6,0);interior.add(light)}
+ const l=lab(b.n,"#1d3a5f",3.4);l.position.set(X,5,-22);interior.add(l);
+}
+let outsidePos=null;
+function enterBuilding(b){
+ if(b===ST){op(b);return}
+ outsidePos={x:pl.position.x,z:pl.position.z,yaw,pit,dist};inside=b;open=false;pn.classList.remove("on");
+ buildInterior(b);interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;dist=8;
+ $("leave").style.display="block";$("interInfo").style.display="block";$("interInfo").textContent="داخل " + b.n + " — نموذج تخيلي تعليمي";
+ $("roomBtns").style.display="flex";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
+}
+function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
+function exitBuilding(){if(!inside)return;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("mini").style.display="block"}
+$("leave").onclick=exitBuilding;
+$("tour").onclick=()=>{topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
+$("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
+$("home").onclick=()=>{exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
+$("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
+$("mini").onclick=()=>{$("tour").click()};
+function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>enterBuilding(b);pn.classList.add("on");en.style.display="none"}
+function cl(){open=false;pn.classList.remove("on")}
+$("x").onclick=cl;en.onclick=()=>near&&op(near);
+function tp(x,z,fx,fz){exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0}
+B.forEach(b=>{const k=document.createElement("button");k.textContent=b.n;k.onclick=()=>tp(b.door.x,b.door.z,0,b.ds==="n"?1:-1);$("bar").appendChild(k)});
+const sk=document.createElement("button");sk.textContent=ST.n;sk.onclick=()=>tp(ST.x+ST.rx+28,ST.z,-1,0);$("bar").appendChild(sk);
+G.forEach(g=>{const k=document.createElement("button");k.className="g";k.textContent=g.n;k.onclick=()=>tp(g.x+g.ix*10,g.z+g.iz*10,g.ix,g.iz);$("bar").appendChild(k)});
+setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
+const hit=(x,z)=>COL.some(c=>x>c[0]-1&&x<c[2]+1&&z>c[1]-1&&z<c[3]+1);
+const mm=$("mini").getContext("2d"),k=260/520,mx=v=>(v+260)*k;
+function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);mm.strokeStyle="#7c8590";mm.lineWidth=3;mm.strokeRect(mx(-186),mx(-186),372*k,372*k);mm.beginPath();mm.moveTo(mx(-200),mx(-88));mm.lineTo(mx(200),mx(-88));mm.moveTo(mx(0),mx(-200));mm.lineTo(mx(0),mx(-88));mm.moveTo(mx(-100),mx(-186));mm.lineTo(mx(-100),mx(200));mm.stroke();
+mm.strokeStyle="#5a4a30";mm.lineWidth=3;mm.strokeRect(mx(-200),mx(-200),400*k,400*k);
+mm.fillStyle="#b04a3a";mm.beginPath();mm.ellipse(mx(ST.x),mx(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
+B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2),mx(b.z-b.d/2),b.w*k,b.d*k)});
+mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mx(g.z),6,0,7);mm.fill()});
+mm.save();mm.translate(mx(pl.position.x),mx(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle="#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
+let last=0;
+(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;
+const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
+if(l>.08&&!open){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
+const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;if(inside){pl.position.x=Math.max(716,Math.min(784,nx));pl.position.z=Math.max(-21,Math.min(21,nz))}else{if(!hit(nx,pl.position.z))pl.position.x=nx;if(!hit(pl.position.x,nz))pl.position.z=nz;}
+const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
+ch.rotation.y=fa;
+const sw=mv?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
+const p=pl.position;sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
+if(topView&&!inside){cam.position.set(p.x,Math.max(175,dist*15),p.z+1);cam.lookAt(p.x,0,p.z)}else{cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
+near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
+if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
+en.style.display=near&&!open&&!inside?"block":"none";if(near)en.textContent="دخول";
+if(!inside)mini();R.render(S,cam)})(0);
+}
+</script>
+</body>
+</html>
