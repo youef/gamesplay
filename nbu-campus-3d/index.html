@@ -79,7 +79,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 <div id="tools"><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
 <div id="buildHud" aria-live="polite"></div>
-<div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم نقطة النهاية.</div>
+<div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم النهاية؛ يتم وصل الأطراف القريبة تلقائيًا.</div>
 <section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي">
   <div id="buildHint">اختر أداة ثم المس الأرض لإضافة عنصر.</div>
   <div class="buildingRow" id="buildChoices"></div>
@@ -248,11 +248,11 @@ addEventListener("keyup",e=>K[e.code]=0);
 let dr=null;const cvs=$("c");
 cvs.addEventListener("pointerdown",e=>{if(buildMode){placeFromPointer(e);return}dr={x:e.clientX,y:e.clientY};cvs.setPointerCapture(e.pointerId)});
 cvs.addEventListener("pointermove",e=>{if(buildMode){previewFromPointer(e);return}if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=Math.max(.1,Math.min(1.2,pit+(e.clientY-dr.y)*.004));dr={x:e.clientX,y:e.clientY}});
-cvs.addEventListener("pointerup",()=>dr=null);cvs.addEventListener("wheel",e=>{dist=Math.max(5,Math.min(20,dist+e.deltaY*.01))});
+cvs.addEventListener("pointerup",()=>dr=null);cvs.addEventListener("pointercancel",()=>dr=null);cvs.addEventListener("lostpointercapture",()=>dr=null);cvs.addEventListener("wheel",e=>{dist=Math.max(5,Math.min(20,dist+e.deltaY*.01))});
 const js=$("js"),kn=$("kn");let jp=false;
 function jm(e){const r=js.getBoundingClientRect(),m=45;let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const l=Math.hypot(dx,dy);if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;kn.style.transform=`translate(${dx}px,${dy}px)`}
 js.addEventListener("pointerdown",e=>{js.setPointerCapture(e.pointerId);jp=true;jm(e)});js.addEventListener("pointermove",e=>{if(jp)jm(e)});
-const je=()=>{jp=false;joy.x=joy.y=0;kn.style.transform=""};js.addEventListener("pointerup",je);js.addEventListener("pointercancel",je);
+const je=()=>{jp=false;joy.x=joy.y=0;kn.style.transform=""};js.addEventListener("pointerup",je);js.addEventListener("pointercancel",je);js.addEventListener("lostpointercapture",je);
 // الواجهة
 const hint=$("hint"),en=$("enter"),pn=$("panel"),pb=$("pb");
 const interior=new THREE.Group();interior.visible=false;S.add(interior);
@@ -318,6 +318,17 @@ const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 const snap=v=>Math.round(v/5)*5;
+function snapRoadEndpoint(point,other){
+ let best=point,bestDistance=12;
+ for(const road of built){
+  if(!buildDefs[road.type]?.path||!road.end)continue;
+  for(const end of [{x:road.x,z:road.z},road.end]){
+   const distance=Math.hypot(end.x-point.x,end.z-point.z);
+   if(distance<bestDistance&&Math.hypot(end.x-other.x,end.z-other.z)>=10){best=end;bestDistance=distance}
+  }
+ }
+ return {x:best.x,z:best.z};
+}
 const buildMoney=o=>{const d=buildDefs[o.type];return Math.round(d.path?d.cost*Math.hypot(o.end.x-o.x,o.end.z-o.z):d.cost)};
 const spent=()=>built.reduce((sum,o)=>sum+buildMoney(o),0);
 const balance=()=>Math.max(0,1600000+budgetBonus-spent());
@@ -415,8 +426,8 @@ function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFr
  const hits=buildRay.intersectObjects(buildGroups,true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
 function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
- if(d.path&&!buildStart){buildStart=p;updateBuildHud();toastBuild("حدد الآن نقطة النهاية");return}
- const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:p}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
+ if(d.path&&!buildStart){buildStart=snapRoadEndpoint(p,{x:p.x+100,z:p.z+100});updateBuildHud();toastBuild("حدد الآن نقطة النهاية؛ ستتصل بنهايات الطرق القريبة تلقائيًا");return}
+ const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:snapRoadEndpoint(p,buildStart)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 function toggleBuilder(){buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;pl.position.set(-100,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
@@ -435,7 +446,10 @@ $("importBuild").onclick=()=>$("buildFile").click();
 $("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const data=JSON.parse(await file.text());if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?clamp(data.budgetBonus,0,5000000):0;missionDone=data.missionDone&&typeof data.missionDone==="object"?data.missionDone:{};drivenMeters=Number.isFinite(data.drivenMeters)?clamp(data.drivenMeters,0,1000000):0;atAirport=!!data.atAirport;atCity=!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();addEventListener("pagehide",()=>{if(carMode)storeBuild()});
+restoreBuild();updateBuildHud();
+function releaseControls(){touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
+addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
+addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
 setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
 const hit=(x,z)=>COL.some(c=>x>c[0]-1&&x<c[2]+1&&z>c[1]-1&&z<c[3]+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
