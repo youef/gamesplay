@@ -30,7 +30,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 #panel summary{font-weight:700;cursor:pointer;font-size:16px}
 #panel details p{margin:8px 0 0;font-size:14px;line-height:1.7;opacity:.85}
 #x{position:absolute;left:12px;top:12px;border:1px solid var(--line);background:none;color:var(--fg);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer}
-#tools{position:fixed;right:10px;top:calc(61px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:7px;z-index:6}
+#tools{position:fixed;right:10px;top:calc(61px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:7px;z-index:6;max-height:65vh;overflow-y:auto;scrollbar-width:none}
 #tools button,#leave,#roomBtns button{border:1px solid #ffffff80;border-radius:13px;background:#21364edb;color:#fff;font:700 14px Tajawal,Tahoma,sans-serif;padding:10px 13px;cursor:pointer;min-height:42px}
 #tools button.active{background:#0f8f86}
 #leave{position:fixed;right:15px;bottom:calc(25px + env(safe-area-inset-bottom,0px));z-index:7;display:none;background:#b44437}
@@ -42,6 +42,15 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 @media(max-width:700px){#bar button{font-size:12px;padding:8px 10px}#tools button{font-size:12px;padding:8px}#mini{top:calc(65px + env(safe-area-inset-top,0px));width:94px;height:94px}#tools{top:calc(176px + env(safe-area-inset-top,0px))}#enter{right:12px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}#roomBtns{top:calc(192px + env(safe-area-inset-top,0px))}}
 @media(prefers-reduced-motion:reduce){#panel{transition:none}}
 
+#drivingHud{position:fixed;left:50%;top:calc(115px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#122337ea;color:white;min-width:125px;text-align:center;padding:10px 14px;border-radius:16px;z-index:6;display:none;font-weight:800;pointer-events:none}
+#speedValue{font:800 27px Tajawal,Tahoma,sans-serif;color:#9ce6d7}#distanceValue{font-size:12px;color:#d5e7ee}#driveTip{font-size:10px;font-weight:500;opacity:.87;margin-top:3px}
+#driveControls{position:fixed;right:20px;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:9;display:none;gap:10px;align-items:end}
+#driveControls button{border:2px solid #ffffff8a;border-radius:20px;background:#0f8f86e8;color:white;padding:17px 15px;min-width:89px;min-height:75px;font:800 16px Tajawal,Tahoma,sans-serif;touch-action:none;user-select:none}
+#driveControls #brakeBtn{background:#a93c36df}#driveControls button.pressed{filter:brightness(1.27);transform:scale(.97)}
+#missionsPanel{position:fixed;top:calc(116px + env(safe-area-inset-top,0px));right:9px;z-index:12;background:#1a2b43f5;color:#fff;padding:12px;border:1px solid #ffffff44;border-radius:15px;width:min(315px,85vw);max-height:56vh;overflow-y:auto;display:none;box-shadow:0 6px 26px #0006}
+#missionsPanel h3{margin:0 0 10px}#missionsPanel p{font-size:12px;opacity:.83;line-height:1.7;margin-bottom:0}
+.mission{padding:7px 0;border-bottom:1px solid #ffffff30;font-size:13px}.mission b{display:block;margin-bottom:2px}.mission.done{color:#a5f6ca}.mission small{opacity:.8;display:block}
+@media(max-width:700px){#drivingHud{top:calc(58px + env(safe-area-inset-top,0px));left:53%}#driveControls{right:10px;bottom:calc(18px + env(safe-area-inset-bottom,0px));gap:6px}#driveControls button{min-width:72px;min-height:66px;font-size:13px;padding:12px 8px}#driveTip{display:none}#missionsPanel{top:calc(60px + env(safe-area-inset-top,0px));right:8px;max-height:64vh}}
 /* نظام إنشاء مدينة جامعية تفاعلية — يعمل باللمس على iPad */
 #builderToggle{background:#e8a23f!important;color:#16243a!important}
 #builderToggle.active{background:#16a17d!important;color:white!important}
@@ -67,7 +76,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 <canvas id="mini" width="260" height="260"></canvas>
 <div id="hint">على الآيباد: حرّك العصا اليسرى للمشي، واسحب يمين الشاشة لتدوير الكاميرا، واضغط دخول قرب المباني</div>
 <div id="js"><div id="kn"></div></div>
-<div id="tools"><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
+<div id="tools"><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
 <div id="buildHud" aria-live="polite"></div>
 <div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم نقطة النهاية.</div>
@@ -82,12 +91,17 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
   <input type="file" id="buildFile" accept=".json,application/json" aria-label="استيراد مخطط محفوظ" />
 </section>
 <div id="buildToast" role="status"></div>
+<div id="drivingHud" aria-live="polite"><span id="speedValue">0</span> كم/س <span id="distanceValue">· 0 م</span><div id="driveTip">عصا التحكّم للتوجيه • الزران للتسارع والفرامل</div></div>
+<div id="driveControls"><button id="brakeBtn" type="button">🛑 فرامل</button><button id="gasBtn" type="button">⏩ بنزين</button></div>
+<section id="missionsPanel" aria-label="مهمات اللعبة"><h3>🎯 مهمات التطوير والاستكشاف</h3><div id="missionsList"></div><p>مكافآت المهمات تضيف رصيدًا إلى ميزانية البناء. تقدّمك محفوظ على جهازك.</p></section>
 <div id="interInfo"></div><div id="roomBtns"></div><button id="leave">خروج من المبنى ↩</button>
-<button id="enter">دخول</button><div id="status">نموذج استكشافي تقريبي • ليس مخططًا مساحيًا معتمدًا</div>
+<button id="enter">دخول</button><div id="status">محاكاة لعب تقريبية وليست مخططًا مساحيًا • 🏗️ بناء | 🚗 قيادة | 🚌 نقل | 🚦 إشارات | 🎯 مهمات</div>
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=i=>document.getElementById(i);
+const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 // ===== بيانات المباني والمعامل (عدّلها بحرية) =====
 const B=[
 {n:"كلية الطب",x:-70,z:-135,w:60,d:40,h:22,c:0xcfd8e4,ds:"s",labs:[["معمل التشريح","مجسمات ونماذج تشريحية للسنوات الأولى."],["معمل الأحياء الدقيقة","مزارع وفحوصات ميكروبية."],["معمل الفسيولوجيا","تجارب وظائف الأعضاء."],["مركز المهارات الإكلينيكية","محاكاة مهارات التمريض والفحص."]]},
@@ -99,15 +113,18 @@ const B=[
 {n:"المبنى الترفيهي",x:0,z:168,w:56,d:26,h:12,c:0xcdb9a0,ds:"n",labs:[["النادي الرياضي","أجهزة لياقة وتمارين."],["صالة الألعاب","طاولات وألعاب جماعية."],["قاعة الأنشطة","فعاليات الطلاب والأندية."]]}];
 const ST={n:"الملعب",x:0,z:82,rx:70,rz:48,labs:[["المضمار","مضمار جري حول الملعب."],["الملعب الرئيسي","ملعب كرة قدم للمباريات والفعاليات."]]};
 const G=[{n:"بوابة 1 – الشمالية",x:0,z:-200,o:"h"},{n:"بوابة 2 – الشرقية",x:200,z:-88,o:"v"},{n:"بوابة 3 – الغربية",x:-200,z:-88,o:"v"},{n:"بوابة 4 – الجنوبية",x:-100,z:200,o:"h"}];
+const DIST={n:"ضاحية الملك فهد",x:-410,z:30,w:240,d:150};
+const CITY={n:"طريق عرعر",x:-615,z:32};
+const AIR={n:"مطار عرعر",x:500,z:-330,w:210,d:115};
 const COL=[];
 if(typeof THREE==="undefined"){$("ld").textContent="تعذر تحميل محرك Three.js. تأكد من الاتصال بالإنترنت وأعد فتح الصفحة."}else{document.fonts.load("800 40px Tajawal").catch(()=>{}).then(init)}
 function init(){
-const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,1.5));R.shadowMap.enabled=true;
+const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.4:2));R.shadowMap.enabled=true;
 const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
 const cam=new THREE.PerspectiveCamera(60,1,.5,1500);
 const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",rs);rs();
 S.add(new THREE.HemisphereLight(0xdff0ff,0xb59a6a,.8));
-const sun=new THREE.DirectionalLight(0xfff1d6,.85);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);const sc=sun.shadow.camera;sc.left=sc.bottom=-70;sc.right=sc.top=70;sc.far=320;S.add(sun,sun.target);
+const sun=new THREE.DirectionalLight(0xfff1d6,.85);sun.castShadow=true;sun.shadow.mapSize.set(matchMedia("(pointer: coarse)").matches?1024:2048,matchMedia("(pointer: coarse)").matches?1024:2048);const sc=sun.shadow.camera;sc.left=sc.bottom=-70;sc.right=sc.top=70;sc.far=320;S.add(sun,sun.target);
 const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
 const box=(w,h,d,m,x,y,z,sh)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=sh!==0;S.add(o);return o};
 const cvt=(w,h,f)=>{const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t};
@@ -156,6 +173,60 @@ for(let t=-190;t<=190;t+=17){[[t,-193],[t,193],[-193,t],[193,t]].forEach(p=>{if(
 B.forEach(b=>{const s=b.ds==="n"?-1:1;palm(b.x-13,b.z+s*(b.d/2+7));palm(b.x+13,b.z+s*(b.d/2+7))});
 const lpm=mat(0x333840),lhm=mat(0xfff2c0,{emissive:0xffe08a});
 for(let t=-180;t<=180;t+=30){[[t,-180],[t,180],[-180,t],[180,t]].forEach(p=>{box(.25,6,.25,lpm,p[0],3,p[1],0);box(1.2,.25,.25,lpm,p[0],6,p[1],0);const h=new THREE.Mesh(new THREE.SphereGeometry(.4,8,6),lhm);h.position.set(p[0]+.5,5.9,p[1]);S.add(h)})}
+// امتداد المنطقة: ضاحية الملك فهد، الطريق العام، المطار
+road(-560,20,-100,20,18);
+road(-100,20,-100,-88,18);
+road(-100,20,430,20,18);
+road(430,20,430,-300,18);
+road(430,-300,500,-300,18);
+const districtPad=new THREE.Mesh(new THREE.PlaneGeometry(DIST.w,DIST.d),mat(0xdcc6a4));districtPad.rotation.x=-Math.PI/2;districtPad.position.set(DIST.x,.05,DIST.z);districtPad.receiveShadow=true;S.add(districtPad);
+const districtRoads=[[DIST.x-DIST.w/2+24,DIST.z-52,DIST.w-34,10],[DIST.x-DIST.w/2+24,DIST.z,DIST.w-34,10],[DIST.x-DIST.w/2+24,DIST.z+52,DIST.w-34,10]].forEach(r=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(r[2],r[3]),mat(0x50565d));m.rotation.x=-Math.PI/2;m.position.set(r[0]+r[2]/2,.08,r[1]);m.receiveShadow=true;S.add(m)});
+[[DIST.x-76,DIST.z-28],[DIST.x-10,DIST.z-28],[DIST.x+56,DIST.z-28],[DIST.x-76,DIST.z+36],[DIST.x-10,DIST.z+36],[DIST.x+56,DIST.z+36]].forEach((p,i)=>{const w=30,d=22,h=11+(i%2)*2;box(w,h,d,mat(0xe8dcc9),p[0],h/2,p[1]);box(w+1,.5,d+1,mat(0x9a8f7d),p[0],h+.25,p[1]);box(7,3,.3,mat(0x20486a),p[0],2.1,p[1]+d/2+.16);COL.push([p[0]-w/2,p[1]-d/2,p[0]+w/2,p[1]+d/2])});
+box(48,13,28,mat(0xd5e0c8),DIST.x+6,6.5,DIST.z-83);box(49,.5,29,mat(0x988d77),DIST.x+6,13.25,DIST.z-83);const dLab=lab("ضاحية الملك فهد","#1d3a5f",5.3);dLab.position.set(DIST.x,16,DIST.z);
+const parkPad=new THREE.Mesh(new THREE.PlaneGeometry(62,36),mat(0x6aa06e));parkPad.rotation.x=-Math.PI/2;parkPad.position.set(DIST.x+86,.06,DIST.z+77);parkPad.receiveShadow=true;S.add(parkPad);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)palm(DIST.x+80+i*18,DIST.z+78+j*10);
+const cityMarker=lab("إلى عرعر","#8d2f2f",4.5);cityMarker.position.set(CITY.x,10,CITY.z);for(let i=0;i<4;i++){box(40,8+i*2,26,mat(0xd8cfbe),CITY.x+40*i,4+i,CITY.z-52+(i%2)*20);}
+const runway=new THREE.Mesh(new THREE.PlaneGeometry(210,32),mat(0x484f55));runway.rotation.x=-Math.PI/2;runway.position.set(AIR.x,.08,AIR.z);runway.receiveShadow=true;S.add(runway);for(let i=-90;i<=90;i+=18){const line=new THREE.Mesh(new THREE.PlaneGeometry(8,2),mat(0xf5f1da));line.rotation.x=-Math.PI/2;line.position.set(AIR.x+i,.1,AIR.z);S.add(line)}
+box(58,13,26,mat(0xcfdbe5),AIR.x-38,6.5,AIR.z+42);box(59,.5,27,mat(0xa39684),AIR.x-38,13.25,AIR.z+42);box(22,22,22,mat(0xafc4d8),AIR.x+42,11,AIR.z+44);const airLabel=lab("مطار عرعر","#1d3a5f",5);airLabel.position.set(AIR.x,18,AIR.z+10);
+// خدمات الحياة اليومية: محطات الحافلات والوقود والتقاطعات والإشارات
+const roadsideStops=[{n:"محطة الضاحية",x:-535,z:45},{n:"محطة الجامعة",x:-130,z:43},{n:"محطة الخدمات",x:260,z:43},{n:"محطة المطار",x:430,z:-250}];
+roadsideStops.forEach((p)=>{box(12,.22,5,mat(0xaaa89d),p.x,.12,p.z);box(10,.4,6,mat(0x278a94),p.x,4.6,p.z);[-4,4].forEach(d=>box(.4,4.2,.4,mat(0x52616d),p.x+d,2.3,p.z));box(9,1.4,.22,mat(0xd9e8ed),p.x,2.9,p.z+2.5);let tag=lab(p.n,"#205477",1.9);tag.position.set(p.x,7.2,p.z) });
+// معبر مشاة وحارات توقف بمداخل الطريق العام
+function drawCrossing(x,z,alongZ=false){for(let i=-4;i<=4;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(alongZ?5:2.5,alongZ?2.5:5),mat(0xf0e9da));m.rotation.x=-Math.PI/2;m.position.set(x+(alongZ?i*3.1:0),.11,z+(alongZ?0:i*3.1));S.add(m)}}
+drawCrossing(-100,46,true);drawCrossing(430,46,true);drawCrossing(-165,20,false);
+// محطة وقود مجسمة غير مطابقة لموقع تجاري فعلي
+box(44,.3,40,mat(0xada9a0),265,.15,78);box(34,1.2,21,mat(0x176c90),265,7.9,76);[-11,11].forEach(dx=>[-6,6].forEach(dz=>box(.8,7,.8,mat(0xd7dedf),265+dx,3.6,76+dz)));[254,276].forEach(x=>{box(2.2,2.9,1.6,mat(0xecece6),x,1.6,76);box(2.3,1,1.7,mat(0x268aa4),x,2.7,76)});let fuelLab=lab("محطة وقود - تجريبية","#176c90",2.2);fuelLab.position.set(265,12,82);
+// إشارات المرور ذات دورتين متبادلتين كل 16 ثانية
+const trafficJunctions=[{x:-100,z:20},{x:430,z:20}],signalBulbs=[];
+trafficJunctions.forEach((j,i)=>{for(const axis of ["ew","ns"]){const o=new THREE.Group();o.position.set(j.x+(axis==="ew"?21:-20),0,j.z+(axis==="ns"?21:-20));S.add(o);
+const post=new THREE.Mesh(new THREE.BoxGeometry(.55,6,.55),mat(0x56636d));post.position.y=3;o.add(post);
+const face=new THREE.Mesh(new THREE.BoxGeometry(1.7,4.4,.65),mat(0x19222b));face.position.y=6.1;o.add(face);
+const leds=[0xe24836,0xe2ba35,0x46cb63].map((c,k)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),mat(c,{emissive:c,emissiveIntensity:.2}));m.position.set(0,7.45-k*1.25,.5);o.add(m);return m});signalBulbs.push({axis,leds,junction:j})}});
+// منخفض التفاصيل لسيارات النقل العام والسيارات المدنية؛ مسارات تمثيلية
+const transitRoutes=[
+ [[-640,20],[-100,20],[430,20],[430,-300],[580,-300]],
+ [[-535,20],[-100,20],[-100,-88],[0,-88]],
+ [[-520,20],[-100,20],[430,20],[430,-250]],
+ [[-500,20],[-280,20],[-100,20],[70,20]]
+];
+const agents=[];let trafficClock=0,trafficEnabled=true,trafficSeconds=0;
+function makeRoadVehicle(bus,color){const root=new THREE.Group();S.add(root);let w=bus?4.6:3.1,d=bus?11:6.2,h=bus?3.3:1.25;
+const meshBox=(bw,bh,bd,co,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat(co));m.position.set(x,y,z);root.add(m);return m};
+meshBox(w,h,d,color,0,.86+h/2,0);meshBox(w-.15,bus?.95:.82,d*(bus?.85:.55),0x8fc0d1,0,1.85+(bus?.5:0),0);
+for(const side of [-1,1])for(const dir of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(bus?.92:.72,bus?.92:.72,.48,10),mat(0x1f2227));wheel.rotation.z=Math.PI/2;wheel.position.set(side*(w/2+.15),.78,dir*d*.31);root.add(wheel)}
+if(bus){meshBox(w-.8,.1,.5,0xf6e6ba,0,3.3,0);meshBox(w-.5,.45,.15,0xf3d960,0,2.2,d/2+.08)}
+return root}
+for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4]);agents.push({mesh:veh,route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
+function moveAgent(a,dt){if(a.dwell>0){a.dwell-=dt;return}let start=a.route[a.seg],end=a.route[a.seg+a.direction];if(!end){a.direction*=-1;a.seg=clamp(a.seg,0,a.route.length-1);a.progress=0;return}
+const dx=end[0]-start[0],dz=end[1]-start[1],len=Math.hypot(dx,dz);if(!len){a.seg+=a.direction;return}a.progress=clamp(a.progress,0,len);
+let remain=len-a.progress,target=a.speed;
+for(const j of trafficJunctions){if(Math.hypot(end[0]-j.x,end[1]-j.z)<1&&remain>3&&remain<24){const axis=Math.abs(dx)>Math.abs(dz)?"ew":"ns";if(!signalAllows(axis))target=Math.min(target,Math.max(0,(remain-7)*1.15))}}
+a.progress+=Math.min(remain,target*dt);const f=clamp(a.progress/len,0,1);a.mesh.position.set(start[0]+dx*f,0,start[1]+dz*f);a.mesh.rotation.y=Math.atan2(dx,dz);
+if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.dwell=a.bus?3:1}}}
+function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
+function updateTraffic(dt){trafficClock+=dt;const phase=trafficClock%16;
+for(const s of signalBulbs){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
+for(const s of buildLights){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
+if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 // الشخصية
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
@@ -169,8 +240,9 @@ const arm=[],leg=[];
 [-1,1].forEach(s=>{let p=new THREE.Group();p.position.set(s*.37,1.4,0);ch.add(p);add(new Cy(.075,.06,.6,10),wh,0,-.3,0,p);add(new Sp(.055,10,8),skin,0,-.64,0,p);arm.push(p);
 p=new THREE.Group();p.position.set(s*.13,.45,0);ch.add(p);add(new THREE.BoxGeometry(.13,.08,.3),dk,0,-.42,.06,p);leg.push(p)});
 pl.position.set(0,0,-188);
+const car=new THREE.Group();S.add(car);const carBox=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;car.add(m);return m};carBox(3.6,1.1,7.2,0xb23830,0,1.1,0);carBox(3.1,.9,3.2,0x90c7df,0,1.95,.2);carBox(2.8,.22,1.2,0x2b3440,0,2.52,.32);[-1,1].forEach(s=>{[-1,1].forEach(f=>{const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.82,.82,.55,14),mat(0x222));wheel.rotation.z=Math.PI/2;wheel.position.set(s*1.95,.7,f*2.38);wheel.castShadow=true;car.add(wheel)})});car.visible=false;
 // التحكم
-const K={},joy={x:0,y:0};let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false;
+const K={},joy={x:0,y:0};let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
 addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
 addEventListener("keyup",e=>K[e.code]=0);
 let dr=null;const cvs=$("c");
@@ -204,6 +276,7 @@ function buildInterior(b){
 }
 let outsidePos=null;
 function enterBuilding(b){
+ if(carMode){toastBuild("🚗 اخرج من السيارة أولًا للدخول");return}
  if(b===ST){op(b);return}
  outsidePos={x:pl.position.x,z:pl.position.z,yaw,pit,dist};inside=b;open=false;pn.classList.remove("on");
  buildInterior(b);interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;dist=8;
@@ -215,37 +288,44 @@ function exitBuilding(){if(!inside)return;inside=null;interior.visible=false;pl.
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
+$("drive").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");if(inside)exitBuilding();carMode=!carMode;carSpeed=0;driveStartDistance=drivenMeters;car.visible=carMode;ch.visible=!carMode;$("drive").classList.toggle("active",carMode);$("driveControls").style.display=carMode?"flex":"none";$("drivingHud").style.display=carMode?"block":"none";
+if(carMode){dist=Math.max(dist,16);toastBuild("🚗 استعمل عصا التحكم للتوجيه وزر البنزين للقيادة") }else{storeBuild();toastBuild("تم الرجوع إلى المشي")}};
+for(const [btn,key] of [["gasBtn","gas"],["brakeBtn","brake"]]){const el=$(btn);el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);if(key==="gas")touchGas=true;else touchBrake=true;el.classList.add("pressed")});const stop=()=>{if(key==="gas")touchGas=false;else touchBrake=false;el.classList.remove("pressed")};el.addEventListener("pointerup",stop);el.addEventListener("pointercancel",stop);el.addEventListener("lostpointercapture",stop)}
+$("trafficToggle").onclick=()=>{trafficEnabled=!trafficEnabled;agents.forEach(a=>a.mesh.visible=trafficEnabled);$("trafficToggle").classList.toggle("active",trafficEnabled);$("trafficToggle").textContent=trafficEnabled?"🚦 حركة المرور":"🚙 حركة متوقفة";toastBuild(trafficEnabled?"تم تشغيل حركة السيارات والحافلات":"تم إيقاف حركة السيارات والحافلات")};
+$("nightToggle").onclick=()=>{nightMode=!nightMode;S.background=new THREE.Color(nightMode?0x10223c:0x9fcff0);sun.intensity=nightMode?.28:.85;$("nightToggle").classList.toggle("active",nightMode);$("nightToggle").textContent=nightMode?"☀️ النهار":"🌙 الليل"};
+$("missionsToggle").onclick=()=>{const el=$("missionsPanel");el.style.display=el.style.display==="block"?"none":"block";renderMissions()};
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
 $("mini").onclick=()=>{$("tour").click()};
 function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>enterBuilding(b);pn.classList.add("on");en.style.display="none"}
 function cl(){open=false;pn.classList.remove("on")}
 $("x").onclick=cl;en.onclick=()=>near&&op(near);
-function tp(x,z,fx,fz){exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0}
+function tp(x,z,fx,fz){exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0;car.position.set(x,0,z)}
 B.forEach(b=>{const k=document.createElement("button");k.textContent=b.n;k.onclick=()=>tp(b.door.x,b.door.z,0,b.ds==="n"?1:-1);$("bar").appendChild(k)});
 const sk=document.createElement("button");sk.textContent=ST.n;sk.onclick=()=>tp(ST.x+ST.rx+28,ST.z,-1,0);$("bar").appendChild(sk);
 G.forEach(g=>{const k=document.createElement("button");k.className="g";k.textContent=g.n;k.onclick=()=>tp(g.x+g.ix*10,g.z+g.iz*10,g.ix,g.iz);$("bar").appendChild(k)});
+[["ضاحية الملك فهد",DIST.x,DIST.z,1,0],["الطريق إلى عرعر",CITY.x,CITY.z,1,0],["مطار عرعر",AIR.x-55,AIR.z+70,1,0]].forEach(r=>{const k=document.createElement("button");k.className="g";k.textContent=r[0];k.onclick=()=>tp(r[1],r[2],r[3],r[4]);$("bar").appendChild(k)});
 
 // ========== منشئ الحرم الجامعي: نسخة 1 — منفصل عن بيانات الحرم المرجعية ==========
 const BUILD_KEY="nbu-campus-builder-v1";
 const buildDefs={
  road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر",cost:1200,path:true,width:11},
  college:{label:"🏫 كلية",cost:165000,w:28,d:23,h:18,color:0xb8ccdf},lab:{label:"🔬 معامل",cost:110000,w:22,d:19,h:13,color:0xb9d7ce},library:{label:"📚 مكتبة",cost:120000,w:27,d:21,h:13,color:0xe2ceb0},admin:{label:"🏢 إدارة",cost:130000,w:25,d:20,h:17,color:0xd3cadf},
- park:{label:"🌳 حديقة",cost:18000,w:30,d:24},plaza:{label:"🏙️ ساحة",cost:12500,w:25,d:25},trees:{label:"🌴 نخيل",cost:1400,w:8,d:8},lamp:{label:"💡 إنارة",cost:2500,w:8,d:8},parking:{label:"🅿️ مواقف",cost:23000,w:32,d:24},fountain:{label:"⛲ نافورة",cost:28000,w:16,d:16},
+ park:{label:"🌳 حديقة",cost:18000,w:30,d:24},plaza:{label:"🏙️ ساحة",cost:12500,w:25,d:25},trees:{label:"🌴 نخيل",cost:1400,w:8,d:8},lamp:{label:"💡 إنارة",cost:2500,w:8,d:8},parking:{label:"🅿️ مواقف",cost:23000,w:32,d:24},fountain:{label:"⛲ نافورة",cost:28000,w:16,d:16},busstop:{label:"🚌 محطة باص",cost:9000,w:15,d:12},gasstation:{label:"⛽ وقود",cost:65000,w:25,d:22},signal:{label:"🚦 إشارة",cost:3800,w:8,d:8},crosswalk:{label:"🚶 معبر مشاة",cost:5500,w:13,d:9},roundabout:{label:"🔄 دوّار",cost:19000,w:22,d:22},
  erase:{label:"🧽 إزالة عنصر"}
 };
 const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
-let built=[],buildGroups=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0;
+let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 const snap=v=>Math.round(v/5)*5;
 const buildMoney=o=>{const d=buildDefs[o.type];return Math.round(d.path?d.cost*Math.hypot(o.end.x-o.x,o.end.z-o.z):d.cost)};
 const spent=()=>built.reduce((sum,o)=>sum+buildMoney(o),0);
-const balance=()=>Math.max(0,1600000-spent());
+const balance=()=>Math.max(0,1600000+budgetBonus-spent());
 const coins=n=>Math.round(n).toLocaleString("ar-SA")+" ر.س";
 function toastBuild(t){const v=$("buildToast");v.textContent=t;v.style.display="block";clearTimeout(buildMessageTime);buildMessageTime=setTimeout(()=>v.style.display="none",3300)}
-function storeBuild(){try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:1,built,creativeMode}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
-function validItem(o){if(!o||typeof o!=="object"||!buildDefs[o.type]||o.type==="erase"||!Number.isFinite(o.x)||!Number.isFinite(o.z)||Math.abs(o.x)>185||Math.abs(o.z)>185)return false;if(buildDefs[o.type].path){return o.end&&Number.isFinite(o.end.x)&&Number.isFinite(o.end.z)&&Math.abs(o.end.x)<=185&&Math.abs(o.end.z)<=185&&Math.hypot(o.end.x-o.x,o.end.z-o.z)>=10}return Number.isInteger(o.rot)&&o.rot>=0&&o.rot<=3}
-function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;redrawBuild()}}catch(e){built=[]}}
+function storeBuild(){evaluateMissions();try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:3,built,creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
+function validItem(o){if(!o||typeof o!=="object"||!buildDefs[o.type]||o.type==="erase"||!Number.isFinite(o.x)||!Number.isFinite(o.z)||o.x<WORLD.buildMinX||o.x>WORLD.buildMaxX||o.z<WORLD.buildMinZ||o.z>WORLD.buildMaxZ)return false;if(buildDefs[o.type].path){return o.end&&Number.isFinite(o.end.x)&&Number.isFinite(o.end.z)&&o.end.x>=WORLD.buildMinX&&o.end.x<=WORLD.buildMaxX&&o.end.z>=WORLD.buildMinZ&&o.end.z<=WORLD.buildMaxZ&&Math.hypot(o.end.x-o.x,o.end.z-o.z)>=10}return Number.isInteger(o.rot)&&o.rot>=0&&o.rot<=3}
+function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;budgetBonus=Number.isFinite(dat.budgetBonus)?clamp(dat.budgetBonus,0,5000000):0;missionDone=dat.missionDone&&typeof dat.missionDone==="object"?dat.missionDone:{};drivenMeters=Number.isFinite(dat.drivenMeters)?clamp(dat.drivenMeters,0,1000000):0;atAirport=!!dat.atAirport;atCity=!!dat.atCity;redrawBuild();evaluateMissions()}}catch(e){built=[]}}
 function part(parent,w,h,d,color,x,y,z){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));mesh.position.set(x,y,z);mesh.castShadow=h>1;mesh.receiveShadow=true;parent.add(mesh);return mesh}
 function buildObject(o){
  const def=buildDefs[o.type],grp=new THREE.Group();grp.userData.buildId=buildGroups.length;let x=o.x,z=o.z;
@@ -274,29 +354,53 @@ function buildObject(o){
    part(grp,w,.1,d,0x49515b,0,.1,0);for(let i=-3;i<=3;i++){part(grp,.18,.06,7,0xf1e5cd,i*4,.2,-4);part(grp,.18,.06,7,0xf1e5cd,i*4,.2,5)}
   }else if(o.type==="fountain"){
    part(grp,16,.4,16,0xd5c7ae,0,.2,0);const water=new THREE.Mesh(new THREE.CylinderGeometry(6,6,.35,22),mat(0x51abd1));water.position.y=.5;grp.add(water);part(grp,.7,2,.7,0xe0f5fc,0,1.4,0)
+  }else if(o.type==="busstop"){
+   part(grp,15,.14,12,0xc6c5bc,0,.07,0);part(grp,11,.4,6,0x278b91,0,5,0);[-4,4].forEach(dx=>part(grp,.5,4.8,.5,0x53636e,dx,2.5,0));part(grp,8,2,.3,0xc7dfe3,0,2.8,3)
+  }else if(o.type==="gasstation"){
+   part(grp,25,.15,22,0xaca99d,0,.1,0);part(grp,20,.8,14,0x208eaa,0,6.8,0);[-8,8].forEach(dx=>[-5,5].forEach(dz=>part(grp,.4,6,.4,0xe5e6e2,dx,3.6,dz)));[-4,4].forEach(dx=>{part(grp,2,2.7,1.5,0xf2eadb,dx,1.4,0);part(grp,2,.7,1.6,0x248ca3,dx,2.4,0)})
+  }else if(o.type==="signal"){
+   part(grp,.5,5.8,.5,0x64717d,0,2.9,0);part(grp,1.9,3.5,.7,0x1b272e,0,6.5,0);const leds=[0xe24836,0xe1b643,0x42b968].map((c,i)=>{const orb=new THREE.Mesh(new THREE.SphereGeometry(.48,8,7),mat(c));orb.position.set(0,7.65-i*1.05,.5);grp.add(orb);return orb});buildLights.push({axis:o.rot%2?"ns":"ew",leds})
+  }else if(o.type==="crosswalk"){
+   part(grp,13,.08,9,0x565b62,0,.09,0);for(let i=-3;i<=3;i++)part(grp,1,.03,7,0xf4e9d9,i*1.7,.16,0)
+  }else if(o.type==="roundabout"){
+   const island=new THREE.Mesh(new THREE.CylinderGeometry(7,7,.4,24),mat(0x4a9969));island.position.y=.3;grp.add(island);const ring=new THREE.Mesh(new THREE.TorusGeometry(9,1.7,8,32),mat(0x515c63));ring.rotation.x=Math.PI/2;ring.position.y=.18;grp.add(ring)
   }
  }
  S.add(grp);return grp;
 }
-function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[]}
+function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[];buildLights=[]}
 function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));updateBuildHud()}
 function updateBuildHud(){const roads=built.filter(o=>["road","avenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
  const objectives=[roads>=2,greens>=3,buildings>=2,bridges>=1],done=objectives.filter(Boolean).length;
  $("buildHud").textContent=(creativeMode?"🎨 إنشاء حر":"💰 المتبقي: "+coins(balance()))+" | 🧱 "+built.length+" عنصر | ⭐ إنجازات "+done+"/4";
  $("creativeBtn").textContent=creativeMode?"🎨 وضع حر — غير محدود":"🎯 وضع ميزانية";
- $("buildHint").textContent=(buildStart?"📍 تم اختيار البداية، المس نقطة النهاية لإنشاء ":"👆 اختر موضعًا لبناء ")+buildDefs[buildTool].label+" | مهمات: شارعين، 3 أشجار/حدائق، مبنيين، جسر";
+ $("buildHint").textContent=(buildStart?"📍 تم اختيار البداية، المس نقطة النهاية لإنشاء ":"👆 اختر موضعًا لبناء ")+buildDefs[buildTool].label+" | 🎯 تابع المهمات والمكافآت من الزر العلوي";
  for(const b of $("buildChoices").children)b.classList.toggle("selected",b.dataset.tool===buildTool);
 }
+const missionDefs=[
+ {id:"road",title:"شبكة طرق جديدة",detail:"ابنِ طريقًا إجمالي طوله 120 وحدة",reward:150000,check:()=>built.filter(o=>["road","avenue"].includes(o.type)).reduce((sum,o)=>sum+Math.hypot(o.end.x-o.x,o.end.z-o.z),0)>=120},
+ {id:"green",title:"توسعة المساحات الخضراء",detail:"أنشئ حديقتين",reward:110000,check:()=>built.filter(o=>o.type==="park").length>=2},
+ {id:"transit",title:"تطوير النقل العام",detail:"محطتا حافلات وموقف واحد",reward:135000,check:()=>built.filter(o=>o.type==="busstop").length>=2&&built.some(o=>o.type==="parking")},
+ {id:"safe",title:"السلامة المرورية",detail:"إشارتا مرور ومعبر للمشاة",reward:90000,check:()=>built.filter(o=>o.type==="signal").length>=2&&built.some(o=>o.type==="crosswalk")},
+ {id:"bridge",title:"الجسر الأول",detail:"ابنِ جسرًا فوق الطريق",reward:175000,check:()=>built.some(o=>o.type==="bridge")},
+ {id:"district",title:"توسعة الخدمات",detail:"ابنِ كلية ومحطة وقود",reward:250000,check:()=>built.some(o=>o.type==="college")&&built.some(o=>o.type==="gasstation")},
+ {id:"drive",title:"رحلة قيادة",detail:"قد لمسافة 1500 وحدة افتراضية",reward:100000,check:()=>drivenMeters>=1500},
+ {id:"airport",title:"الوصول إلى المطار",detail:"قد بالسيارة حتى منطقة المطار",reward:75000,check:()=>atAirport},
+ {id:"arar",title:"رحلة عرعر",detail:"قد بالسيارة حتى نهاية طريق عرعر",reward:75000,check:()=>atCity}
+];
+function renderMissions(){const target=$("missionsList");target.replaceChildren();for(const m of missionDefs){const el=document.createElement("div");el.className="mission"+(missionDone[m.id]?" done":"");const head=document.createElement("b");head.textContent=(missionDone[m.id]?"✅ ":"○ ")+m.title;const detail=document.createElement("small");detail.textContent=m.detail+" • مكافأة "+coins(m.reward);el.append(head,detail);target.append(el)}}
+function evaluateMissions(){let newly=0;for(const m of missionDefs){if(!missionDone[m.id]&&m.check()){missionDone[m.id]=true;budgetBonus+=m.reward;newly++}}
+if(newly){toastBuild("🎉 أكملت "+newly+" مهمة وربحت مكافأة! ");updateBuildHud()}renderMissions()}
 function selectBuild(t){buildTool=t;buildStart=null;updateBuildHud()}
-function footprintBlocked(x,z,w,d){if(Math.abs(x)+w/2>178||Math.abs(z)+d/2>178)return true;
- if(Math.abs(x)<ST.rx+w/2&&Math.abs(z-ST.z)<ST.rz+d/2)return true;
+function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMaxX||z-d/2<WORLD.buildMinZ||z+d/2>WORLD.buildMaxZ)return true;
+ if(Math.abs(x)<ST.rx+w/2&&Math.abs(z-ST.z)<ST.rz+d/2)return true;if(Math.abs(x-DIST.x)<DIST.w/2+w/2&&Math.abs(z-DIST.z)<DIST.d/2+d/2)return true;if(Math.abs(x-AIR.x)<AIR.w/2+w/2&&Math.abs(z-AIR.z)<AIR.d/2+d/2)return true;
  for(const b of B)if(Math.abs(x-b.x)<(w+b.w)/2+2&&Math.abs(z-b.z)<(d+b.d)/2+2)return true;
  for(const o of built){const q=buildDefs[o.type];if(q.path)continue;const qw=o.rot%2?q.d:q.w,qd=o.rot%2?q.w:q.d;if(Math.abs(x-o.x)<(w+qw)/2+2&&Math.abs(z-o.z)<(d+qd)/2+2)return true}return false;
 }
 function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد الأعلى للعناصر، احذف بعض الإضافات";
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
  if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";
-  for(let i=0;i<=len;i+=5){const t=i/len,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(Math.abs(x)>179||Math.abs(z)>179)return "خارج منطقة البناء";
+  for(let i=0;i<=len;i+=5){const t=i/len,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
    for(const b of B)if(Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
    if(Math.abs(x)<ST.rx+d.width/2&&Math.abs(z-ST.z)<ST.rz+d.width/2)return "المسار يتداخل مع الملعب";
    for(const b of built){const bd=buildDefs[b.type];if(bd.path)continue;const w=b.rot%2?bd.d:bd.w,q=b.rot%2?bd.w:bd.d;if(Math.abs(x-b.x)<w/2+d.width/2&&Math.abs(z-b.z)<q/2+d.width/2)return "المسار يتداخل مع مبنى أضفته"}
@@ -310,12 +414,12 @@ function previewFromPointer(e){const p=selectGround(e);if(p){$("builderGuide").t
 function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);
  const hits=buildRay.intersectObjects(buildGroups,true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
 function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
- const d=buildDefs[buildTool];if(Math.abs(p.x)>180||Math.abs(p.z)>180){toastBuild("نقطة خارج الحرم");return}
+ const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){buildStart=p;updateBuildHud();toastBuild("حدد الآن نقطة النهاية");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:p}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
-function toggleBuilder(){buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;$("tour").classList.add("active");dist=25;pl.position.set(0,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
- else{$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
+function toggleBuilder(){buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;pl.position.set(-100,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+ else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
 $("builderToggle").onclick=toggleBuilder;
@@ -323,40 +427,60 @@ $("rotateBtn").onclick=()=>{buildRotation=(buildRotation+1)%4;toastBuild("تدو
 $("undoBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للتراجع");redoStack.push(built.pop());buildStart=null;redrawBuild();storeBuild();toastBuild("تم التراجع")};
 $("redoBuild").onclick=()=>{if(!redoStack.length)return toastBuild("لا توجد خطوة لإعادتها");built.push(redoStack.pop());redrawBuild();storeBuild();toastBuild("تمت إعادة الخطوة")};
 $("zoomBuildIn").onclick=()=>{dist=Math.max(6,dist-2)};$("zoomBuildOut").onclick=()=>{dist=Math.min(29,dist+2)};
-const panBuild=(dx,dz)=>{pl.position.x=Math.max(-175,Math.min(175,pl.position.x+dx));pl.position.z=Math.max(-175,Math.min(175,pl.position.z+dz))};
+const panBuild=(dx,dz)=>{pl.position.x=clamp(pl.position.x+dx,WORLD.buildMinX+30,WORLD.buildMaxX-30);pl.position.z=clamp(pl.position.z+dz,WORLD.buildMinZ+30,WORLD.buildMaxZ-30)};
 $("panNorth").onclick=()=>panBuild(0,-35);$("panSouth").onclick=()=>panBuild(0,35);$("panWest").onclick=()=>panBuild(-35,0);$("panEast").onclick=()=>panBuild(35,0);
 $("creativeBtn").onclick=()=>{creativeMode=!creativeMode;storeBuild();updateBuildHud();toastBuild(creativeMode?"تم تفعيل الإنشاء الحر دون ميزانية":"تم تفعيل نظام الميزانية")};
-$("exportBuild").onclick=()=>{const blob=new Blob([JSON.stringify({version:1,createdAt:new Date().toISOString(),project:"جامعة الحدود الشمالية — نموذج تقريبي",built,creativeMode},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nbu-campus-project.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toastBuild("تم إنشاء نسخة احتياطية من مخططك")};
+$("exportBuild").onclick=()=>{const blob=new Blob([JSON.stringify({version:3,createdAt:new Date().toISOString(),project:"جامعة الحدود الشمالية — نموذج تقريبي",built,creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nbu-campus-project.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toastBuild("تم إنشاء نسخة احتياطية من مخططك")};
 $("importBuild").onclick=()=>$("buildFile").click();
-$("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const data=JSON.parse(await file.text());if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
+$("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const data=JSON.parse(await file.text());if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?clamp(data.budgetBonus,0,5000000):0;missionDone=data.missionDone&&typeof data.missionDone==="object"?data.missionDone:{};drivenMeters=Number.isFinite(data.drivenMeters)?clamp(data.drivenMeters,0,1000000):0;atAirport=!!data.atAirport;atCity=!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();
+restoreBuild();updateBuildHud();addEventListener("pagehide",()=>{if(carMode)storeBuild()});
 
 setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
-const hit=(x,z)=>COL.some(c=>x>c[0]-1&&x<c[2]+1&&z>c[1]-1&&z<c[3]+1);
-const mm=$("mini").getContext("2d"),k=260/520,mx=v=>(v+260)*k;
-function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);mm.strokeStyle="#7c8590";mm.lineWidth=3;mm.strokeRect(mx(-186),mx(-186),372*k,372*k);mm.beginPath();mm.moveTo(mx(-200),mx(-88));mm.lineTo(mx(200),mx(-88));mm.moveTo(mx(0),mx(-200));mm.lineTo(mx(0),mx(-88));mm.moveTo(mx(-100),mx(-186));mm.lineTo(mx(-100),mx(200));mm.stroke();
-mm.strokeStyle="#5a4a30";mm.lineWidth=3;mm.strokeRect(mx(-200),mx(-200),400*k,400*k);
-mm.fillStyle="#b04a3a";mm.beginPath();mm.ellipse(mx(ST.x),mx(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
-B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2),mx(b.z-b.d/2),b.w*k,b.d*k)});
-mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mx(g.z),6,0,7);mm.fill()});
-built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?6:3;mm.beginPath();mm.moveTo(mx(o.x),mx(o.z));mm.lineTo(mx(o.end.x),mx(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mx(o.z-4),8*k,8*k)}});
-mm.save();mm.translate(mx(pl.position.x),mx(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle="#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
+const hit=(x,z)=>COL.some(c=>x>c[0]-1&&x<c[2]+1&&z>c[1]-1&&z<c[3]+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
+const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx=v=>(v-WORLD.minX)*k,mz=v=>(v-WORLD.minZ)*k;
+function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
+mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
+mm.strokeStyle="#7c8590";mm.lineWidth=2;mm.strokeRect(mx(-200),mz(-200),400*k,400*k);
+mm.beginPath();mm.moveTo(mx(-200),mz(-88));mm.lineTo(mx(200),mz(-88));mm.moveTo(mx(0),mz(-200));mm.lineTo(mx(0),mz(-88));mm.moveTo(mx(-100),mz(-186));mm.lineTo(mx(-100),mz(200));mm.stroke();
+mm.strokeStyle="#5f6670";mm.lineWidth=5;mm.beginPath();mm.moveTo(mx(-560),mz(20));mm.lineTo(mx(430),mz(20));mm.lineTo(mx(430),mz(-300));mm.lineTo(mx(500),mz(-300));mm.stroke();
+mm.fillStyle="#c59b4c";mm.fillRect(mx(DIST.x-DIST.w/2),mz(DIST.z-DIST.d/2),DIST.w*k,DIST.d*k);
+mm.fillStyle="#8aa4b8";mm.fillRect(mx(AIR.x-AIR.w/2),mz(AIR.z-AIR.d/2),AIR.w*k,AIR.d*k);
+mm.fillStyle="#b04a3a";mm.beginPath();mm.ellipse(mx(ST.x),mz(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
+B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2),mz(b.z-b.d/2),b.w*k,b.d*k)});
+mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0,7);mm.fill()});
+built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
+mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle=carMode?"#ffb000":"#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
 let last=0;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
-if(l>.08&&!open&&!buildMode){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
-const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;if(inside){pl.position.x=Math.max(716,Math.min(784,nx));pl.position.z=Math.max(-21,Math.min(21,nz))}else{if(!hit(nx,pl.position.z))pl.position.x=nx;if(!hit(pl.position.x,nz))pl.position.z=nz;}
-const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
+if(carMode&&!open&&!inside&&!buildMode){
+ const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
+ carSpeed+=gas*31*dt-brake*44*dt;
+ if(!gas&&!brake)carSpeed=Math.max(0,carSpeed-12*dt);
+ carSpeed=clamp(carSpeed,0,39);
+ if(carSpeed>.25)fa+=steer*dt*(.35+carSpeed/35)*1.45;
+ const step=carSpeed*dt,nx=clamp(pl.position.x+Math.sin(fa)*step,WORLD.minX+5,WORLD.maxX-5),nz=clamp(pl.position.z+Math.cos(fa)*step,WORLD.minZ+5,WORLD.maxZ-5);
+ if(hit(nx,pl.position.z)||hit(pl.position.x,nz)){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001}
+ yaw=fa+Math.PI;
+ $("speedValue").textContent=Math.round(carSpeed*3.6);$("distanceValue").textContent=" · "+Math.round(drivenMeters).toLocaleString("ar-SA")+" م";
+ if(!atAirport&&drivenMeters-driveStartDistance>30&&Math.hypot(pl.position.x-AIR.x,pl.position.z-AIR.z)<110){atAirport=true;storeBuild()}
+ if(!atCity&&drivenMeters-driveStartDistance>30&&pl.position.x<-570&&Math.abs(pl.position.z-CITY.z)<130){atCity=true;storeBuild()}
+ if(Math.floor(drivenMeters/150)>Math.floor((drivenMeters-step)/150))storeBuild();
+ if(mv)hint.style.opacity=0;
+}else if(l>.08&&!open&&!buildMode){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
+ const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;
+ if(inside){pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}else{if(!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
+ const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
 ch.rotation.y=fa;
-const sw=mv?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
-const p=pl.position;sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
-if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(175,dist*15),p.z+1);cam.lookAt(p.x,0,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
+const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
+const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode;sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
+if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+1);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
 near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
-en.style.display=near&&!open&&!inside&&!buildMode?"block":"none";if(near)en.textContent="دخول";
-if(!inside)mini();R.render(S,cam)})(0);
+en.style.display=near&&!open&&!inside&&!buildMode&&!carMode?"block":"none";if(near)en.textContent="دخول";
+updateTraffic(dt);if(!inside)mini();if(!document.hidden)R.render(S,cam)})(0);
 }
 </script>
 </body>
