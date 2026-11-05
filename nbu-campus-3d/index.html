@@ -476,7 +476,8 @@ if(carMode&&!open&&!inside&&!buildMode){
  carSpeed=clamp(carSpeed,0,39);
  if(carSpeed>.25)fa+=steer*dt*(.35+carSpeed/35)*1.45;
  const step=carSpeed*dt,nx=clamp(pl.position.x+Math.sin(fa)*step,WORLD.minX+5,WORLD.maxX-5),nz=clamp(pl.position.z+Math.cos(fa)*step,WORLD.minZ+5,WORLD.maxZ-5);
- if(hit(nx,pl.position.z)||hit(pl.position.x,nz)){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001}
+ const nearbyVehicle=trafficEnabled&&agents.some(a=>a.mesh.visible!==false&&Math.hypot(a.mesh.position.x-nx,a.mesh.position.z-nz)<(a.bus?8:6));
+ if(hit(nx,pl.position.z)||hit(pl.position.x,nz)||nearbyVehicle){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001}
  yaw=fa+Math.PI;
  $("speedValue").textContent=Math.round(carSpeed*3.6);$("distanceValue").textContent=" · "+Math.round(drivenMeters).toLocaleString("ar-SA")+" م";
  if(!atAirport&&drivenMeters-driveStartDistance>30&&Math.hypot(pl.position.x-AIR.x,pl.position.z-AIR.z)<110){atAirport=true;storeBuild()}
