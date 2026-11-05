@@ -220,7 +220,21 @@ function moveAgent(a,dt){if(a.dwell>0){a.dwell-=dt;return}let start=a.route[a.se
 const dx=end[0]-start[0],dz=end[1]-start[1],len=Math.hypot(dx,dz);if(!len){a.seg+=a.direction;return}a.progress=clamp(a.progress,0,len);
 let remain=len-a.progress,target=a.speed;
 for(const j of trafficJunctions){if(Math.hypot(end[0]-j.x,end[1]-j.z)<1&&remain>3&&remain<24){const axis=Math.abs(dx)>Math.abs(dz)?"ew":"ns";if(!signalAllows(axis))target=Math.min(target,Math.max(0,(remain-7)*1.15))}}
-a.progress+=Math.min(remain,target*dt);const f=clamp(a.progress/len,0,1);a.mesh.position.set(start[0]+dx*f,0,start[1]+dz*f);a.mesh.rotation.y=Math.atan2(dx,dz);
+// Keep a forward safety gap between NPC cars and buses.
+const nextProgress=a.progress+Math.min(remain,target*dt);
+const nextFraction=clamp(nextProgress/len,0,1),nextX=start[0]+dx*nextFraction,nextZ=start[1]+dz*nextFraction;
+const headingX=dx/len,headingZ=dz/len;
+const blocked=agents.some(other=>{
+ if(other===a||other.mesh.visible===false)return false;
+ const gapX=other.mesh.position.x-a.mesh.position.x,gapZ=other.mesh.position.z-a.mesh.position.z;
+ const ahead=gapX*headingX+gapZ*headingZ;
+ const lateral=Math.abs(gapX*headingZ-gapZ*headingX);
+ const safeGap=(a.bus?8:5)+(other.bus?5:3);
+ return ahead>0&&ahead<safeGap+target*dt&&lateral<3.8&&
+ Math.hypot(other.mesh.position.x-nextX,other.mesh.position.z-nextZ)<safeGap;
+});
+if(blocked)return;
+a.progress=nextProgress;const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
 if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.dwell=a.bus?3:1}}}
 function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
 function updateTraffic(dt){trafficClock+=dt;const phase=trafficClock%16;
