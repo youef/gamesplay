@@ -1235,7 +1235,7 @@ cvs.addEventListener("pointermove",e=>{
   if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4){mapDrag.moved=true;if(roadDragOrigin&&roadDragPointer===e.pointerId)roadDragMoved=true}if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}
   if(!strategyPan&&!pinchMoved){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId)previewRoad(roadDragOrigin,selectGround(e));else previewFromPointer(e)}return
  }
- if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0&&!seated){dist=clamp(dist*pinchDistance/gap,3,65)}pinchDistance=gap;dr=null;return}
+ if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0){dist=clamp(dist*pinchDistance/gap,seated?1.5:3,seated?80:65)}pinchDistance=gap;dr=null;return}
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
 cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:buildTool==="bridge"?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
@@ -1316,8 +1316,30 @@ $("showLocations").onclick=()=>toggleUiList("bar","showLocations");
 $("closeRooms").onclick=()=>{$("roomBtns").classList.add("collapsed");$("showRooms").style.display="block";$("closeRooms").style.display="none"};
 $("showRooms").onclick=()=>{$("roomBtns").classList.remove("collapsed");$("showRooms").style.display="none";$("closeRooms").style.display="block"};
 $("closeBuildDock").onclick=()=>{document.body.classList.remove("showBuildDock");$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء"};
-function leaveStand(){if(!seated)return;seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
-$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
+let stadiumViewMode="orbit";
+const stadiumViewPanel=document.createElement("div");
+stadiumViewPanel.id="stadiumViewPanel";
+stadiumViewPanel.style.cssText="position:fixed;z-index:20;bottom:calc(110px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:none;max-width:min(95vw,550px);padding:9px;background:#102c40e8;border:1px solid #ffffff55;border-radius:15px;color:white;box-shadow:0 8px 25px #0006;direction:rtl";
+const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.cssText="display:flex;flex-wrap:wrap;justify-content:center;gap:6px";
+const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"]];
+function selectStadiumView(mode){
+ stadiumViewMode=mode;
+ if(mode==="orbit"){yaw=0;pit=.2;dist=8}
+ if(mode==="first"){yaw=0;pit=.08;dist=2}
+ if(mode==="ball"){dist=2}
+ if(mode==="aerial"){dist=60;pit=.7}
+ stadiumViewButtons.querySelectorAll("button").forEach(b=>{b.style.background=b.dataset.mode===mode?"#168e8a":"#244c67"});
+}
+for(const [mode,label] of stadiumViewOptions){
+ const b=document.createElement("button");b.type="button";b.dataset.mode=mode;b.textContent=label;
+ b.style.cssText="background:#244c67;color:#fff;border:1px solid #7796a9;border-radius:9px;padding:8px;font:700 12px Tajawal,Tahoma;touch-action:manipulation";
+ b.onclick=()=>selectStadiumView(mode);stadiumViewButtons.append(b);
+}
+const stadiumViewHint=document.createElement("div");stadiumViewHint.textContent="اسحب الشاشة لتغيير زاوية المشاهدة، وبإصبعين للتقريب والإبعاد. يمكنك التبديل بين 5 كاميرات.";stadiumViewHint.style.cssText="font:500 11px Tajawal,Tahoma;text-align:center;padding-top:6px";
+stadiumViewPanel.append(stadiumViewButtons,stadiumViewHint);document.body.append(stadiumViewPanel);
+selectStadiumView("orbit");
+function leaveStand(){if(!seated)return;stadiumViewPanel.style.display="none";seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
+$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;selectStadiumView("orbit");stadiumViewPanel.style.display="block";$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
 $("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
@@ -1681,7 +1703,7 @@ function organizeSettings(){
  const cameraSection=section("📷 الكاميرا والتكبير والتحريك");
 const cameraControls=document.createElement("div");cameraControls.style.cssText="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:8px";
 for(const [label,action] of [["＋ تقريب",()=>dist=clamp(dist-3,3,65)],["－ إبعاد",()=>dist=clamp(dist+3,3,65)],["⟲ إعادة",()=>{dist=11;pit=.42;yaw=Math.PI}],["← يسار",()=>yaw+=.22],["↑ أعلى",()=>pit=clamp(pit+.13,.1,1.2)],["يمين →",()=>yaw-=.22],["⤢ واسع",()=>{dist=45;pit=.72}],["↓ أسفل",()=>pit=clamp(pit-.13,.1,1.2)],["قريب",()=>{dist=5;pit=.35}]]){
- const button=document.createElement("button");button.type="button";button.textContent=label;button.style.cssText="min-height:43px;border-radius:10px;border:1px solid #8ba2b5;background:#203e59;color:white;font:700 13px Tajawal,Tahoma";button.onclick=()=>{if(!buildMode&&!seated)action()};cameraControls.append(button);
+ const button=document.createElement("button");button.type="button";button.textContent=label;button.style.cssText="min-height:43px;border-radius:10px;border:1px solid #8ba2b5;background:#203e59;color:white;font:700 13px Tajawal,Tahoma";button.onclick=()=>{if(!buildMode)action()};cameraControls.append(button);
 }
 const cameraHelp=document.createElement("p");cameraHelp.textContent="اسحب بإصبع لتدوير الكاميرا يمينًا ويسارًا وأعلى وأسفل، وبإصبعين للتقريب والإبعاد. عجلة الماوس تدعم الزوم أيضًا.";cameraHelp.style.cssText="padding:0 8px;font-size:12px;line-height:1.7";cameraSection.append(cameraHelp,cameraControls);
 const players=section("👥 اللاعبون والشاشة المقسمة");
@@ -1748,7 +1770,19 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  if(hud)hud.textContent="🤝 المسافة بين فواز وزياد: "+Math.round(separation)+" م · لقاءات ناجحة: "+teamMeetCount+(teamMeetingArmed?" · اقتربا إلى 5 م":" · ابتعدا 18 م لإعادة المهمة");
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
-if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){cam.up.set(0,1,0);cam.position.set(ST.x,66,ST.z-116);cam.lookAt(ST.x,0,ST.z)}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
+if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){
+ cam.up.set(0,1,0);
+ const target=stadiumViewMode==="ball"?new THREE.Vector3(ST.x+stadiumMatch.ballX,1.6,ST.z+stadiumMatch.ballZ):new THREE.Vector3(ST.x,1.4,ST.z);
+ if(stadiumViewMode==="broadcast"){cam.position.set(ST.x+74,32,ST.z-5);cam.lookAt(target)}
+ else if(stadiumViewMode==="aerial"){cam.position.set(ST.x+Math.sin(yaw)*dist,Math.max(35,dist*1.2),ST.z+Math.cos(yaw)*dist);cam.lookAt(target)}
+ else{
+  const eye=new THREE.Vector3(pl.position.x,pl.position.y+1.5,pl.position.z);
+  const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pit),-Math.sin(pit),-Math.cos(yaw)*Math.cos(pit));
+  if(stadiumViewMode==="ball"){cam.position.copy(eye);cam.lookAt(target)}
+  else if(stadiumViewMode==="first"){cam.position.copy(eye);cam.lookAt(eye.clone().add(direction))}
+  else{cam.position.copy(eye).addScaledVector(direction,-dist);cam.lookAt(eye.clone().addScaledVector(direction,15))}
+ }
+}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
 near=null;let best=14;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n)||!b.door)return;const d=Math.hypot(p.x-b.door.x,p.z-b.door.z);if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
