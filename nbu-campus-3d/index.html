@@ -753,52 +753,62 @@ stadiumScoreboard.style.cssText="position:fixed;z-index:9;top:calc(65px + env(sa
 document.body.append(stadiumScoreboard);
 function updateStadiumScoreboard(message=""){stadiumScoreboard.textContent="⚽ الأزرق "+stadiumScore.blue+" : "+stadiumScore.white+" الأبيض"+(message?" · "+message:"")}
 updateStadiumScoreboard();
-const stadiumFenceMat=mat(0x8ca6a9,{transparent:true,opacity:.33,depthWrite:false,metalness:.1,roughness:.4,side:THREE.DoubleSide});
-const stadiumPostMat=mat(0x4a6468,{metalness:.35,roughness:.55});
-function stadiumFence(x1,z1,x2,z2){
- const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dx,dz),cx=(x1+x2)/2,cz=(z1+z2)/2;
- const panel=new THREE.Mesh(new THREE.PlaneGeometry(len,4.6),stadiumFenceMat);
- panel.position.set(cx,2.45,cz);panel.rotation.y=angle;panel.renderOrder=3;S.add(panel);
- for(let i=0;i<=Math.ceil(len/8);i++){
-  const t=i/Math.ceil(len/8);box(.17,5,.17,stadiumPostMat,x1+dx*t,2.5,z1+dz*t,0);
+// Unified curved stadium enclosure: replaces the old low fence and rectangular facade.
+// Continuous rear walls support the upper roof and wrap behind the spectator seating.
+const wallConcrete=mat(0xb6c3ca,{roughness:.84,side:THREE.DoubleSide});
+const wallDark=mat(0x173b54,{metalness:.24,roughness:.55,side:THREE.DoubleSide});
+const wallGold=mat(0xd8c49a,{metalness:.55,roughness:.42});
+const wallLED=mat(0x8ce1d8,{emissive:0x247a80,emissiveIntensity:.8});
+const enclosureSegments=96,outerWallRX=91,outerWallRZ=88;
+function enclosurePoint(a,y){return new THREE.Vector3(ST.x+outerWallRX*Math.cos(a),y,ST.z+outerWallRZ*Math.sin(a))}
+function enclosureBeam(p,q,r,material){
+ const direction=new THREE.Vector3().subVectors(q,p),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,direction.length(),6),material);
+ mesh.position.copy(p).add(q).multiplyScalar(.5);
+ mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());S.add(mesh);
+}
+for(let i=0;i<enclosureSegments;i++){
+ const a=i*2*Math.PI/enclosureSegments,b=(i+1)*2*Math.PI/enclosureSegments,mid=(a+b)/2;
+ // Leave two 14m-wide east/west entrance portals, but bridge them overhead.
+ const entrance=(Math.abs(Math.sin(mid))<.085);
+ const p0=enclosurePoint(a,0),p1=enclosurePoint(b,0);
+ const top0=enclosurePoint(a,25.5),top1=enclosurePoint(b,25.5);
+ const buildPanel=(low,high,material)=>{
+  const vertices=new Float32Array([p0.x,low,p0.z,p1.x,low,p1.z,top0.x,high,top0.z,top1.x,high,top1.z]);
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute("position",new THREE.BufferAttribute(vertices,3));
+  geometry.setIndex([0,1,2,1,3,2]);geometry.computeVertexNormals();
+  const mesh=new THREE.Mesh(geometry,material);S.add(mesh);
+ };
+ if(!entrance){
+  buildPanel(0,7,wallConcrete);
+  buildPanel(7.1,17.5,wallDark);
+  buildPanel(17.7,25.5,wallConcrete);
+ }else{
+  buildPanel(13,25.5,wallDark); // overhead portal lintel
  }
- for(const y of [1,4.7]){const rail=box(.09,.11,len,stadiumPostMat,cx,y,cz,0);rail.rotation.y=angle}
- COL.push([Math.min(x1,x2)-.2,Math.min(z1,z2)-.2,Math.max(x1,x2)+.2,Math.max(z1,z2)+.2]);
+ enclosureBeam(enclosurePoint(a,7),enclosurePoint(b,7),.17,wallGold);
+ enclosureBeam(enclosurePoint(a,17.6),enclosurePoint(b,17.6),.16,wallGold);
+ enclosureBeam(top0,top1,.24,wallLED);
+ if(i%4===0){
+  const foot=enclosurePoint(a,0),top=enclosurePoint(a,25.5);
+  enclosureBeam(entrance?enclosurePoint(a,13):foot,top,.35,wallGold);
+ }
+ if(!entrance){
+  // Geometric facade lattice, placed on the outside of the solid stadium wall.
+  const radial=new THREE.Vector3(Math.cos(mid),0,Math.sin(mid));
+  const center=enclosurePoint(mid,12.5).addScaledVector(radial,.28);
+  const panel=new THREE.Mesh(new THREE.PlaneGeometry(4.8,6.8),i%2?wallGold:wallLED);
+  panel.position.copy(center);panel.rotation.y=-mid+Math.PI/2;panel.rotation.z=Math.PI/4;
+  panel.material=panel.material.clone();panel.material.side=THREE.DoubleSide;
+  S.add(panel);
+ }
 }
-// Two clear entry openings at the east and west ends; no invisible barriers across gates.
-const fenceLeft=ST.x-88,fenceRight=ST.x+88,fenceNorth=ST.z-62,fenceSouth=ST.z+62;
-stadiumFence(fenceLeft,fenceNorth,fenceRight,fenceNorth);
-stadiumFence(fenceLeft,fenceSouth,fenceRight,fenceSouth);
-stadiumFence(fenceLeft,fenceNorth,fenceLeft,ST.z-8);
-stadiumFence(fenceLeft,ST.z+8,fenceLeft,fenceSouth);
-stadiumFence(fenceRight,fenceNorth,fenceRight,ST.z-8);
-stadiumFence(fenceRight,ST.z+8,fenceRight,fenceSouth);
-for(const side of [-1,1]){
- const x=ST.x+side*88;
- for(const z of [ST.z-8,ST.z+8])box(.42,5,.42,stadiumPostMat,x,2.5,z,0);
-}
-// Contemporary stadium envelope inspired by Jeddah's jewel-like perforated facade.
-// Decorative panels do not create invisible barriers; the east/west gates remain open.
-const facadeGold=mat(0xd6c7a1,{metalness:.35,roughness:.6,side:THREE.DoubleSide});
-const facadeBlue=mat(0x245875,{metalness:.35,roughness:.5,side:THREE.DoubleSide});
-const facadeLight=mat(0xe7f2e8,{emissive:0x164b38,side:THREE.DoubleSide});
-function stadiumFacadePanel(x,z,angle,w=7){
- const frame=new THREE.Group();frame.position.set(x,0,z);frame.rotation.y=angle;S.add(frame);
- const bar=(bw,bh,bd,bx,by,bz,material)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),material);mesh.position.set(bx,by,bz);frame.add(mesh)};
- bar(w,.35,.3,0,5.5,0,facadeGold);bar(w,.35,.3,0,12.5,0,facadeGold);
- for(const side of [-1,1])bar(.25,7,.3,side*w/2,9,0,facadeGold);
- for(let i=-2;i<=2;i++){const diamond=new THREE.Mesh(new THREE.PlaneGeometry(1.6,3.1),i%2?facadeBlue:facadeLight);diamond.rotation.z=Math.PI/4;diamond.position.set(i*w/6,9,.22);frame.add(diamond)}
-}
-for(let x=-84;x<=84;x+=8){stadiumFacadePanel(ST.x+x,ST.z-61,0);stadiumFacadePanel(ST.x+x,ST.z+61,0)}
-for(let z=-52;z<=52;z+=8){
- if(Math.abs(z)<12)continue; // Wide east and west entrances.
- stadiumFacadePanel(ST.x-87,ST.z+z,Math.PI/2);
- stadiumFacadePanel(ST.x+87,ST.z+z,Math.PI/2);
-}
-// Architectural corner towers and illuminated upper ring.
-for(const x of [-87,87])for(const z of [-61,61]){
- box(1.1,14,1.1,facadeGold,ST.x+x,7,ST.z+z,0);
- box(2.3,.6,2.3,facadeLight,ST.x+x,14.3,ST.z+z,0);
+// Collisions for rear enclosure segments; entrances stay passable.
+for(let i=0;i<enclosureSegments;i++){
+ const a=i*2*Math.PI/enclosureSegments,b=(i+1)*2*Math.PI/enclosureSegments,mid=(a+b)/2;
+ if(Math.abs(Math.sin(mid))<.085)continue;
+ const p=enclosurePoint(a,0),q=enclosurePoint(b,0);
+ COL.push([Math.min(p.x,q.x)-.3,Math.min(p.z,q.z)-.3,Math.max(p.x,q.x)+.3,Math.max(p.z,q.z)+.3]);
 }
 const stadiumSkin=mat(0xc68b62),stadiumShorts=mat(0x243244),stadiumJerseys=[mat(0x1467ac),mat(0xf4e8da)];
 const stadiumBoots=mat(0x1b242e),stadiumHair=mat(0x252323);
