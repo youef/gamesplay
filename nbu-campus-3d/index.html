@@ -675,7 +675,7 @@ const stadiumScoreboard=document.createElement("div");
 stadiumScoreboard.id="stadiumScoreboard";stadiumScoreboard.dir="rtl";
 stadiumScoreboard.style.cssText="position:fixed;z-index:9;top:calc(65px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:#102c40e8;color:white;border:1px solid #ffffff55;border-radius:14px;padding:9px 16px;font:800 14px Tajawal,Tahoma,sans-serif;display:none;pointer-events:none;white-space:nowrap";
 document.body.append(stadiumScoreboard);
-function updateStadiumScoreboard(message=""){stadiumScoreboard.textContent="⚽ الأزرق "+stadiumScore.blue+" : "+stadiumScore.white+" الأبيض"+(message?" · "+message:"")}
+function updateStadiumScoreboard(message=""){stadiumScoreboard.textContent="⚽ الاتحاد "+stadiumScore.blue+" : "+stadiumScore.white+" الهلال"+(message?" · "+message:"")}
 updateStadiumScoreboard();
 // Unified curved stadium enclosure: replaces the old low fence and rectangular facade.
 // Continuous rear walls support the upper roof and wrap behind the spectator seating.
@@ -795,6 +795,35 @@ const stadiumCrowdTorso=new THREE.InstancedMesh(crowdTorsoGeo,crowdTorsoMat,stad
 const stadiumCrowdHead=new THREE.InstancedMesh(crowdHeadGeo,crowdHeadMat,stadiumCapacity);
 stadiumCrowdTorso.frustumCulled=false;stadiumCrowdHead.frustumCulled=false;
 stadiumCrowdTorso.castShadow=false;stadiumCrowdHead.castShadow=false;
+// Ittihad vs Al Hilal derby: a coordinated 60-row yellow-and-black tiger tifo.
+const tifoCanvas=document.createElement("canvas");tifoCanvas.width=512;tifoCanvas.height=256;
+const tg=tifoCanvas.getContext("2d");
+tg.fillStyle="#f4c619";tg.fillRect(0,0,512,256);
+tg.fillStyle="#11100d";
+for(let k=0;k<8;k++){tg.fillRect(k*70-10,0,27,256)}
+// Giant angular tiger face, intimidating eyes and fangs, rendered as fan cards.
+tg.beginPath();tg.moveTo(132,35);tg.lineTo(195,63);tg.lineTo(256,43);tg.lineTo(317,63);tg.lineTo(380,35);tg.lineTo(358,166);tg.lineTo(301,223);tg.lineTo(211,223);tg.lineTo(154,166);tg.closePath();tg.fillStyle="#f5c822";tg.fill();tg.strokeStyle="#111";tg.lineWidth=13;tg.stroke();
+tg.fillStyle="#121212";
+for(const side of [-1,1]){
+ tg.beginPath();tg.moveTo(256+side*24,104);tg.lineTo(256+side*91,87);tg.lineTo(256+side*67,127);tg.closePath();tg.fill();
+ tg.beginPath();tg.moveTo(256+side*14,156);tg.lineTo(256+side*58,181);tg.lineTo(256+side*34,218);tg.closePath();tg.fill();
+}
+tg.beginPath();tg.moveTo(235,143);tg.lineTo(277,143);tg.lineTo(256,166);tg.closePath();tg.fill();
+tg.fillStyle="#fff7d6";tg.fillRect(187,110,28,7);tg.fillRect(297,110,28,7);
+tg.fillStyle="#111";tg.font="900 30px Tahoma";tg.textAlign="center";tg.fillText("ITTIHAD",256,250);
+const tifoPixels=tg.getImageData(0,0,512,256).data;
+function tifoColor(row,seat){
+ // North end: an unbroken giant mosaic; other sections wear club colors.
+ const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
+ if(angle>Math.PI*1.13&&angle<Math.PI*1.87){
+  const u=Math.max(0,Math.min(511,Math.floor((angle-Math.PI*1.13)/(Math.PI*.74)*511)));
+  const v=Math.max(0,Math.min(255,Math.floor((1-row/(stadiumRows-1))*255)));
+  const k=(v*512+u)*4;
+  return (tifoPixels[k]<<16)|(tifoPixels[k+1]<<8)|tifoPixels[k+2];
+ }
+ // Ittihad yellow/black home end; Al Hilal blue away section.
+ return angle<Math.PI*.65?((row+Math.floor(seat/9))%4===0?0xe8edf6:0x1268bb):((row+Math.floor(seat/11))%3===0?0x111111:0xf2c51b);
+}
 const crowdDummy=new THREE.Object3D(),crowdPalette=[0xe7e9e5,0x1674b2,0x253e63,0xd0ad75,0x2e846d,0xd4dbe0];
 for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
  const idx=row*stadiumSeatsPerRow+seat;
@@ -806,7 +835,7 @@ for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat+
  crowdDummy.scale.set(aisle?.001:1,aisle?.001:1,aisle?.001:1);
  crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
  crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
- stadiumCrowdTorso.setColorAt(idx,new THREE.Color(crowdPalette[(row*7+seat*3)%crowdPalette.length]));
+ stadiumCrowdTorso.setColorAt(idx,new THREE.Color(tifoColor(row,seat)));
 }
 stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
 if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=true;
@@ -848,9 +877,9 @@ function drawStadiumScreen(m){
  g.fillStyle="#081b2c";g.fillRect(0,0,w,h);
  g.fillStyle="#1c5675";g.fillRect(0,0,w,90);
  g.fillStyle="#ffffff";g.textAlign="center";g.font="bold 46px Tahoma";
- g.fillText("جامعة الحدود الشمالية | المباراة الجامعية",w/2,60);
+ g.fillText("ديربي الجماهير | الاتحاد × الهلال",w/2,60);
  g.font="bold 115px Tahoma";g.fillText(stadiumScore.blue+"  :  "+stadiumScore.white,w/2,235);
- g.font="bold 42px Tahoma";g.fillText("الفريق الأزرق                              الفريق الأبيض",w/2,302);
+ g.font="bold 42px Tahoma";g.fillText("الاتحاد 🟡                              الهلال 🔵",w/2,302);
  const remaining=Math.max(0,5400-Math.floor(m.elapsed));
  const remMin=Math.floor(remaining/60),remSec=remaining%60;
  g.fillStyle="#a9e5c6";g.font="bold 48px Tahoma";
@@ -880,7 +909,7 @@ function updateStadium(t,dt){
  updateStadiumCheering(t);
  if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
- stadiumScoreboard.textContent="⚽ الأزرق "+stadiumScore.blue+" : "+stadiumScore.white+" الأبيض | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
+ stadiumScoreboard.textContent="⚽ الاتحاد "+stadiumScore.blue+" : "+stadiumScore.white+" الهلال | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
  if(m.flight){
   const f=m.flight;f.progress=Math.min(1,f.progress+dt/f.duration);
   const p=f.progress;m.ballX=f.x+(f.tx-f.x)*p;m.ballZ=f.z+(f.tz-f.z)*p;
