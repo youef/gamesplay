@@ -230,16 +230,49 @@ for(const side of [-1,1])for(const dir of [-1,1]){const wheel=new THREE.Mesh(new
 if(bus){meshBox(w-.8,.1,.5,0xf6e6ba,0,3.3,0);meshBox(w-.5,.45,.15,0xf3d960,0,2.2,d/2+.08)}
 return root}
 for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4]);agents.push({mesh:veh,route,originalRoute:route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
-// V3.7: Two civilian vehicles can use the player's longest surface roads.
-// Routes are recalculated after construction, deletion, import and undo; bridges remain visual-only.
+// V3.8: Build connected multi-segment surface-road routes from snapped endpoints.
+// Only exact snapped endpoints connect; disconnected or intersecting visual segments are not joined.
+function connectedRoadRoutes(){
+ const graph=new Map(), key=(x,z)=>x+","+z;
+ const link=(a,b,length)=>{if(!graph.has(a))graph.set(a,[]);graph.get(a).push({to:b,length})};
+ for(const o of built){
+  if((o.type!=="road"&&o.type!=="avenue")||!o.end)continue;
+  const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);
+  if(!Number.isFinite(len)||len<10||len>230)continue;
+  const a=key(o.x,o.z),b=key(o.end.x,o.end.z);
+  if(a===b)continue;link(a,b,len);link(b,a,len);
+ }
+ const results=[],seenRoutes=new Set();
+ // Bounded DFS keeps route rebuilding cheap on iPad, even with many placed roads.
+ for(const start of graph.keys()){
+  const stack=[{node:start,path:[start],distance:0}];
+  let explored=0;
+  while(stack.length&&explored++<600){
+   const cur=stack.pop();
+   if(cur.path.length>=2&&cur.distance>=35){
+    const signature=[cur.path.join("|"),[...cur.path].reverse().join("|")].sort()[0];
+    if(!seenRoutes.has(signature)){
+     seenRoutes.add(signature);results.push({keys:cur.path,length:cur.distance});
+    }
+   }
+   if(cur.path.length>=12)continue;
+   for(const edge of graph.get(cur.node)||[]){
+    if(cur.path.includes(edge.to))continue;
+    stack.push({node:edge.to,path:[...cur.path,edge.to],distance:cur.distance+edge.length});
+   }
+  }
+ }
+ results.sort((a,b)=>b.length-a.length);
+ return results.slice(0,2).map(route=>route.keys.map(k=>k.split(",").map(Number)));
+}
 function refreshCustomTrafficRoutes(){
- const roads=built.filter(o=>(o.type==="road"||o.type==="avenue")&&o.end)
-  .map(o=>({points:[[o.x,o.z],[o.end.x,o.end.z]],length:Math.hypot(o.end.x-o.x,o.end.z-o.z)}))
-  .filter(o=>o.length>=35).sort((a,b)=>b.length-a.length).slice(0,2);
+ const routes=connectedRoadRoutes();
  for(let slot=0;slot<2;slot++){
   const a=agents[slot+2];if(!a)continue;
-  const next=roads[slot]?.points||a.originalRoute;
-  if(a.route===next||(!roads[slot]&&a.route===a.originalRoute))continue;
+  const next=routes[slot]||a.originalRoute;
+  const signature=next.map(p=>p.join(",")).join("|");
+  if(a.customRouteSignature===signature)continue;
+  a.customRouteSignature=signature;
   a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;
   a.mesh.position.set(next[0][0],0,next[0][1]);
   a.mesh.rotation.y=Math.atan2(next[1][0]-next[0][0],next[1][1]-next[0][1]);
