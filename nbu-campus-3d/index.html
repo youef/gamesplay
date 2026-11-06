@@ -796,29 +796,30 @@ const stadiumCrowdHead=new THREE.InstancedMesh(crowdHeadGeo,crowdHeadMat,stadium
 stadiumCrowdTorso.frustumCulled=false;stadiumCrowdHead.frustumCulled=false;
 stadiumCrowdTorso.castShadow=false;stadiumCrowdHead.castShadow=false;
 // Ittihad vs Al Hilal derby: a coordinated 60-row yellow-and-black tiger tifo.
-const tifoCanvas=document.createElement("canvas");tifoCanvas.width=512;tifoCanvas.height=256;
+const tifoCanvas=document.createElement("canvas");tifoCanvas.width=1024;tifoCanvas.height=512;
 const tg=tifoCanvas.getContext("2d");
-tg.fillStyle="#f4c619";tg.fillRect(0,0,512,256);
-tg.fillStyle="#11100d";
-for(let k=0;k<8;k++){tg.fillRect(k*70-10,0,27,256)}
-// Giant angular tiger face, intimidating eyes and fangs, rendered as fan cards.
-tg.beginPath();tg.moveTo(132,35);tg.lineTo(195,63);tg.lineTo(256,43);tg.lineTo(317,63);tg.lineTo(380,35);tg.lineTo(358,166);tg.lineTo(301,223);tg.lineTo(211,223);tg.lineTo(154,166);tg.closePath();tg.fillStyle="#f5c822";tg.fill();tg.strokeStyle="#111";tg.lineWidth=13;tg.stroke();
-tg.fillStyle="#121212";
-for(const side of [-1,1]){
- tg.beginPath();tg.moveTo(256+side*24,104);tg.lineTo(256+side*91,87);tg.lineTo(256+side*67,127);tg.closePath();tg.fill();
- tg.beginPath();tg.moveTo(256+side*14,156);tg.lineTo(256+side*58,181);tg.lineTo(256+side*34,218);tg.closePath();tg.fill();
-}
-tg.beginPath();tg.moveTo(235,143);tg.lineTo(277,143);tg.lineTo(256,166);tg.closePath();tg.fill();
-tg.fillStyle="#fff7d6";tg.fillRect(187,110,28,7);tg.fillRect(297,110,28,7);
-tg.fillStyle="#111";tg.font="900 30px Tahoma";tg.textAlign="center";tg.fillText("ITTIHAD",256,250);
+// Stadium card mosaic: giant high-contrast Arabic phrase readable from the pitch.
+tg.fillStyle="#f6c900";tg.fillRect(0,0,1024,512);
+tg.fillStyle="#101010";
+for(let x=0;x<1024;x+=128){tg.fillRect(x,0,24,512)}
+tg.fillStyle="#090909";tg.fillRect(64,92,896,320);
+tg.strokeStyle="#f6c900";tg.lineWidth=13;tg.strokeRect(76,104,872,296);
+tg.direction="rtl";tg.textAlign="center";tg.textBaseline="middle";
+tg.fillStyle="#f6c900";tg.font="900 152px Tahoma,Arial,sans-serif";
+tg.fillText("اتحاد حاد",512,254,810);
+tg.fillStyle="#ffffff";tg.font="bold 39px Tahoma,Arial,sans-serif";
+tg.fillText("مدرج الذهب والأسود",512,363,790);
+tg.fillStyle="#111";tg.fillRect(0,445,1024,67);
+tg.fillStyle="#f6c900";tg.font="900 40px Tahoma,Arial,sans-serif";
+tg.fillText("الاتحاد × الهلال",512,477,820);
 const tifoPixels=tg.getImageData(0,0,512,256).data;
 function tifoColor(row,seat){
  // North end: an unbroken giant mosaic; other sections wear club colors.
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
  if(angle>Math.PI*1.13&&angle<Math.PI*1.87){
-  const u=Math.max(0,Math.min(511,Math.floor((angle-Math.PI*1.13)/(Math.PI*.74)*511)));
-  const v=Math.max(0,Math.min(255,Math.floor((1-row/(stadiumRows-1))*255)));
-  const k=(v*512+u)*4;
+  const u=Math.max(0,Math.min(1023,Math.floor((angle-Math.PI*1.13)/(Math.PI*.74)*1023)));
+  const v=Math.max(0,Math.min(511,Math.floor((1-row/(stadiumRows-1))*511)));
+  const k=(v*1024+u)*4;
   return (tifoPixels[k]<<16)|(tifoPixels[k+1]<<8)|tifoPixels[k+2];
  }
  // Ittihad yellow/black home end; Al Hilal blue away section.
