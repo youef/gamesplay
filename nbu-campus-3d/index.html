@@ -274,7 +274,7 @@ function refreshCustomTrafficRoutes(){
   const signature=next.map(p=>p.join(",")).join("|");
   if(a.customRouteSignature===signature)continue;
   a.customRouteSignature=signature;
-  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;a.lastBusStop=null;a.customRouteActive=!!routes[slot];
+  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;a.lastBusStop=null;a.customRouteActive=!!(slot===2?(routes[2]||routes[0]):routes[slot]);
   a.mesh.position.set(next[0][0],0,next[0][1]);
   a.mesh.rotation.y=Math.atan2(next[1][0]-next[0][0],next[1][1]-next[0][1]);
  }
