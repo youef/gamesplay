@@ -603,30 +603,7 @@ for(const sign of [-1,1]){
  for(let x=-3.66;x<=3.67;x+=.61)for(let y=.7;y<=3.15;y+=.61)box(.025,.025,2.2,netWhite,ST.x+x,y,ST.z+(front+back)/2,0);
  for(let j=0;j<=5;j++)for(let y=.7;y<=3.15;y+=.61)box(7.32,.025,.025,netWhite,ST.x,y,ST.z+front+sign*j*.44,0);
 }
-// مدرج شمالي متدرج، مقاعد وممرات ودرابزين — نموذج تخيلي
-const standFront=ST.z-ST.rz-17;
-for(let row=0;row<7;row++){
- const z=standFront-row*2.8,y=.7+row*.72;
- box(112,.7,2.75,mat(row%2?0xc9d1d7:0xe1e6e9),ST.x,y, z);
- for(let x=-50;x<=50;x+=3.3){
-  if(Math.abs(x)<4||Math.abs(x-27)<2||Math.abs(x+27)<2)continue;
-  box(2.75,.45,.9,mat((Math.round(x)+row)%3===0?0x2a557e:0x4076a0),ST.x+x,y+.65,z-.45,0);
-  box(2.75,.65,.28,mat(0x1d456a),ST.x+x,y+1.08,z-1.02,0);
- }
-}
-box(114,1,.4,mat(0xb8c3cd),ST.x,6.3,standFront-19.5,0);
-COL.push([ST.x-56,standFront-20,ST.x+56,standFront+2]);
-// Southern family stand, separated spectator aisles and covered main stand.
-const southStand=ST.z+ST.rz+15;
-for(let row=0;row<6;row++){
- const z=southStand+row*2.8,y=.7+row*.72;
- box(112,.7,2.75,mat(row%2?0xc4cfd7:0xe1e6ea),ST.x,y,z,0);
- for(let x=-50;x<=50;x+=3.3){
-  if(Math.abs(x)<4||Math.abs(x-27)<2||Math.abs(x+27)<2)continue;
-  box(2.75,.45,.9,mat((Math.round(x)+row)%3===0?0x356c91:0x527f9c),ST.x+x,y+.65,z+.45,0);
- }
-}
-COL.push([ST.x-56,southStand-1,ST.x+56,southStand+18]);
+// Legacy north/south straight stands removed; only the 360-degree bowl is used.
 // Upper spectator roof restored, with open playing field.
 const standRoofMat=mat(0x203e56,{metalness:.28,roughness:.6,side:THREE.DoubleSide});
 function superEllipse(a,rx,rz){const c=Math.cos(a),v=Math.sin(a);return {x:ST.x+rx*Math.sign(c)*Math.sqrt(Math.abs(c)),z:ST.z+rz*Math.sign(v)*Math.sqrt(Math.abs(v))}}
@@ -674,7 +651,8 @@ function updateStadiumFloodlights(night){
 }
 const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
 stadiumBoard.position.set(ST.x,13.5,standFront-20);
-const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
+// Seat locations are computed from the new curved bowl, not the removed stands.
+const standSeats=[];
 [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
 // Stadium experience: low-poly animated footballers, crowd, perimeter fence and safe entrances.
 const stadiumActors=[],stadiumCrowd=[];
@@ -1346,7 +1324,7 @@ stadiumViewToggle.onclick=()=>{const open=stadiumViewButtons.style.display==="no
 stadiumViewPanel.append(stadiumViewToggle,stadiumViewButtons,stadiumViewHint);document.body.append(stadiumViewPanel);
 selectStadiumView("orbit");
 function leaveStand(){if(!seated)return;stadiumViewPanel.style.display="none";seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
-$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;selectStadiumView("orbit");stadiumViewPanel.style.display="block";stadiumViewButtons.style.display="none";stadiumViewToggle.textContent="📷 زوايا المشاهدة ▾";$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
+$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=bowlLocation(25,Math.PI*1.5);pl.position.set(seat.x,seat.y+.35,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;selectStadiumView("orbit");stadiumViewPanel.style.display="block";stadiumViewButtons.style.display="none";stadiumViewToggle.textContent="📷 زوايا المشاهدة ▾";$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
 $("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
