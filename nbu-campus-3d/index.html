@@ -205,13 +205,68 @@ function wall(x1,z1,x2,z2){const w=Math.abs(x2-x1)+1.4,d=Math.abs(z2-z1)+1.4,cx=
 const wl=(a,b,f,hz)=>hz?wall(a,f,b,f):wall(f,a,f,b);
 wl(-200,-14,-200,1);wl(14,200,-200,1);wl(-200,-114,200,1);wl(-86,200,200,1);wl(-200,-102,-200,0);wl(-74,200,-200,0);wl(-200,-102,200,0);wl(-74,200,200,0);
 function lab(t,col,sz){const c=document.createElement("canvas"),g=c.getContext("2d"),f="800 44px Tajawal,Tahoma,sans-serif";g.font=f;const w=Math.ceil(g.measureText(t).width+60);c.width=w;c.height=84;g.font=f;g.fillStyle=col;g.beginPath();if(typeof g.roundRect==="function")g.roundRect(0,0,w,84,42);else{const r=Math.min(42,w/2);g.moveTo(r,0);g.lineTo(w-r,0);g.arcTo(w,0,w,84,r);g.lineTo(w,84-r);g.arcTo(w,84,0,84,r);g.lineTo(r,84);g.arcTo(0,84,0,0,r);g.lineTo(0,r);g.arcTo(0,0,w,0,r);g.closePath()}g.fill();g.fillStyle="#fff";g.textAlign="center";g.textBaseline="middle";g.fillText(t,w/2,45);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(sz*w/84,sz,1);S.add(s);return s}
-// البوابات
-const pm=mat(0xb9a27c);
-G.forEach(g=>{const h=g.o==="h",ix=h?0:(g.x<0?1:-1),iz=h?(g.z<0?1:-1):0;g.ix=ix;g.iz=iz;
-[-1,1].forEach(s=>{const px=g.x+(h?s*14:0),pz=g.z+(h?0:s*14);box(3.2,8.5,3.2,pm,px,4.25,pz)});
-box(h?34:2.6,1.8,h?2.6:34,pm,g.x,8.4,g.z);
-const sg=lab(g.n,"#1d3a5f",2.6);sg.position.set(g.x,11,g.z);
-const bx=h?g.x+21:g.x+ix*7,bz=h?g.z+iz*7:g.z+21;box(5,3.2,5,mat(0xe9e0cc),bx,1.6,bz);box(5.2,.5,5.2,pm,bx,3.4,bz);COL.push([bx-2.5,bz-2.5,bx+2.5,bz+2.5])});
+// Premium university entrance: sculptural arches, logo-inspired sign, guards and animated access cars.
+const gateCars=[];
+function makeUniversityEmblem(){
+ const canvas=document.createElement("canvas");canvas.width=512;canvas.height=512;const q=canvas.getContext("2d");
+ q.clearRect(0,0,512,512);q.strokeStyle="#087b45";q.lineWidth=12;q.lineCap="round";
+ // Stylized approximation of the uploaded university mark; not a pixel-perfect reproduction.
+ for(let j=0;j<5;j++){const y=340+j*20;q.beginPath();q.moveTo(35,y);q.bezierCurveTo(195,y+8,205,150,255,130);q.bezierCurveTo(305,150,315,y+8,477,y);q.stroke()}
+ q.strokeStyle="#0c7042";q.lineWidth=10;q.beginPath();q.moveTo(255,140);q.lineTo(255,55);q.quadraticCurveTo(210,15,160,20);q.lineTo(160,125);q.quadraticCurveTo(213,125,255,160);q.quadraticCurveTo(297,125,350,125);q.lineTo(350,20);q.quadraticCurveTo(300,15,255,55);q.stroke();
+ q.fillStyle="#075f37";q.font="bold 30px Tajawal,Tahoma";q.textAlign="center";q.fillText("جامعة الحدود الشمالية",256,460);q.font="bold 19px Arial";q.fillText("NORTHERN BORDER UNIVERSITY",256,488);
+ return new THREE.CanvasTexture(canvas)
+}
+const universityEmblem=makeUniversityEmblem();
+function makeGate(g){
+ const h=g.o==="h",root=new THREE.Group();root.position.set(g.x,0,g.z);root.rotation.y=h?0:Math.PI/2;S.add(root);
+ const p=(w,hh,d,c,x,y,z)=>part(root,w,hh,d,c,x,y,z);
+ const stone=0xd6cbb7,white=0xeae6db,navy=0x184d45,green=0x078052,metal=0x48535b,gold=0xc8a864;
+ // Drive-through portals: clear opening at road center.
+ for(const x of [-18,18]){p(4,10,5,stone,x,5,0);p(5,.65,6,white,x,10.2,0);p(4.5,1.2,5.5,green,x,9.15,0)}
+ p(39,1.5,5.5,navy,0,11.4,0);p(40,.5,6.2,gold,0,12.4,0);
+ p(37,.7,5.9,green,0,10.45,0);
+ for(const x of [-15,15]){p(.35,8,.35,metal,x,4,0);p(.75,.55,.75,0xf3dfad,x,8.25,0)}
+ // Logo on both sides of the overhead entrance and on wall-like wings.
+ const emblemMaterial=new THREE.MeshBasicMaterial({map:universityEmblem,transparent:true,side:THREE.DoubleSide,depthWrite:false});
+ for(const z of [-2.87,2.87]){const m=new THREE.Mesh(new THREE.PlaneGeometry(7.4,7.4),emblemMaterial);m.position.set(0,15.7,z);root.add(m)}
+ p(9,3.8,4.5,white,23,1.9,-3);p(9,.45,5,navy,23,4.05,-3);
+ for(const z of [-.6,1.1])p(2.8,1.9,.1,0x4d8c9a,23,2.2,z);
+ // Security booth and two uniformed staff.
+ for(const x of [-24,24]){
+  p(5,3.5,4,white,x,1.75,8);
+  p(5.5,.5,4.5,green,x,3.75,8);
+  p(4,1.7,.15,0x4e92aa,x,2.4,5.94);
+  for(const side of [-1,1]){
+   const gx=x+side*1.4;
+   p(.8,1.5,.55,navy,gx,1.25,4);
+   p(.65,.7,.55,metal,gx,2.36,4);
+   const head=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xb68a64));head.position.set(gx,2.86,4);root.add(head);
+   p(.78,.2,.65,navy,gx,3.2,4);
+  }
+ }
+ // Swing arms remain outside the central roadway when open.
+ for(const x of [-12,12]){p(.65,1.25,.65,gold,x,.9,5);p(6,.17,.24,white,x+(x<0?-3:3),1.6,5)}
+ // Pavement markers and low walls with repeated green university trim.
+ for(const x of [-32,32]){
+  p(15,2,1.1,stone,x,1,-5);
+  p(15,.3,1.4,green,x,2.15,-5);
+  p(15,.3,1.4,green,x,1.1,-5);
+  const emblem=new THREE.Mesh(new THREE.PlaneGeometry(3.6,3.6),emblemMaterial);emblem.position.set(x,3.8,-4.35);root.add(emblem);
+ }
+ for(const x of [-10,10])p(.25,.035,12,white,x,.12,12);
+ // Slow moving decorative cars passing through the access control.
+ for(const direction of [-1,1]){
+  const car=new THREE.Group();root.add(car);
+  const body=(w,hh,d,c,x,y,z)=>part(car,w,hh,d,c,x,y,z);
+  body(2.6,1.1,5.2,direction===1?0xf4f5f3:0x41677e,0,1.1,0);
+  body(2.3,.85,2.9,0x6396ac,0,2,0);
+  for(const side of [-1,1])for(const z of [-1.65,1.65]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.3,10),mat(0x22272d));wheel.rotation.z=Math.PI/2;wheel.position.set(side*1.38,.65,z);car.add(wheel)}
+  car.position.set(direction*6,0,direction===1?-36:36);car.rotation.y=direction===1?0:Math.PI;
+  gateCars.push({car,direction,progress:0,offset:direction===1?-36:36});
+ }
+}
+// Four university entrance gates, with a decorative university emblem.
+G.forEach(g=>{g.ix=g.o==="h"?0:(g.x<0?1:-1);g.iz=g.o==="h"?(g.z<0?1:-1):0;makeGate(g)});
 // المباني
 const wtex=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.fillStyle="#2b4766";g.fillRect(10,12,44,34);g.fillStyle="#7fa6cc";g.fillRect(10,12,44,12);g.fillStyle="#cfcfcf";g.fillRect(0,56,64,8)});
 B.forEach(b=>{const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshLambertMaterial({map:t,color:b.c})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
@@ -392,7 +447,7 @@ if(approachingStop&&a.progress>=approachingStop.along-.05){a.lastBusStop=approac
 const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
 if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.lastBusStop=null;a.dwell=a.bus?3:1}}}
 function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
-function updateTraffic(dt){trafficClock+=dt;const phase=trafficClock%16;
+function updateTraffic(dt){trafficClock+=dt;for(const a of gateCars){a.progress=(a.progress+dt*5)%82;const z=a.direction===1?-40+a.progress:40-a.progress;a.car.position.z=z;}const phase=trafficClock%16;
 for(const s of signalBulbs){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
 for(const s of buildLights){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
 if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
