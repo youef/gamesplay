@@ -270,7 +270,7 @@ function refreshCustomTrafficRoutes(){
  // Two civilian cars and one campus bus follow player-built connected surface roads.
  for(let slot=0;slot<3;slot++){
   const a=agents[slot===2?5:slot+2];if(!a)continue;
-  const next=routes[slot]||a.originalRoute;
+  const next=(slot===2?(routes[2]||routes[0]):routes[slot])||a.originalRoute;
   const signature=next.map(p=>p.join(",")).join("|");
   if(a.customRouteSignature===signature)continue;
   a.customRouteSignature=signature;
