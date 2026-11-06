@@ -263,12 +263,13 @@ function connectedRoadRoutes(){
   }
  }
  results.sort((a,b)=>b.length-a.length);
- return results.slice(0,2).map(route=>route.keys.map(k=>k.split(",").map(Number)));
+ return results.slice(0,3).map(route=>route.keys.map(k=>k.split(",").map(Number)));
 }
 function refreshCustomTrafficRoutes(){
  const routes=connectedRoadRoutes();
- for(let slot=0;slot<2;slot++){
-  const a=agents[slot+2];if(!a)continue;
+ // Two civilian cars and one campus bus follow player-built connected surface roads.
+ for(let slot=0;slot<3;slot++){
+  const a=agents[slot===2?5:slot+2];if(!a)continue;
   const next=routes[slot]||a.originalRoute;
   const signature=next.map(p=>p.join(",")).join("|");
   if(a.customRouteSignature===signature)continue;
