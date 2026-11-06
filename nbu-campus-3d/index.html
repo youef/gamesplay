@@ -627,6 +627,12 @@ for(let row=0;row<6;row++){
  }
 }
 COL.push([ST.x-56,southStand-1,ST.x+56,southStand+18]);
+// Upper spectator roof restored, with open playing field.
+const standRoofMat=mat(0x203e56,{metalness:.28,roughness:.6,side:THREE.DoubleSide});
+function superEllipse(a,rx,rz){const c=Math.cos(a),v=Math.sin(a);return {x:ST.x+rx*Math.sign(c)*Math.sqrt(Math.abs(c)),z:ST.z+rz*Math.sign(v)*Math.sqrt(Math.abs(v))}}
+const standRoofVertices=[],standRoofIndices=[];
+for(let j=0;j<=128;j++){const a=j*Math.PI*2/128,p=superEllipse(a,65,74),q=superEllipse(a,89,91);standRoofVertices.push(p.x,26,p.z,q.x,24,q.z);if(j<128){const k=j*2;standRoofIndices.push(k,k+1,k+2,k+1,k+3,k+2)}}
+const standRoofGeo=new THREE.BufferGeometry();standRoofGeo.setAttribute("position",new THREE.Float32BufferAttribute(standRoofVertices,3));standRoofGeo.setIndex(standRoofIndices);standRoofGeo.computeVertexNormals();S.add(new THREE.Mesh(standRoofGeo,standRoofMat));
 // Upper roof and central transparent cover removed by request. The stadium's curved outer walls remain.
 function syncStadiumRoofQuality(){}
 // Independent open-air stadium floodlight towers behind the 60,000-seat stands.
@@ -779,11 +785,12 @@ const stadiumTierBase=mat(0x8fa4b3,{roughness:.87,side:THREE.DoubleSide});
 const stadiumAisleMat=mat(0xd4bd87,{roughness:.75});
 const stadiumSeatMat=mat(0x205b84,{roughness:.8});
 const stadiumTierVertices=[],stadiumTierIndices=[];
-const stadiumBowlInner={x:43,z:56},stadiumBowlOuter={x:83,z:82};
+const stadiumBowlInner={x:43,z:61.5},stadiumBowlOuter={x:82,z:85};
 function bowlLocation(row,angle){
  const f=(row+.5)/stadiumRows;
- return {x:ST.x+Math.cos(angle)*(stadiumBowlInner.x+(stadiumBowlOuter.x-stadiumBowlInner.x)*f),
- z:ST.z+Math.sin(angle)*(stadiumBowlInner.z+(stadiumBowlOuter.z-stadiumBowlInner.z)*f),
+ const p=superEllipse(angle,43+39*f,61.5+23.5*f);
+ return {x:p.x,
+ z:p.z,
  y:1.1+f*19};
 }
 // Continuous stepped grandstand surface all around the pitch.
@@ -793,7 +800,7 @@ for(let row=0;row<stadiumRows;row++){
   const a=j*Math.PI*2/128,b=(j+1)*Math.PI*2/128;
   const y=1+f0*19,base=stadiumTierVertices.length/3;
   for(const [f,theta] of [[f0,a],[f1,a],[f0,b],[f1,b]]){
-   stadiumTierVertices.push(ST.x+Math.cos(theta)*(43+40*f),y,ST.z+Math.sin(theta)*(56+26*f));
+   const p=superEllipse(theta,43+39*f,61.5+23.5*f);stadiumTierVertices.push(p.x,y,p.z);
   }
   stadiumTierIndices.push(base,base+1,base+2,base+1,base+3,base+2);
  }
@@ -826,6 +833,19 @@ for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat+
 stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
 if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=true;
 S.add(stadiumCrowdTorso,stadiumCrowdHead);
+const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
+function updateStadiumCheering(t){
+ if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
+ for(const idx of cheeringIndices){
+  if(idx>=stadiumCrowdTorso.count)continue;
+  const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
+  const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28;
+  crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
+  crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
+ }
+ stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
+}
+
 syncStadiumCrowdQuality();
 // Autonomous possession-based exhibition match: chase, pass, shoot, save and restart.
 // Real-time in-world LED scoreboard showing simulated match and time remaining.
@@ -879,6 +899,7 @@ function updateStadium(t,dt){
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
  if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
  if(!nearStadium)return;
+ updateStadiumCheering(t);
  if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
  stadiumScoreboard.textContent="⚽ الأزرق "+stadiumScore.blue+" : "+stadiumScore.white+" الأبيض | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
