@@ -283,6 +283,7 @@ function refreshCustomTrafficRoutes(){
 function busStopAhead(a,start,end,nextProgress,len){
  if(!a.bus||!a.customRouteActive||!len)return null;
  const dx=end[0]-start[0],dz=end[1]-start[1],ux=dx/len,uz=dz/len;
+ let nearest=null;
  for(const stop of built){
   if(stop.type!=="busstop")continue;
   const along=(stop.x-start[0])*ux+(stop.z-start[1])*uz;
@@ -290,9 +291,9 @@ function busStopAhead(a,start,end,nextProgress,len){
   if(lateral>15||along<4||along>len-4)continue;
   const stopKey=a.seg+":"+a.direction+":"+stop.x+":"+stop.z;
   if(a.lastBusStop===stopKey)continue;
-  if(along>=a.progress&&along<=nextProgress+1.5)return {along,key:stopKey};
+  if(along>=a.progress&&along<=nextProgress+1.5&&(!nearest||along<nearest.along))nearest={along,key:stopKey};
  }
- return null;
+ return nearest;
 }
 function moveAgent(a,dt){if(a.dwell>0){a.dwell-=dt;return}let start=a.route[a.seg],end=a.route[a.seg+a.direction];if(!end){a.direction*=-1;a.seg=clamp(a.seg,0,a.route.length-1);a.progress=0;return}
 const dx=end[0]-start[0],dz=end[1]-start[1],len=Math.hypot(dx,dz);if(!len){a.seg+=a.direction;return}a.progress=clamp(a.progress,0,len);
