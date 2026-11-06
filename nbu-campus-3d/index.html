@@ -263,10 +263,10 @@ function setupSecurityPanel(){
  p.querySelector("[data-close]").onclick=()=>{p.style.display="none";securityRole=false};
  p.querySelector("[data-talk]").onclick=()=>msg("الحارس: أهلًا بك في جامعة الحدود الشمالية. يرجى إبراز تصريح الدخول.");
  p.querySelector("[data-role]").onclick=()=>{securityRole=!securityRole;msg(securityRole?"أنت الآن مسؤول عن مراجعة تصاريح البوابة.":"انتهت مناوبة الحراسة.");refreshSecurityPanel()};
- p.querySelector("[data-enter]").onclick=()=>{if(!activeSecurityGate)return;const g=activeSecurityGate.g;pl.position.set(g.x,g.y||0,g.z);msg("أنت الآن عند غرفة الأمن. يمكنك مراجعة التصاريح وتشغيل شاشة المراقبة من هذه اللوحة.")};
+ p.querySelector("[data-enter]").onclick=()=>{if(!activeSecurityGate)return;enterSecurityRoom(activeSecurityGate);p.style.display="none"};
  p.querySelector("[data-monitor]").onclick=()=>{const view=p.querySelector("[data-monitor-view]");view.style.display=view.style.display==="none"?"block":"none";msg("شاشة مراقبة محاكاة تعرض حالات المسارين، وليست فيديو حقيقيًا.")};
- p.querySelector("[data-approve]").onclick=()=>{const c=activeSecurityGate&&activeSecurityGate.cars.find(c=>c.phase==="waiting"||c.phase==="inspection");if(c){c.manual="approved";msg("تم اعتماد مرور السيارة.");}else msg("لا توجد سيارة تنتظر الموافقة.");refreshSecurityPanel()};
- p.querySelector("[data-deny]").onclick=()=>{const c=activeSecurityGate&&activeSecurityGate.cars.find(c=>c.phase==="waiting"||c.phase==="inspection");if(c){c.manual="denied";msg("تم رفض التصريح، وستعود السيارة.");}else msg("لا توجد سيارة تنتظر الفحص.");refreshSecurityPanel()};
+ p.querySelector("[data-approve]").onclick=()=>{const c=activeSecurityGate&&activeSecurityGate.cars.find(c=>c.phase==="waiting"||c.phase==="inspection");if(c){c.manual="approved";activeSecurityGate.approved++;msg("تم اعتماد مرور السيارة.");}else msg("لا توجد سيارة تنتظر الموافقة.");refreshSecurityPanel()};
+ p.querySelector("[data-deny]").onclick=()=>{const c=activeSecurityGate&&activeSecurityGate.cars.find(c=>c.phase==="waiting"||c.phase==="inspection");if(c){c.manual="denied";activeSecurityGate.denied++;msg("تم رفض التصريح، وستعود السيارة.");}else msg("لا توجد سيارة تنتظر الفحص.");refreshSecurityPanel()};
 }
 setupSecurityPanel();
 
@@ -399,7 +399,7 @@ function makeGate(g){
  // Two guards visible at the central control-room side windows.
  const insideGuards=[guard(-1.6,2.65,Math.PI/2),guard(1.6,2.65,-Math.PI/2)];
  const outsideGuards=[guard(-14,7,0),guard(14,7,Math.PI)];
- const security={g,name:g.n,root,barriers,insideGuards,outsideGuards,cars:[],clock:0};
+ const security={g,name:g.n,root,barriers,insideGuards,outsideGuards,cars:[],clock:0,approved:0,denied:0};
  gateSecurity.push(security);
  // Entry / exit signage, direction arrows and independently positioned barrier arms.
  const laneSign=(text,x)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const ctx=c.getContext("2d");ctx.fillStyle="#075a42";ctx.fillRect(0,0,256,96);ctx.font="bold 49px Tajawal,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.fillText(text,128,50);const tex=new THREE.CanvasTexture(c);for(const z of [-3.1,3.1]){const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.6,2.48),new THREE.MeshBasicMaterial({map:tex,side:THREE.FrontSide}));sign.position.set(x,9,z);sign.rotation.y=z<0?Math.PI:0;root.add(sign)}};
@@ -620,23 +620,23 @@ function updateGateSecurity(dt){
    const forward=c.direction===1?1:-1;
    if(c.phase==="approach"){
     c.car.position.z+=forward*6*dt;
-    if(Math.abs(c.car.position.z-(forward===1?14:-14))<.35||c.car.position.z*forward>=14){c.car.position.z=forward*14;c.phase="waiting";c.phaseTime=0;}
+    if(c.car.position.z*forward>=-14){c.car.position.z=-forward*14;c.phase="waiting";c.phaseTime=0;}
    }else if(c.phase==="waiting"){
     if(c.phaseTime>1.3){c.phase="inspection";c.phaseTime=0;}
    }else if(c.phase==="inspection"){
-    if(c.manual==="denied"){c.phase="leaving";c.phaseTime=0;c.car.rotation.y+=Math.PI;}
+    if(c.manual==="denied"||(c.permit==="denied"&&c.phaseTime>4)){c.phase="leaving";c.phaseTime=0;c.car.rotation.y+=Math.PI;}
     else if(c.manual==="approved"||(c.permit==="approved"&&c.phaseTime>2.4)||(c.permit==="review"&&c.phaseTime>7)){
      barrier.target=1;c.phase="crossing";c.phaseTime=0;
     }
    }else if(c.phase==="crossing"){
-    if(c.phaseTime>1.3)c.car.position.z+=forward*6*dt;
-    if(c.phaseTime>10){c.phase="leaving";c.phaseTime=0;barrier.target=0;}
+    if(c.phaseTime>1.3&&barrier.open)c.car.position.z+=forward*6*dt;
+    if(c.car.position.z*forward>22){c.phase="leaving";c.phaseTime=0;barrier.target=0;}
    }else if(c.phase==="leaving"){
     c.car.position.z+=forward*(c.manual==="denied"?-6:6)*dt;
-    if(c.phaseTime>5){c.phase="approach";c.phaseTime=0;c.manual=null;c.car.position.z=forward===1?-36:36;c.car.rotation.y=forward===1?0:Math.PI;barrier.target=0;}
+    if(c.phaseTime>5){c.phase="approach";c.phaseTime=0;c.manual=null;c.car.position.z=forward===1?-36:36;c.car.rotation.y=forward===1?0:Math.PI;c.permit=["approved","review","denied"][(Math.floor(g.clock/17)+index)%3];c.kind=c.permit==="approved"?"موظف":c.permit==="review"?"زائر":"مركبة دون تصريح";barrier.target=0;}
    }
    const guard=g.outsideGuards[index];
-   const targetZ=c.phase==="inspection"||c.phase==="waiting"?10:7;
+   const targetZ=c.phase==="inspection"||c.phase==="waiting"?-5:7;
    guard.position.z+=(targetZ-guard.position.z)*Math.min(1,dt*1.7);
    guard.rotation.y=c.phase==="inspection"?(index===0?Math.PI/2:-Math.PI/2):index===0?0:Math.PI;
   });
@@ -709,7 +709,22 @@ function buildInterior(b){
  for(let i=0;i<4;i++){const light=new THREE.PointLight(0xffedc9,.6,45);light.position.set(X-24+i*16,6,0);interior.add(light)}
  const l=lab(b.n,"#1d3a5f",3.4);l.position.set(X,5,-22);interior.add(l);
 }
-let outsidePos=null,seated=false,seatOrigin=null;
+let outsidePos=null,seated=false,seatOrigin=null,securityInteriorGate=null;
+function enterSecurityRoom(gate){
+ if(!gate||carMode){toastBuild("اخرج من السيارة أولًا لدخول غرفة الحراسة");return}
+ if(inside)exitBuilding();
+ securityInteriorGate=gate;
+ const room={n:"غرفة أمن "+gate.name,labs:[["مكتب التصاريح","افحص تصاريح المركبات"],["مراقبة البوابات","عرض حالة مساري الدخول والخروج"],["سجل المرور","سجل الموافقات والرفض"]]};
+ enterBuilding(room);
+ const roomBtns=$("roomBtns");roomBtns.replaceChildren();
+ for(const [name,action] of [
+ ["🪑 الجلوس على كرسي الحارس",()=>{if(!seated){seatOrigin={x:pl.position.x,z:pl.position.z};seated=true;pl.position.set(750,0,-3.6);$("interInfo").textContent="أنت جالس أمام مكتب الحراسة";}else{seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);}}],
+ ["💻 استخدام كمبيوتر التصاريح",()=>{gateSecurityPanel(gate);$("interInfo").textContent="كمبيوتر التصاريح: اختر السيارة ثم اسمح أو ارفض";}],
+ ["📹 كاميرات البوابات",()=>{gateSecurityPanel(gate);const view=document.querySelector("#securityPanel [data-monitor-view]");if(view)view.style.display="block";$("interInfo").textContent="مراقبة مسارات البوابة";}],
+ ["🚪 الخروج من غرفة الأمن",()=>exitBuilding()]
+ ]){const btn=document.createElement("button");btn.textContent=name;btn.onclick=action;roomBtns.appendChild(btn)}
+}
+
 function enterBuilding(b){
  if(seated)leaveStand();
  if(carMode){toastBuild("🚗 اخرج من السيارة أولًا للدخول");return}
@@ -720,7 +735,7 @@ function enterBuilding(b){
  $("roomBtns").style.display="flex";$("roomBtns").classList.remove("collapsed");$("closeRooms").style.display="block";$("showRooms").style.display="none";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
 }
 function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
-function exitBuilding(){if(!inside)return;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
+function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
