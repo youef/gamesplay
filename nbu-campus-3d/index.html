@@ -653,7 +653,7 @@ if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 let playerMode="single",singleStudent="fawaz";
 const zyad=new THREE.Group(),zyadAvatar=new THREE.Group(),cam2=new THREE.PerspectiveCamera(60,1,.5,1500);
-const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false,student2Steps=0,zyadVisited=new Set();
+const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false,student2Steps=0,zyadVisited=new Set(),teamMeetCount=0,teamMeetingArmed=true;
 S.add(zyad);zyad.add(zyadAvatar);
 
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
@@ -687,7 +687,7 @@ function setStudentMode(mode,student){
  ch.visible=(!carMode||buildMode)&&(!(!split&&singleStudent==="zyad"));
  if(!split&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";const run2=document.getElementById("student2Run");if(run2)run2.style.display=split?"block":"none";const explore2=document.getElementById("student2Explore");if(explore2)explore2.style.display=split?"block":"none";const divider=document.getElementById("studentDivider");if(divider)divider.style.display=split?"block":"none";const info2=document.getElementById("student2Info");if(info2&&!split)info2.style.display="none";
- const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";const primaryStick=document.getElementById("js");if(primaryStick){primaryStick.style.left=split?"8%":"";primaryStick.style.right=split?"auto":"";}
+ const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";const teamHud=document.getElementById("studentTeamHud");if(teamHud)teamHud.style.display=split?"block":"none";const primaryStick=document.getElementById("js");if(primaryStick){primaryStick.style.left=split?"8%":"";primaryStick.style.right=split?"auto":"";}
  document.querySelectorAll("[data-student-mode]").forEach(b=>b.classList.toggle("active",b.dataset.studentMode===mode+(mode==="single"?"-"+singleStudent:"")));
 }
 function setupStudents(){
@@ -705,6 +705,7 @@ function setupStudents(){
  document.body.appendChild(explore2);
  explore2.onclick=()=>{if(playerMode!=="split")return;let nearB=null,best=24;for(const b of B){if(removedCampusBuildings.has(b.n))continue;const d=Math.hypot(zyad.position.x-b.x,zyad.position.z-b.z);if(d<best){nearB=b;best=d}}if(!nearB){toastBuild("زياد: اقترب من أحد مباني الجامعة أولًا");return}zyadVisited.add(nearB.n);const p=document.getElementById("student2Info");if(p){p.style.display="block";p.textContent="زياد يستكشف "+nearB.n+" | المرافق: "+nearB.labs.map(l=>l[0]).join("، ")+" | مبانٍ زارها: "+zyadVisited.size;}};
  const info2=document.createElement("div");info2.id="student2Info";info2.dir="rtl";info2.style.cssText="display:none;position:fixed;z-index:17;top:calc(92px + env(safe-area-inset-top,0px));right:8px;max-width:42vw;max-height:28vh;overflow:auto;border-radius:12px;padding:10px;background:#14394be8;color:white;font:700 12px Tajawal,Tahoma";document.body.appendChild(info2);
+ const teamHud=document.createElement("div");teamHud.id="studentTeamHud";teamHud.dir="rtl";teamHud.style.cssText="display:none;position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));padding:8px 13px;border-radius:14px;border:1px solid #ffffff66;background:#122d42ed;color:#fff;font:800 12px Tajawal,Tahoma;text-align:center;pointer-events:none;max-width:45vw";teamHud.textContent="🤝 اقتربوا من بعض لتنفيذ مهمة اللقاء";document.body.appendChild(teamHud);
  const ctl=document.createElement("div");ctl.id="student2Controls";ctl.style.cssText="display:none;position:fixed;z-index:18;bottom:calc(35px + env(safe-area-inset-bottom,0px));right:8%;width:118px;height:118px;border:2px solid #fff8;border-radius:50%;background:#193d5b88;touch-action:none";
  ctl.innerHTML='<div style="position:absolute;inset:36px;border-radius:50%;background:#e9f7ff99;pointer-events:none" id="student2Knob"></div>';document.body.appendChild(ctl);
  let pid=null;
@@ -1132,6 +1133,11 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  if(!hit(zyad.position.x,zz))zyad.position.z=zz;
  zyad.rotation.y=Math.atan2(joy2.x,joy2.y);zyadYaw=zyad.rotation.y+Math.PI;zyadAvatar.rotation.z=Math.sin(t*.014)*(secondRunning?.07:.04);
  }
+ const separation=Math.hypot(zyad.position.x-pl.position.x,zyad.position.z-pl.position.z);
+ const hud=document.getElementById("studentTeamHud");
+ if(separation>18)teamMeetingArmed=true;
+ if(separation<5&&teamMeetingArmed){teamMeetingArmed=false;teamMeetCount++;toastBuild("🤝 فواز وزياد التقيا! مهمة التعاون رقم "+teamMeetCount)}
+ if(hud)hud.textContent="🤝 المسافة بين فواز وزياد: "+Math.round(separation)+" م · لقاءات ناجحة: "+teamMeetCount+(teamMeetingArmed?" · اقتربا إلى 5 م":" · ابتعدا 18 م لإعادة المهمة");
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
