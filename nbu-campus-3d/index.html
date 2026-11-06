@@ -651,6 +651,11 @@ for(const s of buildLights){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(
 if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 // الشخصية
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
+let playerMode="single",singleStudent="fawaz";
+const zyad=new THREE.Group(),zyadAvatar=new THREE.Group(),cam2=new THREE.PerspectiveCamera(60,1,.5,1500);
+const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11;
+S.add(zyad);zyad.add(zyadAvatar);
+
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
 const gtx=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.strokeStyle="#d33a35";g.lineWidth=3;for(let i=0;i<=64;i+=8){g.beginPath();g.moveTo(i,0);g.lineTo(i,64);g.moveTo(0,i);g.lineTo(64,i);g.stroke()}});gtx.repeat.set(2,2);const gm=new THREE.MeshLambertMaterial({map:gtx});
 const add=(g,m,x,y,z,p)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;(p||ch).add(o);return o};
@@ -668,6 +673,42 @@ const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:
 addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
 addEventListener("keyup",e=>K[e.code]=0);
 let dr=null;const cvs=$("c");
+function createSecondStudent(){
+ ch.updateMatrixWorld(true);
+ const cloned=ch.clone(true);
+ cloned.traverse(node=>{if(node.isMesh){node.material=node.material.clone();if(node.material.color){const c=node.material.color;if(c.r>.7&&c.g>.7&&c.b>.7)c.setHex(0xc2e0ef)}node.castShadow=true}});
+ zyadAvatar.add(cloned);
+ zyad.position.set(pl.position.x+5,0,pl.position.z+5);
+}
+function setStudentMode(mode,student){
+ playerMode=mode;singleStudent=student||singleStudent;
+ const split=mode==="split";document.body.classList.toggle("splitStudents",split);
+ zyad.visible=split||singleStudent==="zyad";
+ ch.visible=(!carMode||buildMode)&&(!(!split&&singleStudent==="zyad"));
+ if(!split&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
+ const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";
+ const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";
+ document.querySelectorAll("[data-student-mode]").forEach(b=>b.classList.toggle("active",b.dataset.studentMode===mode+(mode==="single"?"-"+singleStudent:"")));
+}
+function setupStudents(){
+ createSecondStudent();
+ const menu=document.createElement("div");menu.id="studentModeMenu";menu.dir="rtl";menu.style.cssText="position:fixed;z-index:29;top:calc(8px + env(safe-area-inset-top,0px));left:8px;display:flex;gap:5px;flex-wrap:wrap;max-width:85vw";
+ menu.innerHTML='<button data-student-mode="single-fawaz">👨‍🎓 فواز</button><button data-student-mode="single-zyad">👨‍🎓 زياد</button><button data-student-mode="split">👥 لاعبان</button>';
+ document.body.appendChild(menu);
+ menu.querySelectorAll("button").forEach(b=>{b.style.cssText="border:1px solid #d4e5dc;border-radius:10px;background:#173c54;color:white;padding:9px;font:700 13px Tajawal,Tahoma";b.onclick=()=>{if(buildMode||carMode){toastBuild("أوقف القيادة أو البناء أولًا لتفعيل اللعب المشترك");return}const m=b.dataset.studentMode;if(m==="split")setStudentMode("split");else setStudentMode("single",m.split("-")[1])}});
+ const labels=document.createElement("div");labels.id="studentLabels";labels.style.cssText="display:none;position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:0;right:0;z-index:7;pointer-events:none;justify-content:space-around;color:white;text-shadow:0 2px 4px #000;font:800 18px Tajawal,Tahoma";
+ labels.innerHTML="<span>فواز · اللاعب الأول</span><span>زياد · اللاعب الثاني</span>";document.body.appendChild(labels);
+ const ctl=document.createElement("div");ctl.id="student2Controls";ctl.style.cssText="display:none;position:fixed;z-index:18;bottom:calc(35px + env(safe-area-inset-bottom,0px));right:8%;width:118px;height:118px;border:2px solid #fff8;border-radius:50%;background:#193d5b88;touch-action:none";
+ ctl.innerHTML='<div style="position:absolute;inset:36px;border-radius:50%;background:#e9f7ff99;pointer-events:none" id="student2Knob"></div>';document.body.appendChild(ctl);
+ let pid=null;
+ const move=e=>{const rect=ctl.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),l=Math.max(1,Math.hypot(dx,dy)),m=Math.min(43,l);joy2.x=dx/l*m/43;joy2.y=dy/l*m/43;document.getElementById("student2Knob").style.transform="translate("+joy2.x*38+"px,"+joy2.y*38+"px)"};
+ ctl.addEventListener("pointerdown",e=>{if(pid!==null)return;pid=e.pointerId;ctl.setPointerCapture(pid);move(e)});
+ ctl.addEventListener("pointermove",e=>{if(pid===e.pointerId)move(e)});
+ const stop=e=>{if(pid!==e.pointerId)return;pid=null;joy2.x=joy2.y=0;document.getElementById("student2Knob").style.transform=""};
+ ctl.addEventListener("pointerup",stop);ctl.addEventListener("pointercancel",stop);ctl.addEventListener("lostpointercapture",stop);
+ setStudentMode("single","fawaz");
+}
+
 // Multi-touch gestures: pinch to zoom, one finger to pan the strategy camera.
 const pointerGap=()=>{const pts=[...activePointers.values()];return pts.length<2?0:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)};
 cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}dr={x:e.clientX,y:e.clientY}});
@@ -1033,7 +1074,7 @@ $("importBuild").onclick=()=>$("buildFile").click();
 $("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const fileText=typeof file.text==="function"?await file.text():await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error("تعذر قراءة الملف"));reader.readAsText(file,"UTF-8")});const data=JSON.parse(fileText);if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?Math.max(budgetBonus,clamp(data.budgetBonus,0,5000000)):budgetBonus;missionDone=data.missionDone&&typeof data.missionDone==="object"&&!Array.isArray(data.missionDone)?Object.fromEntries(missionDefs.map(m=>[m.id,!!(missionDone[m.id]||data.missionDone[m.id])])):missionDone;drivenMeters=Number.isFinite(data.drivenMeters)?Math.max(drivenMeters,clamp(data.drivenMeters,0,1000000)):drivenMeters;atAirport=atAirport||!!data.atAirport;atCity=atCity||!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();
+restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupStudents();
 function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
@@ -1077,13 +1118,37 @@ if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
 ch.rotation.y=fa;
 const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
-const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode;sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
+if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
+ const v=Math.hypot(joy2.x,joy2.y);
+ if(v>.12){const speed=8*dt,xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
+ if(!hit(xx,zyad.position.z))zyad.position.x=xx;
+ if(!hit(zyad.position.x,zz))zyad.position.z=zz;
+ zyad.rotation.y=Math.atan2(joy2.x,joy2.y);
+ }
+ }else if(playerMode==="single"&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
+ const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
 near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
 $("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-ST.rz-23))<65?"block":"none";if(near)en.textContent="دخول";
-updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!document.hidden)R.render(S,cam)})(0);
+updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!document.hidden){
+ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
+  const w=innerWidth,h=innerHeight,half=Math.floor(w/2);
+  R.setScissorTest(true);
+  cam.aspect=half/h;cam.updateProjectionMatrix();
+  R.setViewport(0,0,half,h);R.setScissor(0,0,half,h);R.render(S,cam);
+  cam2.aspect=(w-half)/h;cam2.updateProjectionMatrix();
+  cam2.up.set(0,1,0);
+  cam2.position.set(zyad.position.x+Math.sin(zyadYaw)*zyadDistance,5+Math.sin(zyadPitch)*zyadDistance,zyad.position.z+Math.cos(zyadYaw)*zyadDistance);
+  cam2.lookAt(zyad.position.x,1.5,zyad.position.z);
+  R.setViewport(half,0,w-half,h);R.setScissor(half,0,w-half,h);R.render(S,cam2);
+  R.setScissorTest(false);
+ }else{
+  cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+  R.setViewport(0,0,innerWidth,innerHeight);R.render(S,cam);
+ }
+}})(0);
 }
 </script>
 </body>
