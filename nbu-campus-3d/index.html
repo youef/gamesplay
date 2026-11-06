@@ -279,7 +279,7 @@ function setupAtmosphere(){
  for(const id of ["atmTime","atmWeather","atmQuality"])document.getElementById(id).style.cssText="border:0;border-radius:7px;background:#e7f4f8;color:#123044;padding:5px;font:700 12px Tahoma";
  document.getElementById("atmTime").onchange=e=>{atmosphere.auto=e.target.value==="auto";if(!atmosphere.auto)atmosphere.hour=Number(e.target.value)};
  document.getElementById("atmWeather").onchange=e=>atmosphere.weather=e.target.value;
- document.getElementById("atmQuality").onchange=e=>{atmosphere.quality=e.target.value;R.setPixelRatio(Math.min(devicePixelRatio,e.target.value==="low"?1:e.target.value==="high"?1.65:1.3));R.setSize(innerWidth,innerHeight)};
+ document.getElementById("atmQuality").onchange=e=>{atmosphere.quality=e.target.value;R.setPixelRatio(Math.min(devicePixelRatio,e.target.value==="low"?1:e.target.value==="high"?1.65:1.3));R.setSize(innerWidth,innerHeight);syncStadiumCrowdQuality()};
  for(let i=0;i<10;i++){const light=new THREE.PointLight(0xffd9a0,0,24,2);const x=-165+(i%5)*80,z=i<5?-175:175;light.position.set(x,6,z);S.add(light);nightLights.push(light)}
 }
 const mat=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.78,metalness:0},o||{}));
@@ -605,6 +605,16 @@ const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
 [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
 // Stadium experience: low-poly animated footballers, crowd, perimeter fence and safe entrances.
 const stadiumActors=[],stadiumCrowd=[];
+const stadiumCrowdSettings={density:"dense",visibleCount:0};
+function stadiumCrowdEnabled(index){
+ const q=atmosphere.quality;
+ const divisor=q==="low"?5:q==="balanced"?2:1;
+ return index%divisor===0;
+}
+function syncStadiumCrowdQuality(){
+ for(let i=0;i<stadiumCrowd.length;i++)stadiumCrowd[i].g.visible=stadiumCrowdEnabled(i);
+ stadiumCrowdSettings.visibleCount=stadiumCrowd.filter(c=>c.g.visible).length;
+}
 const stadiumScore={blue:0,white:0,lastGoal:0};
 const stadiumScoreboard=document.createElement("div");
 stadiumScoreboard.id="stadiumScoreboard";stadiumScoreboard.dir="rtl";
@@ -663,8 +673,9 @@ for(let row=0;row<7;row++)for(let i=0;i<31;i++){
  const crowd=new THREE.Group(),color=crowdColors[(i+row*3)%crowdColors.length];
  const torso=new THREE.Mesh(new THREE.BoxGeometry(.68,.9,.44),color);torso.position.y=.63;crowd.add(torso);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.27,6,5),stadiumSkin);head.position.y=1.34;crowd.add(head);
- crowd.position.set(x,1.1+row*.72,z);S.add(crowd);stadiumCrowd.push({g:crowd,phase:i*.87+row*.46});
+ crowd.position.set(x,1.1+row*.72,z);S.add(crowd);stadiumCrowd.push({g:crowd,phase:i*.87+row*.46,baseY:1.1+row*.72});
 }
+syncStadiumCrowdQuality();
 function updateStadium(t,dt){
  if(!dt)return;
  const nearStadium=seated||Math.hypot(pl.position.x-ST.x,pl.position.z-ST.z)<260;
@@ -688,7 +699,7 @@ const phase=time%32,goalSide=Math.floor(time/32)%2?1:-1;
  if(phase>=28&&stadiumScore.lastGoal!==goalNumber){stadiumScore.lastGoal=goalNumber;stadiumScore[goalSide===1?"blue":"white"]++;updateStadiumScoreboard("هدف! 🎉");}
  else if(phase<25)updateStadiumScoreboard();
  ball.rotation.x+=dt*2;ball.rotation.z+=dt*1.4;
- if(atmosphere.quality!=="low")for(const c of stadiumCrowd){const base=1.1+Math.floor((c.g.position.y-1.1)/.72+.5)*.72;const cheer=phase>=28&&phase<31;c.g.position.y=base+Math.sin(time*(cheer?9:2)+c.phase)*(cheer?.14:.015);c.g.rotation.z=cheer?Math.sin(time*8+c.phase)*.13:0}
+ for(const c of stadiumCrowd){if(!c.g.visible)continue;const cheer=phase>=28&&phase<31;c.g.position.y=c.baseY+Math.sin(time*(cheer?9:2)+c.phase)*(cheer?.14:.015);c.g.rotation.z=cheer?Math.sin(time*8+c.phase)*.13:0}
 }
 
 const sl=lab("ملعب الجامعة","#b04a3a",3.6);sl.position.set(ST.x,12,ST.z);
