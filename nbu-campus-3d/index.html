@@ -317,7 +317,7 @@ if(blocked)return;
 a.progress=nextProgress;
 if(approachingStop&&a.progress>=approachingStop.along-.05){a.lastBusStop=approachingStop.key;a.dwell=3.5}
 const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
-if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.dwell=a.bus?3:1}}}
+if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.lastBusStop=null;a.dwell=a.bus?3:1}}}
 function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
 function updateTraffic(dt){trafficClock+=dt;const phase=trafficClock%16;
 for(const s of signalBulbs){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
