@@ -1061,7 +1061,7 @@ function setupStudents(){
 
 // Multi-touch gestures: pinch to zoom, one finger to pan the strategy camera.
 const pointerGap=()=>{const pts=[...activePointers.values()];return pts.length<2?0:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)};
-cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false;if(!strategyPan&&buildDefs[buildTool]?.path&&!buildStart){const p=selectGround(e);roadDragOrigin=p?snapRoadEndpoint(p):null;roadDragPointer=e.pointerId}}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}dr={x:e.clientX,y:e.clientY}});
+cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false;if(!strategyPan&&buildDefs[buildTool]?.path&&!buildStart){const p=selectGround(e);roadDragOrigin=p?snapRoadEndpoint(p):null;roadDragPointer=e.pointerId}}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}if(activePointers.size>=2){pinchDistance=pointerGap();dr=null;return}dr={x:e.clientX,y:e.clientY}});
 cvs.addEventListener("pointermove",e=>{
  if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(buildMode){
@@ -1069,12 +1069,13 @@ cvs.addEventListener("pointermove",e=>{
   if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4){mapDrag.moved=true;if(roadDragOrigin&&roadDragPointer===e.pointerId)roadDragMoved=true}if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}
   if(!strategyPan&&!pinchMoved){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId)previewRoad(roadDragOrigin,selectGround(e));else previewFromPointer(e)}return
  }
+ if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0&&!seated){dist=clamp(dist*pinchDistance/gap,3,65)}pinchDistance=gap;dr=null;return}
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
 cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:buildTool==="bridge"?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
 const cancelPointer=e=>{clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
 cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
-cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else dist=clamp(dist+e.deltaY*.01,5,20)},{passive:false});
+cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else{e.preventDefault();dist=clamp(dist+e.deltaY*.018,3,65)}},{passive:false});
 const js=$("js"),kn=$("kn");let jp=false;
 function jm(e){const r=js.getBoundingClientRect(),m=45;let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const l=Math.hypot(dx,dy);if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;kn.style.transform=`translate(${dx}px,${dy}px)`}
 js.addEventListener("pointerdown",e=>{js.setPointerCapture(e.pointerId);jp=true;jm(e)});js.addEventListener("pointermove",e=>{if(jp)jm(e)});
@@ -1511,7 +1512,13 @@ setupAtmosphere();
 function organizeSettings(){
  const settings=$("gameSettings").querySelector(".settingsScroll");
  function section(title){const details=document.createElement("details");details.className="gameSettingsSection";const summary=document.createElement("summary");summary.textContent=title;details.append(summary);settings.append(details);return details}
- const players=section("👥 اللاعبون والشاشة المقسمة");
+ const cameraSection=section("📷 الكاميرا والتكبير والتحريك");
+const cameraControls=document.createElement("div");cameraControls.style.cssText="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:8px";
+for(const [label,action] of [["＋ تقريب",()=>dist=clamp(dist-3,3,65)],["－ إبعاد",()=>dist=clamp(dist+3,3,65)],["⟲ إعادة",()=>{dist=11;pit=.42;yaw=Math.PI}],["← يسار",()=>yaw+=.22],["↑ أعلى",()=>pit=clamp(pit+.13,.1,1.2)],["يمين →",()=>yaw-=.22],["⤢ واسع",()=>{dist=45;pit=.72}],["↓ أسفل",()=>pit=clamp(pit-.13,.1,1.2)],["قريب",()=>{dist=5;pit=.35}]]){
+ const button=document.createElement("button");button.type="button";button.textContent=label;button.style.cssText="min-height:43px;border-radius:10px;border:1px solid #8ba2b5;background:#203e59;color:white;font:700 13px Tajawal,Tahoma";button.onclick=()=>{if(!buildMode&&!seated)action()};cameraControls.append(button);
+}
+const cameraHelp=document.createElement("p");cameraHelp.textContent="اسحب بإصبع لتدوير الكاميرا يمينًا ويسارًا وأعلى وأسفل، وبإصبعين للتقريب والإبعاد. عجلة الماوس تدعم الزوم أيضًا.";cameraHelp.style.cssText="padding:0 8px;font-size:12px;line-height:1.7";cameraSection.append(cameraHelp,cameraControls);
+const players=section("👥 اللاعبون والشاشة المقسمة");
  const menu=$("studentModeMenu");menu.classList.add("settingsEmbedded");players.append(menu);
  const climate=section("☀️ الوقت والطقس وجودة الرسومات");
  const weather=$("atmospherePanel");weather.classList.add("settingsEmbedded");climate.append(weather);
