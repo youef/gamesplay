@@ -41,6 +41,25 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 #status{position:fixed;left:9px;bottom:calc(6px + env(safe-area-inset-bottom,0px));background:#18283caa;color:#fff;font-size:11px;padding:4px 8px;border-radius:9px;z-index:4}
 @media(max-width:700px){#bar button{font-size:12px;padding:8px 10px}#tools button{font-size:12px;padding:8px}#mini{top:calc(65px + env(safe-area-inset-top,0px));width:94px;height:94px}#tools{top:calc(176px + env(safe-area-inset-top,0px))}#enter{right:12px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}#roomBtns{top:calc(192px + env(safe-area-inset-top,0px))}}
 @media(prefers-reduced-motion:reduce){#panel{transition:none}}
+#settingsToggle{position:fixed;z-index:15;top:calc(9px + env(safe-area-inset-top,0px));right:10px;border:1px solid #ffffff88;border-radius:13px;background:#123c5e;color:white;font:800 15px Tajawal,Tahoma;padding:10px 14px;cursor:pointer}
+#gameSettings{position:fixed;z-index:16;top:calc(58px + env(safe-area-inset-top,0px));right:10px;width:min(350px,calc(100vw - 20px));max-height:calc(100dvh - 78px - env(safe-area-inset-top,0px));display:none;flex-direction:column;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 42px #0008;overflow:hidden}
+#gameSettings.on{display:flex}
+.settingsHeader{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
+.settingsHeader button{border:0;background:#a34040;color:#fff;border-radius:9px;font-size:18px;padding:6px 11px}
+.settingsScroll{overflow-y:auto;overscroll-behavior:contain;padding:8px 12px 16px}
+.settingsScroll details{border-bottom:1px solid var(--line);padding:10px 0}
+.settingsScroll summary{font-weight:800;cursor:pointer;padding:6px 0}
+.settingsScroll details>div{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0}
+.settingsScroll button{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--fg);font:700 13px Tajawal,Tahoma;cursor:pointer}
+.settingsScroll button.active{background:#0f8f86;color:#fff}
+#bar,#tools,#strategyBar,#buildDock,#buildHud,#builderGuide,#mini,#status,#hint{transition:opacity .16s}
+body.cleanUi #bar,body.cleanUi #tools,body.cleanUi #strategyBar,body.cleanUi #buildDock,body.cleanUi #buildHud,body.cleanUi #builderGuide,body.cleanUi #mini,body.cleanUi #status,body.cleanUi #hint,body.cleanUi #showTools,body.cleanUi #showLocations{display:none!important}
+body.cleanUi #settingsToggle{display:block!important}
+#bar{padding-right:135px}
+#strategyBar{top:calc(60px + env(safe-area-inset-top,0px))}
+#showTools,#showLocations{display:none!important}
+@media(max-width:700px){#strategyBar{top:calc(63px + env(safe-area-inset-top,0px));max-width:96vw}#bar{padding-right:125px}#settingsToggle{font-size:13px;padding:8px}}
+
 #strategyBar{position:fixed;z-index:7;top:calc(56px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;gap:5px;max-width:min(98vw,720px);overflow-x:auto;padding:5px;background:#152b43d9;border-radius:14px}
 #strategyBar button{flex:none;border:1px solid #ffffff55;border-radius:9px;background:#344b66;color:#fff;font:700 12px Tajawal,Tahoma;padding:8px;cursor:pointer}
 #strategyBar button.active{background:#0b9b87}
@@ -97,7 +116,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 <div id="js"><div id="kn"></div></div>
 <button id="showTools" aria-label="فتح قائمة الأدوات" aria-expanded="true">☰ القوائم</button><button id="showLocations" aria-label="فتح قائمة المواقع" aria-expanded="true">📍 المواقع</button><div id="tools"><button id="closeTools" class="uiClose" aria-label="إغلاق قائمة الأدوات">✕ إغلاق</button><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
-<div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button></div><div id="buildHud" aria-live="polite"></div>
+<button id="settingsToggle" aria-expanded="false" aria-controls="gameSettings">⚙️ الإعدادات</button><div id="gameSettings" role="dialog" aria-label="إعدادات اللعبة" aria-hidden="true"><div class="settingsHeader"><strong>⚙️ الإعدادات والتحكم</strong><button id="settingsClose" aria-label="إغلاق الإعدادات">✕</button></div><div class="settingsScroll"><details open><summary>🎮 نمط اللعب</summary><div id="settingsModes"></div></details><details><summary>🗺️ الخريطة والبناء</summary><div id="settingsMap"></div></details><details><summary>👁️ العرض والواجهات</summary><div id="settingsDisplay"></div></details><details><summary>🛠️ أدوات ومهام</summary><div id="settingsActions"></div></details></div></div><div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button></div><div id="buildHud" aria-live="polite"></div>
 <div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم النهاية؛ يتم وصل الأطراف القريبة تلقائيًا.</div>
 <section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي"><button id="closeBuildDock" class="uiClose" aria-label="إغلاق لوحة البناء">✕ إغلاق الأدوات</button>
   <div id="buildHint">اختر أداة ثم المس الأرض لإضافة عنصر.</div>
@@ -383,13 +402,26 @@ p=new THREE.Group();p.position.set(s*.13,.45,0);ch.add(p);add(new THREE.BoxGeome
 pl.position.set(0,0,-188);
 const car=new THREE.Group();S.add(car);const carBox=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;car.add(m);return m};carBox(3.6,1.1,7.2,0xb23830,0,1.1,0);carBox(3.1,.9,3.2,0x90c7df,0,1.95,.2);carBox(2.8,.22,1.2,0x2b3440,0,2.52,.32);[-1,1].forEach(s=>{[-1,1].forEach(f=>{const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.82,.82,.55,14),mat(0x222));wheel.rotation.z=Math.PI/2;wheel.position.set(s*1.95,.7,f*2.38);wheel.castShadow=true;car.add(wheel)})});car.visible=false;
 // التحكم
-const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:-100,z:0},mapDrag=null;let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
+const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:-100,z:0},mapDrag=null;const activePointers=new Map();let pinchDistance=0,pinchMoved=false;let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
 addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
 addEventListener("keyup",e=>K[e.code]=0);
 let dr=null;const cvs=$("c");
-cvs.addEventListener("pointerdown",e=>{if(buildMode){mapDrag={x:e.clientX,y:e.clientY,moved:false};cvs.setPointerCapture(e.pointerId);return}dr={x:e.clientX,y:e.clientY};cvs.setPointerCapture(e.pointerId)});
-cvs.addEventListener("pointermove",e=>{if(buildMode){if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4)mapDrag.moved=true;if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}if(!strategyPan)previewFromPointer(e);return}if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=Math.max(.1,Math.min(1.2,pit+(e.clientY-dr.y)*.004));dr={x:e.clientX,y:e.clientY}});
-cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!mapDrag.moved)placeFromPointer(e);mapDrag=null;dr=null});cvs.addEventListener("pointercancel",()=>{dr=null;mapDrag=null});cvs.addEventListener("lostpointercapture",()=>{dr=null;mapDrag=null});cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else dist=clamp(dist+e.deltaY*.01,5,20)},{passive:false});
+// Multi-touch gestures: pinch to zoom, one finger to pan the strategy camera.
+const pointerGap=()=>{const pts=[...activePointers.values()];return pts.length<2?0:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)};
+cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}dr={x:e.clientX,y:e.clientY}});
+cvs.addEventListener("pointermove",e=>{
+ if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(buildMode){
+  if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0)dist=clamp(dist*pinchDistance/gap,8,65);pinchDistance=gap;pinchMoved=true;if(mapDrag)mapDrag.moved=true;return}
+  if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4)mapDrag.moved=true;if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}
+  if(!strategyPan&&!pinchMoved)previewFromPointer(e);return
+ }
+ if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
+});
+cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!mapDrag.moved&&!pinchMoved&&activePointers.size===1)placeFromPointer(e);activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
+const cancelPointer=e=>{activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
+cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
+cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else dist=clamp(dist+e.deltaY*.01,5,20)},{passive:false});
 const js=$("js"),kn=$("kn");let jp=false;
 function jm(e){const r=js.getBoundingClientRect(),m=45;let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const l=Math.hypot(dx,dy);if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;kn.style.transform=`translate(${dx}px,${dy}px)`}
 js.addEventListener("pointerdown",e=>{js.setPointerCapture(e.pointerId);jp=true;jm(e)});js.addEventListener("pointermove",e=>{if(jp)jm(e)});
@@ -583,6 +615,21 @@ function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtP
  if(d.path&&!buildStart){buildStart=snapRoadEndpoint(p,{x:p.x+100,z:p.z+100});updateBuildHud();toastBuild("حدد الآن نقطة النهاية؛ ستتصل بنهايات الطرق القريبة تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:snapRoadEndpoint(p,buildStart)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
+// Centralized settings: reuse existing game controls without duplicating handlers.
+function setupSettings(){
+ const sections={settingsModes:["modeWalk","modeDrive","modeStrategy"],settingsMap:["viewStrategy","panStrategy","placeStrategy","zoomBuildIn","zoomBuildOut","panNorth","panSouth","panWest","panEast"],settingsDisplay:["tour","run","trafficToggle","nightToggle","missionsToggle","home"],settingsActions:["builderToggle","creativeBtn","exportBuild","importBuild","resetBuild","maps"]};
+ for(const [target,ids] of Object.entries(sections))for(const id of ids){const source=$(id),copy=document.createElement("button");copy.textContent=source.textContent;copy.dataset.target=id;copy.onclick=()=>{source.click();copy.textContent=source.textContent;syncSettings()};$(target).append(copy)}
+ const hide=document.createElement("button");hide.id="hideUi";hide.textContent="👁️ إخفاء كل الواجهات";hide.onclick=()=>{document.body.classList.toggle("cleanUi");syncSettings();closeSettings()};$("settingsDisplay").append(hide);
+ const showLocations=document.createElement("button");showLocations.textContent="📍 إظهار/إخفاء المواقع";showLocations.onclick=()=>{$("bar").classList.toggle("collapsed")};$("settingsDisplay").append(showLocations);
+ const showBuilder=document.createElement("button");showBuilder.textContent="🏗️ إظهار/إخفاء لوحة البناء";showBuilder.onclick=()=>{if(!buildMode)toggleBuilder();else $("buildDock").classList.toggle("collapsed")};$("settingsMap").append(showBuilder);
+ $("settingsToggle").onclick=()=>setSettings(!$("gameSettings").classList.contains("on"));
+ $("settingsClose").onclick=closeSettings;
+ addEventListener("keydown",e=>{if(e.code==="Escape")closeSettings()});
+ syncSettings();
+}
+function setSettings(show){$("gameSettings").classList.toggle("on",show);$("gameSettings").setAttribute("aria-hidden",String(!show));$("settingsToggle").setAttribute("aria-expanded",String(show));if(show)syncSettings()}
+function closeSettings(){setSettings(false)}
+function syncSettings(){for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
 function updateModes(){for(const id of ["modeWalk","modeDrive","modeStrategy"])$(id).classList.remove("active");$(buildMode?"modeStrategy":carMode?"modeDrive":"modeWalk").classList.add("active");for(const id of ["viewStrategy","panStrategy","placeStrategy"])$(id).style.display=buildMode?"block":"none";$("viewStrategy").textContent=strategy2D?"🔲 2D علوي":"🏙️ 3D مائل";$("viewStrategy").classList.toggle("active",strategy2D);$("panStrategy").classList.toggle("active",strategyPan);$("placeStrategy").classList.toggle("active",!strategyPan);$("builderGuide").textContent=strategyPan?"✋ اسحب الخريطة بإصبعك دون تحريك اللاعب. اختر «بناء» لوضع الطرق والمباني.":"🛣️ المس الأرض للبناء؛ اضغط «تحريك الخريطة» للتنقل دون إضافة عناصر."}
 $("modeWalk").onclick=()=>{if(buildMode)toggleBuilder();if(carMode)$("drive").click();updateModes()};
 $("modeDrive").onclick=()=>{if(buildMode)toggleBuilder();if(!carMode)$("drive").click();updateModes()};
@@ -607,8 +654,8 @@ $("importBuild").onclick=()=>$("buildFile").click();
 $("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const fileText=typeof file.text==="function"?await file.text():await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error("تعذر قراءة الملف"));reader.readAsText(file,"UTF-8")});const data=JSON.parse(fileText);if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?Math.max(budgetBonus,clamp(data.budgetBonus,0,5000000)):budgetBonus;missionDone=data.missionDone&&typeof data.missionDone==="object"&&!Array.isArray(data.missionDone)?Object.fromEntries(missionDefs.map(m=>[m.id,!!(missionDone[m.id]||data.missionDone[m.id])])):missionDone;drivenMeters=Number.isFinite(data.drivenMeters)?Math.max(drivenMeters,clamp(data.drivenMeters,0,1000000)):drivenMeters;atAirport=atAirport||!!data.atAirport;atCity=atCity||!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();updateModes();
-function releaseControls(){touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
+restoreBuild();updateBuildHud();updateModes();setupSettings();
+function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
