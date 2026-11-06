@@ -280,7 +280,7 @@ function updateAtmosphere(t,dt){
  S.background.copy(skyNight).lerp(dusty?skyDust:skyDay,day);
  S.fog.color.copy(skyFogNight).lerp(dusty?skyDust:skyFogDay,day);
  S.fog.near=foggy?35:dusty?65:140;S.fog.far=foggy?185:dusty?310:620;
- for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);R.toneMappingExposure=.78+day*.48;
+ for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);updateStadiumFloodlights(night);R.toneMappingExposure=.78+day*.48;
  rain.visible=atmosphere.weather==="rain"&&atmosphere.quality!=="low";
  if(rain.visible){rain.position.set(pl.position.x,0,pl.position.z);for(let i=0;i<rainCount;i++){const j=i*3+1;rainPositions[j]-=dt*22;if(rainPositions[j]<1)rainPositions[j]=35}rainGeo.attributes.position.needsUpdate=true}
 }
@@ -669,6 +669,32 @@ for(const [radius,material,heightOffset] of [[canopyInner,canopyLEDMat,.08],[can
   const outer=radius===canopyOuter,p=canopyPoint(a,outer),q=canopyPoint(b,outer);
   p.y+=heightOffset;q.y+=heightOffset;canopyBeam(p,q,outer?.13:.11,material);
  }
+}
+// Night match floodlights mounted on the roof ring, aimed at the pitch.
+const stadiumFloodlights=[],stadiumFloodlightLenses=[];
+const floodFixtureMat=mat(0x2b3e4a,{metalness:.6,roughness:.35});
+const floodLensMat=mat(0xe8f7ff,{emissive:0xcdeeff,emissiveIntensity:0,roughness:.2});
+for(let side of [-1,1])for(let n=0;n<6;n++){
+ const z=ST.z-49+n*19.6,x=ST.x+side*57;
+ const fixture=new THREE.Group();fixture.position.set(x,30,z);S.add(fixture);
+ const housing=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.15,.65),floodFixtureMat);
+ housing.position.set(0,0,0);fixture.add(housing);
+ const lens=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.82),floodLensMat.clone());
+ lens.position.set(0,0,.35);fixture.add(lens);stadiumFloodlightLenses.push(lens);
+ const light=new THREE.SpotLight(0xf3f9ff,0,180,Math.PI/3.3,.62,1.25);
+ light.position.set(x,29,z);
+ light.target.position.set(ST.x+side*9,0,ST.z+(z-ST.z)*.72);
+ S.add(light,light.target);stadiumFloodlights.push(light);
+}
+function updateStadiumFloodlights(night){
+ const active=night>.08;
+ const strength=active?Math.min(1,night*1.35):0;
+ const quality=atmosphere.quality;
+ stadiumFloodlights.forEach((light,i)=>{
+  // Keep fewer expensive dynamic spotlights on low graphics settings.
+  light.intensity=quality==="low"&&i%2?0:strength*(quality==="high"?110:80);
+ });
+ stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=strength*2.4});
 }
 // V3: transparent ETFE-style full-field roof. The 360-degree outer canopy stays opaque,
 // while a high, translucent central cover protects the entire 105x68 pitch.
