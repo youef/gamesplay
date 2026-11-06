@@ -229,7 +229,22 @@ meshBox(w,h,d,color,0,.86+h/2,0);meshBox(w-.15,bus?.95:.82,d*(bus?.85:.55),0x8fc
 for(const side of [-1,1])for(const dir of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(bus?.92:.72,bus?.92:.72,.48,10),mat(0x1f2227));wheel.rotation.z=Math.PI/2;wheel.position.set(side*(w/2+.15),.78,dir*d*.31);root.add(wheel)}
 if(bus){meshBox(w-.8,.1,.5,0xf6e6ba,0,3.3,0);meshBox(w-.5,.45,.15,0xf3d960,0,2.2,d/2+.08)}
 return root}
-for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4]);agents.push({mesh:veh,route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
+for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4]);agents.push({mesh:veh,route,originalRoute:route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
+// V3.7: Two civilian vehicles can use the player's longest surface roads.
+// Routes are recalculated after construction, deletion, import and undo; bridges remain visual-only.
+function refreshCustomTrafficRoutes(){
+ const roads=built.filter(o=>(o.type==="road"||o.type==="avenue")&&o.end)
+  .map(o=>({points:[[o.x,o.z],[o.end.x,o.end.z]],length:Math.hypot(o.end.x-o.x,o.end.z-o.z)}))
+  .filter(o=>o.length>=35).sort((a,b)=>b.length-a.length).slice(0,2);
+ for(let slot=0;slot<2;slot++){
+  const a=agents[slot+2];if(!a)continue;
+  const next=roads[slot]?.points||a.originalRoute;
+  if(a.route===next||(!roads[slot]&&a.route===a.originalRoute))continue;
+  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;
+  a.mesh.position.set(next[0][0],0,next[0][1]);
+  a.mesh.rotation.y=Math.atan2(next[1][0]-next[0][0],next[1][1]-next[0][1]);
+ }
+}
 function moveAgent(a,dt){if(a.dwell>0){a.dwell-=dt;return}let start=a.route[a.seg],end=a.route[a.seg+a.direction];if(!end){a.direction*=-1;a.seg=clamp(a.seg,0,a.route.length-1);a.progress=0;return}
 const dx=end[0]-start[0],dz=end[1]-start[1],len=Math.hypot(dx,dz);if(!len){a.seg+=a.direction;return}a.progress=clamp(a.progress,0,len);
 let remain=len-a.progress,target=a.speed;
@@ -408,7 +423,7 @@ function buildObject(o){
  S.add(grp);return grp;
 }
 function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[];buildLights=[]}
-function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));updateBuildHud()}
+function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));refreshCustomTrafficRoutes();updateBuildHud()}
 function updateBuildHud(){const roads=built.filter(o=>["road","avenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
  const objectives=[roads>=2,greens>=3,buildings>=2,bridges>=1],done=objectives.filter(Boolean).length;
  $("buildHud").textContent=(creativeMode?"🎨 إنشاء حر":"💰 المتبقي: "+coins(balance()))+" | 🧱 "+built.length+" عنصر | ⭐ إنجازات "+done+"/4";
@@ -456,7 +471,7 @@ function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtP
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){buildStart=snapRoadEndpoint(p,{x:p.x+100,z:p.z+100});updateBuildHud();toastBuild("حدد الآن نقطة النهاية؛ ستتصل بنهايات الطرق القريبة تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:snapRoadEndpoint(p,buildStart)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
- if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
+ if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 function toggleBuilder(){buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;pl.position.set(-100,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud()}
