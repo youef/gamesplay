@@ -292,7 +292,7 @@ function setupAtmosphere(){
  for(const id of ["atmTime","atmWeather","atmQuality"])document.getElementById(id).style.cssText="border:0;border-radius:7px;background:#e7f4f8;color:#123044;padding:5px;font:700 12px Tahoma";
  document.getElementById("atmTime").onchange=e=>{atmosphere.auto=e.target.value==="auto";if(!atmosphere.auto)atmosphere.hour=Number(e.target.value)};
  document.getElementById("atmWeather").onchange=e=>atmosphere.weather=e.target.value;
- document.getElementById("atmQuality").onchange=e=>{atmosphere.quality=e.target.value;R.setPixelRatio(Math.min(devicePixelRatio,e.target.value==="low"?1:e.target.value==="high"?1.65:1.3));R.setSize(innerWidth,innerHeight);syncStadiumCrowdQuality()};
+ document.getElementById("atmQuality").onchange=e=>{atmosphere.quality=e.target.value;R.setPixelRatio(Math.min(devicePixelRatio,e.target.value==="low"?1:e.target.value==="high"?1.65:1.3));R.setSize(innerWidth,innerHeight);syncStadiumCrowdQuality();syncStadiumRoofQuality()};
  for(let i=0;i<10;i++){const light=new THREE.PointLight(0xffd9a0,0,24,2);const x=-165+(i%5)*80,z=i<5?-175:175;light.position.set(x,6,z);S.add(light);nightLights.push(light)}
 }
 const mat=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.78,metalness:0},o||{}));
