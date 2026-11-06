@@ -837,8 +837,8 @@ S.add(stadiumCrowdTorso,stadiumCrowdHead);
 // The card mosaic remains in the seats behind this raised fan choreography.
 // Individual supporters raise coloured cards from their actual seats.
 // No floating banner or overlay: every visible letter is formed by raised cards.
-const tifoCardGeo=new THREE.PlaneGeometry(1.12,.78);
-const tifoCardMat=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
+const tifoCardGeo=new THREE.PlaneGeometry(1.45,1.12);
+const tifoCardMat=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide,depthTest:false,depthWrite:false});
 const tifoCardIndices=[];
 for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
@@ -850,15 +850,23 @@ const tifoDummy=new THREE.Object3D();
 for(let n=0;n<tifoCardIndices.length;n++){
  const idx=tifoCardIndices[n],row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow;
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
- tifoDummy.position.set(p.x,p.y+1.85,p.z);
- tifoDummy.rotation.set(-.18,-angle-Math.PI/2,0);
+ tifoDummy.position.set(p.x,p.y+2.35,p.z);
+ tifoDummy.rotation.set(-.1,-angle+Math.PI/2,0);
  tifoDummy.scale.set(1,1,1);tifoDummy.updateMatrix();
  tifoCards.setMatrixAt(n,tifoDummy.matrix);
  tifoCards.setColorAt(n,new THREE.Color(tifoColor(row,seat)));
 }
 tifoCards.instanceMatrix.needsUpdate=true;
 if(tifoCards.instanceColor)tifoCards.instanceColor.needsUpdate=true;
+tifoCards.renderOrder=50;
 S.add(tifoCards);
+// Coordinated flash choreography: all supporters lower and raise their cards together.
+// Hold the complete mosaic for 6 seconds, then hide it for 2 seconds.
+function updateTifoFlash(t){
+ const phase=(t*.001)%8;
+ const raised=phase<6;
+ if(tifoCards.visible!==raised)tifoCards.visible=raised;
+}
 const tifoCardIndexSet=new Set(tifoCardIndices);
 const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
 function updateStadiumCheering(t){
@@ -924,8 +932,9 @@ function updateStadium(t,dt){
  m.elapsed+=dt*4; // Accelerated match clock, independent from animation frame count.
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
  if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
- if(!nearStadium)return;
+ if(!nearStadium){tifoCards.visible=false;return;}
  updateStadiumCheering(t);
+ updateTifoFlash(t);
  if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
  stadiumScoreboard.textContent="⚽ الاتحاد "+stadiumScore.blue+" : "+stadiumScore.white+" الهلال | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
