@@ -41,6 +41,19 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 #status{position:fixed;left:9px;bottom:calc(6px + env(safe-area-inset-bottom,0px));background:#18283caa;color:#fff;font-size:11px;padding:4px 8px;border-radius:9px;z-index:4}
 @media(max-width:700px){#bar button{font-size:12px;padding:8px 10px}#tools button{font-size:12px;padding:8px}#mini{top:calc(65px + env(safe-area-inset-top,0px));width:94px;height:94px}#tools{top:calc(176px + env(safe-area-inset-top,0px))}#enter{right:12px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}#roomBtns{top:calc(192px + env(safe-area-inset-top,0px))}}
 @media(prefers-reduced-motion:reduce){#panel{transition:none}}
+.uiClose{border:1px solid #ffffff77;border-radius:10px;background:#8a3333;color:#fff;font:700 13px Tajawal,Tahoma;padding:7px 10px;cursor:pointer;min-height:34px}
+#missionsPanel .uiClose,#buildDock .uiClose{float:left;margin:0 0 8px 8px}
+#showTools,#showLocations,#showRooms,#closeRooms,#sitStand,#standUp{position:fixed;z-index:11;border:1px solid #fff9;border-radius:13px;background:#183754;color:white;padding:10px;font:800 13px Tajawal,Tahoma;cursor:pointer}
+#showTools{top:calc(62px + env(safe-area-inset-top,0px));right:10px}
+#showLocations{top:calc(62px + env(safe-area-inset-top,0px));left:135px}
+#showRooms,#closeRooms{right:10px;top:calc(110px + env(safe-area-inset-top,0px));display:none}
+#sitStand,#standUp{bottom:calc(122px + env(safe-area-inset-bottom,0px));right:12px;display:none;background:#166a62}
+#standUp{background:#a34933}
+#tools.collapsed,#bar.collapsed,#roomBtns.collapsed{display:none!important}
+#buildDock.collapsed{display:none!important}
+#tools .uiClose{background:#8a3333}
+#bar .uiClose{background:#8a3333}
+@media(max-width:700px){#showLocations{left:113px}#showTools,#showLocations{top:calc(64px + env(safe-area-inset-top,0px));padding:8px;font-size:12px}#sitStand,#standUp{bottom:calc(136px + env(safe-area-inset-bottom,0px))}}
 
 #drivingHud{position:fixed;left:50%;top:calc(115px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#122337ea;color:white;min-width:125px;text-align:center;padding:10px 14px;border-radius:16px;z-index:6;display:none;font-weight:800;pointer-events:none}
 #speedValue{font:800 27px Tajawal,Tahoma,sans-serif;color:#9ce6d7}#distanceValue{font-size:12px;color:#d5e7ee}#driveTip{font-size:10px;font-weight:500;opacity:.87;margin-top:3px}
@@ -72,15 +85,15 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 <body>
 <canvas id="c"></canvas>
 <div id="ld">جارٍ تجهيز الحرم الجامعي…</div>
-<div id="bar"></div>
+<div id="bar"><button id="closeLocations" class="uiClose" aria-label="إغلاق المواقع">✕ إغلاق</button></div>
 <canvas id="mini" width="260" height="260"></canvas>
 <div id="hint">على الآيباد: حرّك العصا اليسرى للمشي، واسحب يمين الشاشة لتدوير الكاميرا، واضغط دخول قرب المباني</div>
 <div id="js"><div id="kn"></div></div>
-<div id="tools"><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
+<button id="showTools" aria-label="فتح قائمة الأدوات" aria-expanded="true">☰ القوائم</button><button id="showLocations" aria-label="فتح قائمة المواقع" aria-expanded="true">📍 المواقع</button><div id="tools"><button id="closeTools" class="uiClose" aria-label="إغلاق قائمة الأدوات">✕ إغلاق</button><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
 <div id="buildHud" aria-live="polite"></div>
 <div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم النهاية؛ يتم وصل الأطراف القريبة تلقائيًا.</div>
-<section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي">
+<section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي"><button id="closeBuildDock" class="uiClose" aria-label="إغلاق لوحة البناء">✕ إغلاق الأدوات</button>
   <div id="buildHint">اختر أداة ثم المس الأرض لإضافة عنصر.</div>
   <div class="buildingRow" id="buildChoices"></div>
   <div class="cmdRow">
@@ -93,9 +106,9 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 <div id="buildToast" role="status"></div>
 <div id="drivingHud" aria-live="polite"><span id="speedValue">0</span> كم/س <span id="distanceValue">· 0 م</span><div id="driveTip">عصا التحكّم للتوجيه • الزران للتسارع والفرامل</div></div>
 <div id="driveControls"><button id="brakeBtn" type="button">🛑 فرامل</button><button id="gasBtn" type="button">⏩ بنزين</button></div>
-<section id="missionsPanel" aria-label="مهمات اللعبة"><h3>🎯 مهمات التطوير والاستكشاف</h3><div id="missionsList"></div><p>مكافآت المهمات تضيف رصيدًا إلى ميزانية البناء. تقدّمك محفوظ على جهازك.</p></section>
-<div id="interInfo"></div><div id="roomBtns"></div><button id="leave">خروج من المبنى ↩</button>
-<button id="enter">دخول</button><div id="status">محاكاة لعب تقريبية وليست مخططًا مساحيًا • 🏗️ بناء | 🚗 قيادة | 🚌 نقل | 🚦 إشارات | 🎯 مهمات</div>
+<section id="missionsPanel" aria-label="مهمات اللعبة"><button id="closeMissions" class="uiClose" aria-label="إغلاق المهمات">✕ إغلاق</button><h3>🎯 مهمات التطوير والاستكشاف</h3><div id="missionsList"></div><p>مكافآت المهمات تضيف رصيدًا إلى ميزانية البناء. تقدّمك محفوظ على جهازك.</p></section>
+<div id="interInfo"></div><div id="roomBtns"></div><button id="closeRooms" aria-label="إغلاق قائمة القاعات">✕ إغلاق القاعات</button><button id="showRooms" aria-label="فتح قائمة القاعات">🚪 القاعات</button><button id="leave">خروج من المبنى ↩</button>
+<button id="sitStand" aria-label="الجلوس في مدرج الملعب">🪑 الجلوس بالمدرج</button><button id="standUp" aria-label="القيام من المقعد">↩ القيام</button><button id="enter">دخول</button><div id="status">محاكاة لعب تقريبية وليست مخططًا مساحيًا • 🏗️ بناء | 🚗 قيادة | 🚌 نقل | 🚦 إشارات | 🎯 مهمات</div>
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -147,11 +160,11 @@ const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
 const box=(w,h,d,m,x,y,z,sh)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=sh!==0;S.add(o);return o};
 const cvt=(w,h,f)=>{const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t};
 // الأرض
-const gt=cvt(128,128,(g,w,h)=>{g.fillStyle="#d8c093";g.fillRect(0,0,w,h);for(let i=0;i<500;i++){g.fillStyle=Math.random()<.5?"#c9ad7b":"#e6d2a8";g.fillRect(Math.random()*w,Math.random()*h,2,2)}});gt.repeat.set(300,300);
+const gt=cvt(256,256,(g,w,h)=>{g.fillStyle="#d8c093";g.fillRect(0,0,w,h);for(let i=0;i<4200;i++){const x=Math.random()*w,y=Math.random()*h;g.fillStyle=Math.random()<.5?"#c9ad7b":"#e6d2a8";g.fillRect(x,y,1+Math.random()*3,1+Math.random()*2)}for(let i=0;i<180;i++){g.strokeStyle="#e7d2ac";g.beginPath();const x=Math.random()*w,y=Math.random()*h;g.moveTo(x,y);g.lineTo(x+Math.random()*8,y+Math.random()*3);g.stroke()}});gt.repeat.set(300,300);
 const gp=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),new THREE.MeshLambertMaterial({map:gt}));gp.rotation.x=-Math.PI/2;gp.receiveShadow=true;S.add(gp);
 const fl=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0xdccdaa));fl.rotation.x=-Math.PI/2;fl.position.y=.03;fl.receiveShadow=true;S.add(fl);
 // الطرق
-const dash=hz=>cvt(hz?64:16,hz?16:64,(g,w,h)=>{g.fillStyle="#41464d";g.fillRect(0,0,w,h);for(let i=0;i<120;i++){g.fillStyle="#4f555d";g.fillRect(Math.random()*w,Math.random()*h,1,1)}g.fillStyle="#e8e8e8";hz?g.fillRect(0,h/2-1,w/2,2):g.fillRect(w/2-1,0,2,h/2)});
+const dash=hz=>cvt(hz?256:64,hz?64:256,(g,w,h)=>{g.fillStyle="#363b42";g.fillRect(0,0,w,h);for(let i=0;i<1400;i++){g.fillStyle=Math.random()<.5?"#454b53":"#2e343b";g.fillRect(Math.random()*w,Math.random()*h,1.5,1.5)}g.fillStyle="#e5dfc9";hz?g.fillRect(0,h/2-2,w/2,4):g.fillRect(w/2-2,0,4,h/2)});
 function road(x1,z1,x2,z2,w){const hz=z1===z2,len=hz?Math.abs(x2-x1):Math.abs(z2-z1),t=dash(hz);t.repeat.set(hz?len/8:1,hz?1:len/8);const m=new THREE.Mesh(new THREE.PlaneGeometry(hz?len:w,hz?w:len),new THREE.MeshLambertMaterial({map:t}));m.rotation.x=-Math.PI/2;m.position.set((x1+x2)/2,.06,(z1+z2)/2);m.receiveShadow=true;S.add(m)}
 [[-186,-186,186,-186],[-186,186,186,186],[-186,-186,-186,186],[186,-186,186,186],[-200,-88,200,-88],[0,-200,0,-88],[-100,-186,-100,200],[-200,-88,-320,-88],[200,-88,320,-88],[0,-200,0,-320],[-100,200,-100,320]].forEach(r=>road(r[0],r[1],r[2],r[3],8));
 // السور
@@ -180,8 +193,29 @@ COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
 const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
 ell(ST.rx+16,ST.rz+16,0xc9bfa8,.1);ell(ST.rx,ST.rz,0xb04a3a,.2);ell(ST.rx-9,ST.rz-9,0x2f56a3,.3);ell(ST.rx-14,ST.rz-14,0x3f8a4a,.4);
 const wm=mat(0xffffff);[[0,-30,90,.5],[0,30,90,.5],[-45,0,.5,60],[45,0,.5,60],[0,0,.5,60]].forEach(l=>box(l[2]||.5,.1,l[3]||.5,wm,ST.x+l[0],.58,ST.z+l[1],0));
-box(110,6,6,mat(0xe7e2d6),ST.x,3,ST.z-ST.rz-20);COL.push([ST.x-55,ST.z-ST.rz-23,ST.x+55,ST.z-ST.rz-17]);
+// مدرج شمالي متدرج، مقاعد وممرات ودرابزين — نموذج تخيلي
+const standFront=ST.z-ST.rz-17;
+for(let row=0;row<7;row++){
+ const z=standFront-row*2.8,y=.7+row*.72;
+ box(112,.7,2.75,mat(row%2?0xc9d1d7:0xe1e6e9),ST.x,y, z);
+ for(let x=-50;x<=50;x+=3.3){
+  if(Math.abs(x)<4||Math.abs(x-27)<2||Math.abs(x+27)<2)continue;
+  box(2.75,.45,.9,mat((Math.round(x)+row)%3===0?0x2a557e:0x4076a0),ST.x+x,y+.65,z-.45,0);
+  box(2.75,.65,.28,mat(0x1d456a),ST.x+x,y+1.08,z-1.02,0);
+ }
+}
+box(114,1,.4,mat(0xb8c3cd),ST.x,6.3,standFront-19.5,0);
+COL.push([ST.x-56,standFront-20,ST.x+56,standFront+2]);
+const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
 [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
+// خطوط ملعب وأهداف مع شباك مبسط
+for(const sign of [-1,1]){
+ const z=ST.z+sign*29;
+ box(18,.22,.22,mat(0xf6f6ed),ST.x,3.5,z,0);
+ box(.25,3.5,.25,mat(0xf5f5f1),ST.x-9,1.75,z,0);
+ box(.25,3.5,.25,mat(0xf5f5f1),ST.x+9,1.75,z,0);
+ for(let t=-8;t<=8;t+=2)box(.04,3,.04,mat(0xe6e9e6),ST.x+t,1.5,z+sign*1.6,0);
+}
 const sl=lab("ملعب الجامعة","#b04a3a",3.6);sl.position.set(ST.x,12,ST.z);
 // نخيل وإنارة
 const trm=mat(0x8a6a45),lfm=mat(0x3f8a45);
@@ -375,17 +409,18 @@ function buildInterior(b){
  for(let i=0;i<4;i++){const light=new THREE.PointLight(0xffedc9,.6,45);light.position.set(X-24+i*16,6,0);interior.add(light)}
  const l=lab(b.n,"#1d3a5f",3.4);l.position.set(X,5,-22);interior.add(l);
 }
-let outsidePos=null;
+let outsidePos=null,seated=false,seatOrigin=null;
 function enterBuilding(b){
+ if(seated)leaveStand();
  if(carMode){toastBuild("🚗 اخرج من السيارة أولًا للدخول");return}
  if(b===ST){op(b);return}
  outsidePos={x:pl.position.x,z:pl.position.z,yaw,pit,dist};inside=b;open=false;pn.classList.remove("on");
  buildInterior(b);interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;dist=8;
  $("leave").style.display="block";$("interInfo").style.display="block";$("interInfo").textContent="داخل " + b.n + " — نموذج تخيلي تعليمي";
- $("roomBtns").style.display="flex";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
+ $("roomBtns").style.display="flex";$("roomBtns").classList.remove("collapsed");$("closeRooms").style.display="block";$("showRooms").style.display="none";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
 }
 function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
-function exitBuilding(){if(!inside)return;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("mini").style.display="block"}
+function exitBuilding(){if(!inside)return;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
@@ -395,13 +430,25 @@ for(const [btn,key] of [["gasBtn","gas"],["brakeBtn","brake"]]){const el=$(btn);
 $("trafficToggle").onclick=()=>{trafficEnabled=!trafficEnabled;agents.forEach(a=>a.mesh.visible=trafficEnabled);$("trafficToggle").classList.toggle("active",trafficEnabled);$("trafficToggle").textContent=trafficEnabled?"🚦 حركة المرور":"🚙 حركة متوقفة";toastBuild(trafficEnabled?"تم تشغيل حركة السيارات والحافلات":"تم إيقاف حركة السيارات والحافلات")};
 $("nightToggle").onclick=()=>{nightMode=!nightMode;S.background=new THREE.Color(nightMode?0x10223c:0x9fcff0);sun.intensity=nightMode?.28:.85;$("nightToggle").classList.toggle("active",nightMode);$("nightToggle").textContent=nightMode?"☀️ النهار":"🌙 الليل"};
 $("missionsToggle").onclick=()=>{const el=$("missionsPanel");el.style.display=el.style.display==="block"?"none":"block";renderMissions()};
+$("closeMissions").onclick=()=>{$("missionsPanel").style.display="none"};
+function toggleUiList(id,showId,force){const el=$(id),next=typeof force==="boolean"?force:el.classList.contains("collapsed");el.classList.toggle("collapsed",!next);$(showId).setAttribute("aria-expanded",String(next))}
+$("closeTools").onclick=()=>toggleUiList("tools","showTools",false);
+$("showTools").onclick=()=>toggleUiList("tools","showTools");
+$("closeLocations").onclick=()=>toggleUiList("bar","showLocations",false);
+$("showLocations").onclick=()=>toggleUiList("bar","showLocations");
+$("closeRooms").onclick=()=>{$("roomBtns").classList.add("collapsed");$("showRooms").style.display="block";$("closeRooms").style.display="none"};
+$("showRooms").onclick=()=>{$("roomBtns").classList.remove("collapsed");$("showRooms").style.display="none";$("closeRooms").style.display="block"};
+$("closeBuildDock").onclick=()=>{$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء"};
+function leaveStand(){if(!seated)return;seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
+$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.15;dist=5;ch.rotation.x=-.18;$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
+$("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
 $("mini").onclick=()=>{$("tour").click()};
 function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>enterBuilding(b);pn.classList.add("on");en.style.display="none"}
 function cl(){open=false;pn.classList.remove("on")}
 $("x").onclick=cl;en.onclick=()=>near&&op(near);
-function tp(x,z,fx,fz){exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0;car.position.set(x,0,z)}
+function tp(x,z,fx,fz){if(seated)leaveStand();exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0;car.position.set(x,0,z)}
 B.forEach(b=>{const k=document.createElement("button");k.textContent=b.n;k.onclick=()=>tp(b.door.x,b.door.z,0,b.ds==="n"?1:-1);$("bar").appendChild(k)});
 const sk=document.createElement("button");sk.textContent=ST.n;sk.onclick=()=>tp(ST.x+ST.rx+28,ST.z,-1,0);$("bar").appendChild(sk);
 G.forEach(g=>{const k=document.createElement("button");k.className="g";k.textContent=g.n;k.onclick=()=>tp(g.x+g.ix*10,g.z+g.iz*10,g.ix,g.iz);$("bar").appendChild(k)});
@@ -530,7 +577,7 @@ function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtP
  if(d.path&&!buildStart){buildStart=snapRoadEndpoint(p,{x:p.x+100,z:p.z+100});updateBuildHud();toastBuild("حدد الآن نقطة النهاية؛ ستتصل بنهايات الطرق القريبة تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:snapRoadEndpoint(p,buildStart)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
-function toggleBuilder(){buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;pl.position.set(-100,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+function toggleBuilder(){if(seated)leaveStand();buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;pl.position.set(-100,0,0);$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
@@ -570,7 +617,7 @@ mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.P
 let last=0,lastMiniDraw=-Infinity;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
-if(carMode&&!open&&!inside&&!buildMode){
+if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
  carSpeed+=gas*31*dt-brake*44*dt;
  if(!gas&&!brake)carSpeed=Math.max(0,carSpeed-12*dt);
@@ -585,7 +632,7 @@ if(carMode&&!open&&!inside&&!buildMode){
  if(!atCity&&drivenMeters-driveStartDistance>30&&pl.position.x<-570&&Math.abs(pl.position.z-CITY.z)<130){atCity=true;storeBuild()}
  if(Math.floor(drivenMeters/150)>Math.floor((drivenMeters-step)/150))storeBuild();
  if(mv)hint.style.opacity=0;
-}else if(l>.08&&!open&&!buildMode){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
+}else if(l>.08&&!open&&!buildMode&&!seated){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
  const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;
  if(inside){pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}else{if(!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
  const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
@@ -595,7 +642,8 @@ const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=ca
 if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+1);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
 near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
-en.style.display=near&&!open&&!inside&&!buildMode&&!carMode?"block":"none";if(near)en.textContent="دخول";
+en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
+$("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-ST.rz-23))<65?"block":"none";if(near)en.textContent="دخول";
 updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!document.hidden)R.render(S,cam)})(0);
 }
 </script>
