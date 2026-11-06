@@ -798,20 +798,14 @@ stadiumCrowdTorso.castShadow=false;stadiumCrowdHead.castShadow=false;
 // Ittihad vs Al Hilal derby: a coordinated 60-row yellow-and-black tiger tifo.
 const tifoCanvas=document.createElement("canvas");tifoCanvas.width=1024;tifoCanvas.height=512;
 const tg=tifoCanvas.getContext("2d");
-// Stadium card mosaic: giant high-contrast Arabic phrase readable from the pitch.
-tg.fillStyle="#f6c900";tg.fillRect(0,0,1024,512);
-tg.fillStyle="#101010";
-for(let x=0;x<1024;x+=128){tg.fillRect(x,0,24,512)}
-tg.fillStyle="#090909";tg.fillRect(64,92,896,320);
-tg.strokeStyle="#f6c900";tg.lineWidth=13;tg.strokeRect(76,104,872,296);
-tg.direction="ltr";tg.textAlign="center";tg.textBaseline="middle";
-tg.fillStyle="#f6c900";tg.font="900 148px Arial,sans-serif";
-tg.fillText("ITTIHAD",512,254,810);
-tg.fillStyle="#ffffff";tg.font="bold 39px Tahoma,Arial,sans-serif";
-tg.fillText("BLACK & YELLOW",512,363,790);
-tg.fillStyle="#111";tg.fillRect(0,445,1024,67);
-tg.fillStyle="#f6c900";tg.font="900 40px Tahoma,Arial,sans-serif";
-tg.fillText("AL ITTIHAD vs AL HILAL",512,477,820);
+tg.fillStyle="#f7ca0c";tg.fillRect(0,0,1024,512);
+tg.fillStyle="#101010";tg.fillRect(0,0,1024,74);tg.fillRect(0,432,1024,80);
+tg.fillStyle="#101010";tg.fillRect(32,89,960,330);
+tg.strokeStyle="#f7ca0c";tg.lineWidth=12;tg.strokeRect(48,105,928,298);
+tg.textAlign="center";tg.textBaseline="middle";tg.direction="ltr";
+tg.fillStyle="#f7ca0c";tg.font="900 185px Arial,sans-serif";tg.fillText("ITTIHAD",512,241,905);
+tg.fillStyle="#ffffff";tg.font="900 54px Arial,sans-serif";tg.fillText("BLACK & YELLOW",512,358,860);
+tg.fillStyle="#f7ca0c";tg.font="900 48px Arial,sans-serif";tg.fillText("THE TIGERS",512,470,800);
 const tifoPixels=tg.getImageData(0,0,512,256).data;
 function tifoColor(row,seat){
  // North end: an unbroken giant mosaic; other sections wear club colors.
@@ -841,6 +835,29 @@ for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat+
 stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
 if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=true;
 S.add(stadiumCrowdTorso,stadiumCrowdHead);
+// Dedicated 3D crowd tifo banner: readable from the pitch, not tiny individual shirts.
+// The card mosaic remains in the seats behind this raised fan choreography.
+const tifoTexture=new THREE.CanvasTexture(tifoCanvas);
+tifoTexture.colorSpace=THREE.SRGBColorSpace;
+tifoTexture.anisotropy=Math.min(8,R.capabilities.getMaxAnisotropy());
+const tifoBannerMat=new THREE.MeshBasicMaterial({map:tifoTexture,side:THREE.DoubleSide,depthWrite:true});
+const tifoBannerVerts=[],tifoBannerUvs=[],tifoBannerIndices=[];
+const tifoSegments=64;
+for(let j=0;j<=tifoSegments;j++){
+ const u=j/tifoSegments,x=(u-.5)*98;
+ // Position banner directly in front of the northern grandstand, with shallow curvature.
+ const z=ST.z-61.9-8*Math.pow(Math.abs(x)/49,2);
+ tifoBannerVerts.push(ST.x+x,3,z,ST.x+x,20.5,z);
+ tifoBannerUvs.push(u,0,u,1);
+ if(j<tifoSegments){const k=j*2;tifoBannerIndices.push(k,k+1,k+2,k+1,k+3,k+2)}
+}
+const tifoBannerGeo=new THREE.BufferGeometry();
+tifoBannerGeo.setAttribute("position",new THREE.Float32BufferAttribute(tifoBannerVerts,3));
+tifoBannerGeo.setAttribute("uv",new THREE.Float32BufferAttribute(tifoBannerUvs,2));
+tifoBannerGeo.setIndex(tifoBannerIndices);tifoBannerGeo.computeVertexNormals();
+const tifoBanner=new THREE.Mesh(tifoBannerGeo,tifoBannerMat);
+tifoBanner.renderOrder=2;tifoBanner.frustumCulled=false;S.add(tifoBanner);
+
 const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
 function updateStadiumCheering(t){
  if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
