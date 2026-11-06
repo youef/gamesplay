@@ -1240,7 +1240,16 @@ addEventListener("blur",releaseControls);document.addEventListener("visibilitych
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
 setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
-const hit=(x,z)=>B.some(b=>!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+1&&Math.abs(z-b.z)<b.d/2+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
+// Solid perimeter: only the actual modeled wall segments block movement.
+// Gate openings remain traversable. Swept sampling prevents fast vehicles
+// and sprinting players from tunneling through thin walls between frames.
+const wallBlocked=(x,z,radius=1.05)=>COL.some(([minX,minZ,maxX,maxZ])=>x+radius>minX&&x-radius<maxX&&z+radius>minZ&&z-radius<maxZ);
+function wallSweepBlocked(x0,z0,x1,z1,radius=1.05){
+ const distance=Math.hypot(x1-x0,z1-z0),steps=Math.max(1,Math.ceil(distance/.45));
+ for(let i=1;i<=steps;i++){const t=i/steps;if(wallBlocked(x0+(x1-x0)*t,z0+(z1-z0)*t,radius))return true}
+ return false;
+}
+const hit=(x,z)=>wallBlocked(x,z)||B.some(b=>!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+1&&Math.abs(z-b.z)<b.d/2+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
 const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx=v=>(v-WORLD.minX)*k,mz=v=>(v-WORLD.minZ)*k;
 function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
 mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
@@ -1294,7 +1303,7 @@ if(carMode&&!open&&!inside&&!buildMode&&!seated){
  if(carSpeed>.25)fa-=steer*dt*(.35+carSpeed/35)*1.45;
  const step=carSpeed*dt,nx=clamp(pl.position.x+Math.sin(fa)*step,WORLD.minX+5,WORLD.maxX-5),nz=clamp(pl.position.z+Math.cos(fa)*step,WORLD.minZ+5,WORLD.maxZ-5);
  const nearbyVehicle=trafficEnabled&&agents.some(a=>a.mesh.visible!==false&&Math.hypot(a.mesh.position.x-nx,a.mesh.position.z-nz)<(a.bus?8:6));
- if(hit(nx,pl.position.z)||hit(pl.position.x,nz)||nearbyVehicle){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001}
+ if(wallSweepBlocked(pl.position.x,pl.position.z,nx,nz,2.3)||hit(nx,pl.position.z)||hit(pl.position.x,nz)||nearbyVehicle){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001}
  yaw=fa+Math.PI;
  $("speedValue").textContent=Math.round(carSpeed*3.6);$("distanceValue").textContent=" · "+Math.round(drivenMeters).toLocaleString("ar-SA")+" م";
  if(!atAirport&&drivenMeters-driveStartDistance>30&&Math.hypot(pl.position.x-AIR.x,pl.position.z-AIR.z)<110){atAirport=true;storeBuild()}
@@ -1303,15 +1312,15 @@ if(carMode&&!open&&!inside&&!buildMode&&!seated){
  if(mv)hint.style.opacity=0;
 }else if(l>.08&&!open&&!buildMode&&!seated){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
  const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;
- if(inside){pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}else{if(!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
+ if(inside){pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}else{if(!wallSweepBlocked(pl.position.x,pl.position.z,nx,pl.position.z,1.05)&&!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!wallSweepBlocked(pl.position.x,pl.position.z,pl.position.x,nz,1.05)&&!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
  const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
 ch.rotation.y=fa;
 const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
 if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  const v=Math.hypot(joy2.x,joy2.y);
  if(v>.12){const speed=(secondRunning?15:8)*dt;student2Steps+=speed*v;const xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
- if(!hit(xx,zyad.position.z))zyad.position.x=xx;
- if(!hit(zyad.position.x,zz))zyad.position.z=zz;
+ if(!wallSweepBlocked(zyad.position.x,zyad.position.z,xx,zyad.position.z,1.05)&&!hit(xx,zyad.position.z))zyad.position.x=xx;
+ if(!wallSweepBlocked(zyad.position.x,zyad.position.z,zyad.position.x,zz,1.05)&&!hit(zyad.position.x,zz))zyad.position.z=zz;
  zyad.rotation.y=Math.atan2(joy2.x,joy2.y);zyadYaw=zyad.rotation.y+Math.PI;zyadAvatar.rotation.z=Math.sin(t*.014)*(secondRunning?.07:.04);
  }
  const separation=Math.hypot(zyad.position.x-pl.position.x,zyad.position.z-pl.position.z);
