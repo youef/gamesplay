@@ -131,6 +131,25 @@ body.cleanUi #buildDock{display:none!important}
 #ipadPauseCard .pauseActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
 body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #showLocations,body.hudFocus #settingsToggle,body.hudFocus #atmospherePanel,body.hudFocus #hint{display:none!important}
 #mini{transform-origin:top left;transition:transform .2s}
+/* Clean gameplay: all nonessential panels are organized inside Settings. */
+#studentModeMenu,#ipadHudBar,#atmospherePanel,#mini:not(.settingsMapVisible),#studentTeamHud,#student2Info,#buildHud,#builderGuide,#strategyBar,#showTools,#showLocations,#bar,#tools,#hint{display:none!important}
+#settingsToggle{position:fixed!important;display:block!important;z-index:60!important;top:calc(10px + env(safe-area-inset-top,0px))!important;right:calc(10px + env(safe-area-inset-right,0px))!important;left:auto!important}
+#gameSettings{z-index:65!important;top:calc(56px + env(safe-area-inset-top,0px))!important;right:calc(10px + env(safe-area-inset-right,0px))!important;max-height:calc(100dvh - 70px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;width:min(450px,calc(100vw - 20px))!important}
+#gameSettings .settingsScroll{overflow:auto;overscroll-behavior:contain}
+#gameSettings .settingsEmbedded{position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;display:block!important;width:100%!important;max-width:100%!important;max-height:none!important;overflow:visible!important;box-shadow:none!important;margin:8px 0!important;z-index:auto!important}
+#gameSettings #buildDock.settingsEmbedded{background:transparent!important;border:0!important;padding:5px!important}
+#gameSettings #missionsPanel.settingsEmbedded{background:transparent!important;border:0!important;padding:5px!important}
+#gameSettings #atmospherePanel.settingsEmbedded{background:transparent!important;border:0!important;color:inherit!important;padding:6px!important;backdrop-filter:none!important}
+#gameSettings #studentModeMenu.settingsEmbedded{display:flex!important;gap:6px;flex-wrap:wrap}
+#gameSettings #studentModeMenu.settingsEmbedded button{flex:1;min-width:95px}
+#gameSettings #buildDock.settingsEmbedded:not(.builderSettingsActive){display:none!important}
+#gameSettings #missionsPanel.settingsEmbedded:not(.missionsSettingsActive){display:none!important}
+#gameSettings #campusEditor.settingsEmbedded{display:none!important}
+#gameSettings #campusEditor.settingsEmbedded.editorSettingsActive{display:block!important}
+#gameSettings #buildDock .uiClose,#gameSettings #missionsPanel .uiClose{display:none!important}
+#gameSettings #buildDock button,#gameSettings #missionsPanel button{min-height:36px}
+#gameSettings #atmospherePanel select{max-width:100%}
+@media(max-width:900px){#gameSettings{width:min(450px,calc(100vw - 20px))!important}#settingsToggle{font-size:12px!important;padding:8px!important}}
 </style>
 </head>
 <body>
@@ -777,7 +796,7 @@ function setStudentMode(mode,student){
 }
 function setupStudents(){
  createSecondStudent();
- const menu=document.createElement("div");menu.id="studentModeMenu";menu.dir="rtl";menu.style.cssText="position:fixed;z-index:29;top:calc(8px + env(safe-area-inset-top,0px));left:8px;display:flex;gap:5px;flex-wrap:wrap;max-width:85vw";
+ const menu=document.createElement("div");menu.id="studentModeMenu";menu.dir="rtl";menu.style.cssText="display:flex;gap:5px;flex-wrap:wrap";
  menu.innerHTML='<button data-student-mode="single-fawaz">👨‍🎓 فواز</button><button data-student-mode="single-zyad">👨‍🎓 زياد</button><button data-student-mode="split">👥 لاعبان</button>';
  document.body.appendChild(menu);
  menu.querySelectorAll("button").forEach(b=>{b.style.cssText="border:1px solid #d4e5dc;border-radius:10px;background:#173c54;color:white;padding:9px;font:700 13px Tajawal,Tahoma";b.onclick=()=>{if(buildMode||carMode){toastBuild("أوقف القيادة أو البناء أولًا لتفعيل اللعب المشترك");return}const m=b.dataset.studentMode;if(m==="split")setStudentMode("split");else setStudentMode("single",m.split("-")[1])}});
@@ -1168,7 +1187,7 @@ function setupSettings(){
  for(const [target,ids] of Object.entries(sections))for(const id of ids){const source=$(id),copy=document.createElement("button");copy.textContent=source.textContent;copy.dataset.target=id;copy.onclick=()=>{source.click();copy.textContent=source.textContent;syncSettings()};$(target).append(copy)}
  const hide=document.createElement("button");hide.id="hideUi";hide.textContent="👁️ إخفاء كل الواجهات";hide.onclick=()=>{document.body.classList.toggle("cleanUi");syncSettings();closeSettings()};$("settingsDisplay").append(hide);
  const showLocations=document.createElement("button");showLocations.textContent="📍 إظهار/إخفاء المواقع";showLocations.onclick=()=>{$("bar").classList.toggle("collapsed")};$("settingsDisplay").append(showLocations);
- const showBuilder=document.createElement("button");showBuilder.id="showBuilderSettings";showBuilder.textContent="🏗️ إظهار أدوات البناء";showBuilder.onclick=()=>{if(!buildMode)toggleBuilder();document.body.classList.toggle("showBuildDock");$("buildDock").classList.remove("collapsed");syncSettings()};$("settingsMap").append(showBuilder);
+ const showBuilder=document.createElement("button");showBuilder.id="showBuilderSettings";showBuilder.textContent="🏗️ فتح أدوات البناء";showBuilder.onclick=()=>{if(!buildMode)toggleBuilder();const panel=$("buildDock");panel.classList.toggle("builderSettingsActive");syncSettings()};$("settingsMap").append(showBuilder);
  $("settingsToggle").onclick=()=>setSettings(!$("gameSettings").classList.contains("on"));
  $("settingsClose").onclick=closeSettings;
  addEventListener("keydown",e=>{if(e.code==="Escape")closeSettings()});
@@ -1176,7 +1195,7 @@ function setupSettings(){
 }
 function setSettings(show){$("gameSettings").classList.toggle("on",show);$("gameSettings").setAttribute("aria-hidden",String(!show));$("settingsToggle").setAttribute("aria-expanded",String(show));if(show)syncSettings()}
 function closeSettings(){setSettings(false)}
-function syncSettings(){const buildButton=$("showBuilderSettings");if(buildButton)buildButton.textContent=document.body.classList.contains("showBuildDock")?"✕ إخفاء أدوات البناء":"🏗️ إظهار أدوات البناء";for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
+function syncSettings(){const buildButton=$("showBuilderSettings");if(buildButton)buildButton.textContent=$("buildDock").classList.contains("builderSettingsActive")?"✕ إغلاق أدوات البناء":"🏗️ فتح أدوات البناء";for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
 function updateModes(){for(const id of ["modeWalk","modeDrive","modeStrategy"])$(id).classList.remove("active");$(buildMode?"modeStrategy":carMode?"modeDrive":"modeWalk").classList.add("active");for(const id of ["viewStrategy","panStrategy","placeStrategy"])$(id).style.display=buildMode?"block":"none";$("viewStrategy").textContent=strategy2D?"🔲 2D علوي":"🏙️ 3D مائل";$("viewStrategy").classList.toggle("active",strategy2D);$("panStrategy").classList.toggle("active",strategyPan);$("placeStrategy").classList.toggle("active",!strategyPan);$("builderGuide").textContent=strategyPan?"✋ اسحب الخريطة بإصبعك دون تحريك اللاعب. اختر «بناء» لوضع الطرق والمباني.":"🛣️ المس الأرض للبناء؛ اضغط «تحريك الخريطة» للتنقل دون إضافة عناصر."}
 $("modeWalk").onclick=()=>{if(buildMode)toggleBuilder();if(carMode)$("drive").click();updateModes()};
 $("modeDrive").onclick=()=>{if(buildMode)toggleBuilder();if(!carMode)$("drive").click();updateModes()};
@@ -1235,7 +1254,33 @@ B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2
 mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0,7);mm.fill()});
 built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
 mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle=carMode?"#ffb000":"#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
-setupAtmosphere();let last=0,lastMiniDraw=-Infinity;
+setupAtmosphere();
+function organizeSettings(){
+ const settings=$("gameSettings").querySelector(".settingsScroll");
+ function section(title){const details=document.createElement("details");details.className="gameSettingsSection";const summary=document.createElement("summary");summary.textContent=title;details.append(summary);settings.append(details);return details}
+ const players=section("👥 اللاعبون والشاشة المقسمة");
+ const menu=$("studentModeMenu");menu.classList.add("settingsEmbedded");players.append(menu);
+ const climate=section("☀️ الوقت والطقس وجودة الرسومات");
+ const weather=$("atmospherePanel");weather.classList.add("settingsEmbedded");climate.append(weather);
+ const construction=section("🏗️ تخطيط الجامعة وأدوات البناء");
+ const dock=$("buildDock");dock.classList.add("settingsEmbedded","builderSettingsActive");construction.append(dock);
+ const tasks=section("🎯 قائمة المهمات");
+ const missions=$("missionsPanel");missions.classList.add("settingsEmbedded","missionsSettingsActive");tasks.append(missions);
+ const campus=section("🏢 إدارة مباني الجامعة");
+ const editor=$("campusEditor");editor.classList.add("settingsEmbedded");campus.append(editor);
+ campus.addEventListener("toggle",()=>{editor.classList.toggle("editorSettingsActive",campus.open);if(campus.open){const button=[...$("settingsActions").querySelectorAll("button")].find(b=>b.textContent.includes("حذف / استعادة مباني"));if(button)button.click()}});
+ construction.addEventListener("toggle",()=>{dock.classList.toggle("builderSettingsActive",construction.open);if(construction.open&&!buildMode)toggleBuilder()});
+ tasks.addEventListener("toggle",()=>missions.classList.toggle("missionsSettingsActive",tasks.open));
+ const mapSection=section("🗺️ الخريطة المصغرة");
+ const mapToggle=document.createElement("button");mapToggle.textContent="إظهار / إخفاء الخريطة المصغرة";mapToggle.onclick=()=>{$("mini").classList.toggle("settingsMapVisible");mapToggle.textContent=$("mini").classList.contains("settingsMapVisible")?"إخفاء الخريطة المصغرة":"إظهار الخريطة المصغرة"};mapSection.append(mapToggle);
+ const pauseSection=section("⏸️ إيقاف مؤقت والتحكم");
+ const pause=document.createElement("button");pause.textContent="⏸ إيقاف اللعبة مؤقتًا";pause.onclick=()=>{$("ipadPauseBtn").click();closeSettings()};pauseSection.append(pause);
+ const focus=document.createElement("button");focus.textContent="👁️ وضع اللعب النظيف";focus.onclick=()=>$("ipadFocusBtn").click();pauseSection.append(focus);
+ const zoom=document.createElement("button");zoom.textContent="🗺️ تكبير الخريطة";zoom.onclick=()=>$("ipadMapBtn").click();mapSection.append(zoom);
+ const controls=$("ipadPauseCard");const controlCopy=document.createElement("div");controlCopy.innerHTML='<p style="font-size:12px">يمكن ضبط الصوت والاهتزاز ويد التحكم من قائمة الإيقاف المؤقت.</p>';pauseSection.append(controlCopy);
+ document.body.classList.add("gameplayClean");
+}
+organizeSettings();let last=0,lastMiniDraw=-Infinity;
 (function loop(t){requestAnimationFrame(loop);const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
 if(ipadGamepadEnabled&&!ipadPaused&&navigator.getGamepads){const pad=Array.from(navigator.getGamepads()).find(Boolean);if(pad){const dead=v=>Math.abs(v)>.18?v:0;joy.x=dead(pad.axes[0]||0);joy.y=dead(pad.axes[1]||0);if(pad.axes.length>=4){yaw+=dead(pad.axes[2]||0)*dt*2;pit=Math.max(-.15,Math.min(1.25,pit+dead(pad.axes[3]||0)*dt))}if(pad.buttons[0]&&pad.buttons[0].pressed&&!ipadPauseBtnHeld){ipadPauseBtnHeld=true;ipadHaptic()}if(!pad.buttons[0]||!pad.buttons[0].pressed)ipadPauseBtnHeld=false;}}
 if(ipadPaused){joy.x=joy.y=0;}
