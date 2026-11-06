@@ -298,16 +298,49 @@ function makeGate(g){
  // Each lane stays clear for traffic at x=-9 and x=+9.
  p(6.2,.28,24,stone,0,.14,0);
  p(6.2,.4,24,green,0,.44,0);
- // Central glazed security room with a raised roof, visible counters and guards at windows.
- p(5.8,3.7,8.8,white,0,2.25,1);
- p(6.5,.55,9.5,navy,0,4.5,1);
- p(6.7,.2,9.7,gold,0,4.88,1);
- for(const side of [-1,1]){
-  p(.14,2.2,5.4,0x4c9cb3,side*2.98,2.65,1);
-  p(.22,.17,5.6,green,side*3.1,3.77,1);
-  p(.8,.65,2.4,stone,side*3.2,1.42,1);
+ // Open-plan glazed security room: actual transparent panes, not opaque blue walls.
+ // Lightweight materials and limited geometry keep the booth usable on mobile WebGL.
+ const glass=new THREE.MeshPhongMaterial({color:0x8dc9d9,transparent:true,opacity:.24,side:THREE.DoubleSide,depthWrite:false,shininess:95,specular:0x9fd7e9});
+ const glassPanel=(w,hh,d,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),glass);mesh.position.set(x,y,z);mesh.renderOrder=2;root.add(mesh);return mesh};
+ const mullion=0x314d53,interior=0xe1ded3;
+ p(6.2,.32,9.2,stone,0,.6,1);
+ p(6.3,.2,9.3,interior,0,.8,1);
+ for(const x of [-2.98,2.98]){
+  p(.22,1.05,9.15,white,x,1.35,1);
+  p(.2,.38,9.2,green,x,4.04,1);
+  glassPanel(.08,2.48,8.4,x,2.85,1);
+  for(const z of [-3.35,1,5.35])p(.22,2.5,.22,mullion,x,2.85,z);
+  p(.23,.13,9.1,mullion,x,2.98,1);
+  p(.5,.16,2.5,stone,x+(x<0?-.25:.25),2.03,1);
  }
- for(const z of [-3.46,5.46])p(3.6,2.2,.15,0x4c9cb3,0,2.65,z);
+ for(const z of [-3.48,5.48]){
+  p(6.1,1.05,.22,white,0,1.35,z);
+  glassPanel(5.7,2.5,.08,0,2.85,z);
+  for(const x of [-2.85,0,2.85])p(.19,2.5,.18,mullion,x,2.85,z);
+  p(6.1,.18,.23,green,0,4.04,z);
+ }
+ // Visible desks, chairs, screens and warm lighting inside the booth.
+ for(const x of [-1.45,1.45]){
+  p(1.6,.14,.85,stone,x,1.88,1);
+  p(.12,1.05,.12,mullion,x-.6,1.31,.7);
+  p(.12,1.05,.12,mullion,x+.6,1.31,.7);
+  p(.78,.55,.1,navy,x,2.29,.68);
+  p(.25,.12,.22,mullion,x,1.98,.68);
+  p(.7,.14,.7,navy,x,1.22,2.05);
+  p(.18,.55,.18,mullion,x,.94,2.05);
+ }
+ p(6.6,.55,9.7,navy,0,4.48,1);
+ p(6.8,.18,9.9,gold,0,4.86,1);
+ p(5.7,.12,8.7,0xf5e3a2,0,4.13,1);
+ // Security cameras, bollards and illuminated green trim.
+ for(const z of [-3.5,5.5]){
+  for(const x of [-2.8,2.8]){
+   p(.15,.7,.15,mullion,x,4.12,z);
+   p(.55,.23,.35,white,x,3.76,z+(z<0?-.35:.35));
+   p(.25,.1,.18,navy,x,3.67,z+(z<0?-.56:.56));
+  }
+ }
+ for(const x of [-4.2,4.2])for(const z of [-3.2,5.2])p(.32,1.15,.32,gold,x,.78,z);
  // Uniformed guard model: distinct head, cap, body, arms and legs.
  function guard(x,z,angle=0){
   const human=new THREE.Group();human.position.set(x,0,z);human.rotation.y=angle;root.add(human);
@@ -322,7 +355,7 @@ function makeGate(g){
   hp(.4,.1,.12,gold,0,2.12,-.34);
  }
  // Two guards visible at the central control-room side windows.
- guard(-1.65,1,Math.PI/2);guard(1.65,1,-Math.PI/2);
+ guard(-1.6,2.65,Math.PI/2);guard(1.6,2.65,-Math.PI/2);
  // Two guards outside, one overseeing each lane.
  guard(-14,7,0);guard(14,7,Math.PI);
  // Entry / exit signage, direction arrows and independently positioned barrier arms.
