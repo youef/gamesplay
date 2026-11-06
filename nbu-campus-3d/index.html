@@ -653,7 +653,7 @@ if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 let playerMode="single",singleStudent="fawaz";
 const zyad=new THREE.Group(),zyadAvatar=new THREE.Group(),cam2=new THREE.PerspectiveCamera(60,1,.5,1500);
-const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false,student2Steps=0;
+const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false,student2Steps=0,zyadVisited=new Set();
 S.add(zyad);zyad.add(zyadAvatar);
 
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
@@ -686,7 +686,7 @@ function setStudentMode(mode,student){
  zyad.visible=split||singleStudent==="zyad";if(split){zyad.position.set(pl.position.x+5,0,pl.position.z+5);joy2.x=joy2.y=0;secondRunning=false;}
  ch.visible=(!carMode||buildMode)&&(!(!split&&singleStudent==="zyad"));
  if(!split&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
- const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";const run2=document.getElementById("student2Run");if(run2)run2.style.display=split?"block":"none";const divider=document.getElementById("studentDivider");if(divider)divider.style.display=split?"block":"none";
+ const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";const run2=document.getElementById("student2Run");if(run2)run2.style.display=split?"block":"none";const explore2=document.getElementById("student2Explore");if(explore2)explore2.style.display=split?"block":"none";const divider=document.getElementById("studentDivider");if(divider)divider.style.display=split?"block":"none";const info2=document.getElementById("student2Info");if(info2&&!split)info2.style.display="none";
  const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";const primaryStick=document.getElementById("js");if(primaryStick){primaryStick.style.left=split?"8%":"";primaryStick.style.right=split?"auto":"";}
  document.querySelectorAll("[data-student-mode]").forEach(b=>b.classList.toggle("active",b.dataset.studentMode===mode+(mode==="single"?"-"+singleStudent:"")));
 }
@@ -701,6 +701,10 @@ function setupStudents(){
  const divider=document.createElement("div");divider.id="studentDivider";divider.style.cssText="display:none;position:fixed;top:0;bottom:0;left:50%;width:3px;transform:translateX(-50%);background:#ffffff88;pointer-events:none;z-index:6";document.body.appendChild(divider);
  const run2=document.createElement("button");run2.id="student2Run";run2.textContent="🏃 ركض زياد";run2.style.cssText="display:none;position:fixed;z-index:18;right:5%;bottom:calc(175px + env(safe-area-inset-bottom,0px));border:1px solid #fff8;border-radius:14px;padding:12px;background:#163b57e8;color:#fff;font:800 13px Tajawal,Tahoma;touch-action:none";
  document.body.appendChild(run2);run2.addEventListener("pointerdown",e=>{secondRunning=true;run2.setPointerCapture(e.pointerId)});for(const event of ["pointerup","pointercancel","lostpointercapture"])run2.addEventListener(event,()=>secondRunning=false);
+ const explore2=document.createElement("button");explore2.id="student2Explore";explore2.textContent="🏫 استكشف";explore2.style.cssText="display:none;position:fixed;z-index:18;right:5%;bottom:calc(225px + env(safe-area-inset-bottom,0px));border:1px solid #fff8;border-radius:14px;padding:12px;background:#17785de8;color:#fff;font:800 13px Tajawal,Tahoma;touch-action:manipulation";
+ document.body.appendChild(explore2);
+ explore2.onclick=()=>{if(playerMode!=="split")return;let nearB=null,best=24;for(const b of B){if(removedCampusBuildings.has(b.n))continue;const d=Math.hypot(zyad.position.x-b.x,zyad.position.z-b.z);if(d<best){nearB=b;best=d}}if(!nearB){toastBuild("زياد: اقترب من أحد مباني الجامعة أولًا");return}zyadVisited.add(nearB.n);const p=document.getElementById("student2Info");if(p){p.style.display="block";p.textContent="زياد يستكشف "+nearB.n+" | المرافق: "+nearB.labs.map(l=>l[0]).join("، ")+" | مبانٍ زارها: "+zyadVisited.size;}};
+ const info2=document.createElement("div");info2.id="student2Info";info2.dir="rtl";info2.style.cssText="display:none;position:fixed;z-index:17;top:calc(92px + env(safe-area-inset-top,0px));right:8px;max-width:42vw;max-height:28vh;overflow:auto;border-radius:12px;padding:10px;background:#14394be8;color:white;font:700 12px Tajawal,Tahoma";document.body.appendChild(info2);
  const ctl=document.createElement("div");ctl.id="student2Controls";ctl.style.cssText="display:none;position:fixed;z-index:18;bottom:calc(35px + env(safe-area-inset-bottom,0px));right:8%;width:118px;height:118px;border:2px solid #fff8;border-radius:50%;background:#193d5b88;touch-action:none";
  ctl.innerHTML='<div style="position:absolute;inset:36px;border-radius:50%;background:#e9f7ff99;pointer-events:none" id="student2Knob"></div>';document.body.appendChild(ctl);
  let pid=null;
@@ -1131,7 +1135,7 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
-near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
+near=null;let best=12;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n))return;const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
 $("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-ST.rz-23))<65?"block":"none";if(near)en.textContent="دخول";
