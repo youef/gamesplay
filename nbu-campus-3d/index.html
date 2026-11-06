@@ -133,7 +133,11 @@ function loadThreeFallback(){
 }
 loadThreeFallback();
 function init(){
-const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.4:2));R.shadowMap.enabled=true;
+const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});
+// V3.16: recover from GPU context loss on iPad without a blank canvas.
+$("c").addEventListener("webglcontextlost",event=>{event.preventDefault();$("ld").style.display="flex";$("ld").textContent="توقف محرك الرسوم مؤقتًا. جارٍ انتظار استعادة WebGL…";});
+$("c").addEventListener("webglcontextrestored",()=>{window.location.reload();});
+R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.4:2));R.shadowMap.enabled=true;
 const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
 const cam=new THREE.PerspectiveCamera(60,1,.5,1500);
 const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",rs);rs();
