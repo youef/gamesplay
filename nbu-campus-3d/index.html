@@ -601,6 +601,22 @@ for(let row=0;row<7;row++){
 }
 box(114,1,.4,mat(0xb8c3cd),ST.x,6.3,standFront-19.5,0);
 COL.push([ST.x-56,standFront-20,ST.x+56,standFront+2]);
+// Southern family stand, separated spectator aisles and covered main stand.
+const southStand=ST.z+ST.rz+15;
+for(let row=0;row<6;row++){
+ const z=southStand+row*2.8,y=.7+row*.72;
+ box(112,.7,2.75,mat(row%2?0xc4cfd7:0xe1e6ea),ST.x,y,z,0);
+ for(let x=-50;x<=50;x+=3.3){
+  if(Math.abs(x)<4||Math.abs(x-27)<2||Math.abs(x+27)<2)continue;
+  box(2.75,.45,.9,mat((Math.round(x)+row)%3===0?0x356c91:0x527f9c),ST.x+x,y+.65,z+.45,0);
+ }
+}
+COL.push([ST.x-56,southStand-1,ST.x+56,southStand+18]);
+const stadiumRoof=mat(0x27445b,{metalness:.4,roughness:.45,side:THREE.DoubleSide});
+box(116,.7,24,stadiumRoof,ST.x,11.2,standFront-10,0);
+for(const x of [-55,55])for(const z of [standFront-19,standFront+1])box(.65,11,.65,mat(0x8a9ca9),ST.x+x,5.6,z,0);
+const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
+stadiumBoard.position.set(ST.x,13.5,standFront-20);
 const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
 [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
 // Stadium experience: low-poly animated footballers, crowd, perimeter fence and safe entrances.
@@ -670,13 +686,15 @@ for(let team=0;team<2;team++)for(let i=0;i<11;i++){
 }
 const ball=new THREE.Mesh(new THREE.SphereGeometry(.75,12,8),mat(0xf8f8f0,{roughness:.64}));ball.position.set(ST.x,.85,ST.z);ball.castShadow=true;S.add(ball);
 const crowdColors=[mat(0xe7e9e5),mat(0x1674b2),mat(0x253e63),mat(0xd0ad75),mat(0x2e846d)];
-for(let row=0;row<7;row++)for(let i=0;i<31;i++){
- const x=ST.x-49+i*3.25,z=standFront-row*2.8-.4;
+for(let side=0;side<2;side++)for(let row=0;row<(side===0?7:6);row++)for(let i=0;i<31;i++){
+ const x=ST.x-49+i*3.25,z=side===0?standFront-row*2.8-.4:southStand+row*2.8+.4;
  if(Math.abs(x-ST.x)<4||Math.abs(x-(ST.x+27))<2||Math.abs(x-(ST.x-27))<2)continue;
- const crowd=new THREE.Group(),color=crowdColors[(i+row*3)%crowdColors.length];
+ const crowd=new THREE.Group(),color=crowdColors[(i+row*3+side)%crowdColors.length];
  const torso=new THREE.Mesh(new THREE.BoxGeometry(.68,.9,.44),color);torso.position.y=.63;crowd.add(torso);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.27,6,5),stadiumSkin);head.position.y=1.34;crowd.add(head);
- crowd.position.set(x,1.1+row*.72,z);S.add(crowd);stadiumCrowd.push({g:crowd,phase:i*.87+row*.46,baseY:1.1+row*.72});
+ const baseY=1.1+row*.72;
+ crowd.position.set(x,baseY,z);crowd.rotation.y=side===0?0:Math.PI;S.add(crowd);
+ stadiumCrowd.push({g:crowd,phase:i*.87+row*.46+side,baseY});
 }
 syncStadiumCrowdQuality();
 // Autonomous possession-based exhibition match: chase, pass, shoot, save and restart.
