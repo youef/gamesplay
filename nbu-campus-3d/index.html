@@ -781,16 +781,52 @@ const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 const snap=v=>Math.round(v/5)*5;
-function snapRoadEndpoint(point,other){
- let best=point,bestDistance=12;
- for(const road of built){
-  if(!buildDefs[road.type]?.path||!road.end)continue;
-  for(const end of [{x:road.x,z:road.z},road.end]){
-   const distance=Math.hypot(end.x-point.x,end.z-point.z);
-   if(distance<bestDistance&&Math.hypot(end.x-other.x,end.z-other.z)>=10){best=end;bestDistance=distance}
-  }
+// Snap to the actual permanent road centerlines as well as player-built paths.
+function roadSegments(){
+ const list=campusRoads.map(r=>({x1:r.x1,z1:r.z1,x2:r.x2,z2:r.z2,width:r.width,fixed:true}));
+ for(const r of built)if((r.type==="road"||r.type==="avenue")&&r.end)list.push({x1:r.x,z1:r.z,x2:r.end.x,z2:r.end.z,width:buildDefs[r.type].width,fixed:false});
+ return list;
+}
+function closestRoadPoint(point,limit=17){
+ let best=null,score=limit;
+ for(const r of roadSegments()){
+  const dx=r.x2-r.x1,dz=r.z2-r.z1,den=dx*dx+dz*dz;if(!den)continue;
+  const t=clamp(((point.x-r.x1)*dx+(point.z-r.z1)*dz)/den,0,1);
+  const x=r.x1+t*dx,z=r.z1+t*dz,dist=Math.hypot(x-point.x,z-point.z);
+  if(dist<score){best={x,z,road:r,t,distance:dist};score=dist}
  }
- return {x:best.x,z:best.z};
+ return best;
+}
+function snapRoadEndpoint(point,other){
+ const match=closestRoadPoint(point);
+ if(match&&(!other||Math.hypot(match.x-other.x,match.z-other.z)>=9))return {x:match.x,z:match.z};
+ return {x:snap(point.x),z:snap(point.z)};
+}
+function orientRoadEnd(start,end){
+ // Shift drag/tap endpoint onto the horizontal or vertical axis of the first click.
+ const dx=end.x-start.x,dz=end.z-start.z;
+ const horizontal=Math.abs(dx)>=Math.abs(dz);
+ const axisPoint=horizontal?{x:end.x,z:start.z}:{x:start.x,z:end.z};
+ const match=closestRoadPoint(axisPoint,10);
+ if(match&&Math.hypot(match.x-start.x,match.z-start.z)>=10){
+  // Preserve an orthogonal segment: snap only if the existing street crosses the same axis.
+  if(horizontal&&Math.abs(match.z-start.z)<.75)return {x:match.x,z:start.z};
+  if(!horizontal&&Math.abs(match.x-start.x)<.75)return {x:start.x,z:match.z};
+ }
+ return axisPoint;
+}
+function roadTouchesNetwork(o){
+ const segs=roadSegments(),ax=o.x,az=o.z,bx=o.end.x,bz=o.end.z;
+ // The new road must start on a street, or meet one at its end / a crossing.
+ const onSegment=(x,z,r)=>{const dx=r.x2-r.x1,dz=r.z2-r.z1,den=dx*dx+dz*dz;if(!den)return false;const t=((x-r.x1)*dx+(z-r.z1)*dz)/den;return t>=-.001&&t<=1.001&&Math.hypot(x-(r.x1+t*dx),z-(r.z1+t*dz))<.8};
+ if(segs.some(r=>onSegment(ax,az,r)||onSegment(bx,bz,r)))return true;
+ for(const r of segs){
+  const dx=bx-ax,dz=bz-az,rx=r.x2-r.x1,rz=r.z2-r.z1,den=dx*rz-dz*rx;
+  if(Math.abs(den)<1e-7)continue;
+  const qx=r.x1-ax,qz=r.z1-az,t=(qx*rz-qz*rx)/den,u=(qx*dz-qz*dx)/den;
+  if(t>=0&&t<=1&&u>=0&&u<=1)return true;
+ }
+ return false;
 }
 const buildMoney=o=>{const d=buildDefs[o.type];return Math.round(d.path?d.cost*Math.hypot(o.end.x-o.x,o.end.z-o.z):d.cost)};
 const spent=()=>built.reduce((sum,o)=>sum+buildMoney(o),0);
@@ -917,7 +953,7 @@ function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMa
 }
 function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد الأعلى للعناصر، احذف بعض الإضافات";
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
- if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";
+ if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(o.type!=="bridge"&&!roadTouchesNetwork(o))return "يجب ربط الطريق بالشبكة الحالية";if(o.type!=="bridge"&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
   for(let i=0;i<=len;i+=5){const t=i/len,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
    for(const b of B)if(Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
    if(Math.abs(x)<ST.rx+d.width/2&&Math.abs(z-ST.z)<ST.rz+d.width/2)return "المسار يتداخل مع الملعب";
@@ -933,8 +969,8 @@ function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFr
  const hits=buildRay.intersectObjects(buildGroups,true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
 function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
- if(d.path&&!buildStart){buildStart=snapRoadEndpoint(p,{x:p.x+100,z:p.z+100});updateBuildHud();toastBuild("حدد الآن نقطة النهاية؛ ستتصل بنهايات الطرق القريبة تلقائيًا");return}
- const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:snapRoadEndpoint(p,buildStart)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
+ if(d.path&&!buildStart){const nearest=closestRoadPoint(p,18);if(!nearest&&buildTool!=="bridge"){toastBuild("ابدأ من الطريق الموجود: قرّب المؤشر من حافة شارع أو تقاطع");return}buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
+ const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 // Centralized settings: reuse existing game controls without duplicating handlers.
 function setupSettings(){
