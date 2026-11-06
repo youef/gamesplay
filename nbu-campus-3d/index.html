@@ -677,6 +677,29 @@ for(const side of [-1,1]){
  const x=ST.x+side*88;
  for(const z of [ST.z-8,ST.z+8])box(.42,5,.42,stadiumPostMat,x,2.5,z,0);
 }
+// Contemporary stadium envelope inspired by Jeddah's jewel-like perforated facade.
+// Decorative panels do not create invisible barriers; the east/west gates remain open.
+const facadeGold=mat(0xd6c7a1,{metalness:.35,roughness:.6,side:THREE.DoubleSide});
+const facadeBlue=mat(0x245875,{metalness:.35,roughness:.5,side:THREE.DoubleSide});
+const facadeLight=mat(0xe7f2e8,{emissive:0x164b38,side:THREE.DoubleSide});
+function stadiumFacadePanel(x,z,angle,w=7){
+ const frame=new THREE.Group();frame.position.set(x,0,z);frame.rotation.y=angle;S.add(frame);
+ const bar=(bw,bh,bd,bx,by,bz,material)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),material);mesh.position.set(bx,by,bz);frame.add(mesh)};
+ bar(w,.35,.3,0,5.5,0,facadeGold);bar(w,.35,.3,0,12.5,0,facadeGold);
+ for(const side of [-1,1])bar(.25,7,.3,side*w/2,9,0,facadeGold);
+ for(let i=-2;i<=2;i++){const diamond=new THREE.Mesh(new THREE.PlaneGeometry(1.6,3.1),i%2?facadeBlue:facadeLight);diamond.rotation.z=Math.PI/4;diamond.position.set(i*w/6,9,.22);frame.add(diamond)}
+}
+for(let x=-84;x<=84;x+=8){stadiumFacadePanel(ST.x+x,ST.z-61,0);stadiumFacadePanel(ST.x+x,ST.z+61,0)}
+for(let z=-52;z<=52;z+=8){
+ if(Math.abs(z)<12)continue; // Wide east and west entrances.
+ stadiumFacadePanel(ST.x-87,ST.z+z,Math.PI/2);
+ stadiumFacadePanel(ST.x+87,ST.z+z,Math.PI/2);
+}
+// Architectural corner towers and illuminated upper ring.
+for(const x of [-87,87])for(const z of [-61,61]){
+ box(1.1,14,1.1,facadeGold,ST.x+x,7,ST.z+z,0);
+ box(2.3,.6,2.3,facadeLight,ST.x+x,14.3,ST.z+z,0);
+}
 const stadiumSkin=mat(0xc68b62),stadiumShorts=mat(0x243244),stadiumJerseys=[mat(0x1467ac),mat(0xf4e8da)];
 const stadiumBoots=mat(0x1b242e),stadiumHair=mat(0x252323);
 function stadiumPerson(x,z,team,scale=1){
@@ -713,6 +736,38 @@ for(let side=0;side<2;side++)for(let row=0;row<(side===0?7:6);row++)for(let i=0;
 }
 syncStadiumCrowdQuality();
 // Autonomous possession-based exhibition match: chase, pass, shoot, save and restart.
+// Real-time in-world LED scoreboard showing simulated match and time remaining.
+const stadiumScreenCanvas=document.createElement("canvas");
+stadiumScreenCanvas.width=1024;stadiumScreenCanvas.height=512;
+const stadiumScreenCtx=stadiumScreenCanvas.getContext("2d");
+const stadiumScreenTexture=new THREE.CanvasTexture(stadiumScreenCanvas);
+stadiumScreenTexture.colorSpace=THREE.SRGBColorSpace;
+const stadiumScreenMaterial=new THREE.MeshBasicMaterial({map:stadiumScreenTexture,side:THREE.DoubleSide});
+function stadiumVideoScreen(x,y,z,rotation){
+ const surround=new THREE.Mesh(new THREE.BoxGeometry(22,11.5,.7),mat(0x152d39,{metalness:.5}));
+ surround.position.set(x,y,z);surround.rotation.y=rotation;S.add(surround);
+ const display=new THREE.Mesh(new THREE.PlaneGeometry(20.7,10.1),stadiumScreenMaterial);
+ display.position.set(x,y,z+.42);display.rotation.y=rotation;S.add(display);
+}
+stadiumVideoScreen(ST.x,20,ST.z-60,0);
+stadiumVideoScreen(ST.x,20,ST.z+60,Math.PI);
+let stadiumScreenLastDraw=-1;
+function drawStadiumScreen(m){
+ if(!stadiumScreenCtx)return;
+ const g=stadiumScreenCtx,w=1024,h=512;
+ g.fillStyle="#081b2c";g.fillRect(0,0,w,h);
+ g.fillStyle="#1c5675";g.fillRect(0,0,w,90);
+ g.fillStyle="#ffffff";g.textAlign="center";g.font="bold 46px Tahoma";
+ g.fillText("جامعة الحدود الشمالية | المباراة الجامعية",w/2,60);
+ g.font="bold 115px Tahoma";g.fillText(stadiumScore.blue+"  :  "+stadiumScore.white,w/2,235);
+ g.font="bold 42px Tahoma";g.fillText("الفريق الأزرق                              الفريق الأبيض",w/2,302);
+ const remaining=Math.max(0,5400-Math.floor(m.elapsed));
+ const remMin=Math.floor(remaining/60),remSec=remaining%60;
+ g.fillStyle="#a9e5c6";g.font="bold 48px Tahoma";
+ g.fillText("المتبقي "+String(remMin).padStart(2,"0")+":"+String(remSec).padStart(2,"0")+"  |  الشوط "+m.half,w/2,390);
+ g.fillStyle="#ffdd86";g.font="bold 38px Tahoma";g.fillText(m.elapsed-m.eventTime<20?m.event:"المباراة جارية",w/2,460);
+ stadiumScreenTexture.needsUpdate=true;
+}
 const stadiumMatch={elapsed:0,possessor:9,ballX:0,ballZ:0,flight:null,goalFlash:0,event:"بداية المباراة",eventTime:0,half:1};
 function stadiumKick(from,to,speed=18){
  stadiumMatch.possessor=-1;
@@ -732,6 +787,7 @@ function updateStadium(t,dt){
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
  if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
  if(!nearStadium)return;
+ if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
  stadiumScoreboard.textContent="⚽ الأزرق "+stadiumScore.blue+" : "+stadiumScore.white+" الأبيض | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
  if(m.flight){
