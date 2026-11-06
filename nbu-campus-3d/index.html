@@ -653,7 +653,7 @@ if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 let playerMode="single",singleStudent="fawaz";
 const zyad=new THREE.Group(),zyadAvatar=new THREE.Group(),cam2=new THREE.PerspectiveCamera(60,1,.5,1500);
-const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11;
+const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false;
 S.add(zyad);zyad.add(zyadAvatar);
 
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
@@ -683,10 +683,10 @@ function createSecondStudent(){
 function setStudentMode(mode,student){
  playerMode=mode;singleStudent=student||singleStudent;
  const split=mode==="split";document.body.classList.toggle("splitStudents",split);
- zyad.visible=split||singleStudent==="zyad";
+ zyad.visible=split||singleStudent==="zyad";if(split){zyad.position.set(pl.position.x+5,0,pl.position.z+5);joy2.x=joy2.y=0;}
  ch.visible=(!carMode||buildMode)&&(!(!split&&singleStudent==="zyad"));
  if(!split&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
- const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";
+ const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";const run2=document.getElementById("student2Run");if(run2)run2.style.display=split?"block":"none";const divider=document.getElementById("studentDivider");if(divider)divider.style.display=split?"block":"none";
  const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";
  document.querySelectorAll("[data-student-mode]").forEach(b=>b.classList.toggle("active",b.dataset.studentMode===mode+(mode==="single"?"-"+singleStudent:"")));
 }
@@ -698,6 +698,9 @@ function setupStudents(){
  menu.querySelectorAll("button").forEach(b=>{b.style.cssText="border:1px solid #d4e5dc;border-radius:10px;background:#173c54;color:white;padding:9px;font:700 13px Tajawal,Tahoma";b.onclick=()=>{if(buildMode||carMode){toastBuild("أوقف القيادة أو البناء أولًا لتفعيل اللعب المشترك");return}const m=b.dataset.studentMode;if(m==="split")setStudentMode("split");else setStudentMode("single",m.split("-")[1])}});
  const labels=document.createElement("div");labels.id="studentLabels";labels.style.cssText="display:none;position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:0;right:0;z-index:7;pointer-events:none;justify-content:space-around;color:white;text-shadow:0 2px 4px #000;font:800 18px Tajawal,Tahoma";
  labels.innerHTML="<span>فواز · اللاعب الأول</span><span>زياد · اللاعب الثاني</span>";document.body.appendChild(labels);
+ const divider=document.createElement("div");divider.id="studentDivider";divider.style.cssText="display:none;position:fixed;top:0;bottom:0;left:50%;width:3px;transform:translateX(-50%);background:#ffffff88;pointer-events:none;z-index:6";document.body.appendChild(divider);
+ const run2=document.createElement("button");run2.id="student2Run";run2.textContent="🏃 ركض زياد";run2.style.cssText="display:none;position:fixed;z-index:18;right:5%;bottom:calc(175px + env(safe-area-inset-bottom,0px));border:1px solid #fff8;border-radius:14px;padding:12px;background:#163b57e8;color:#fff;font:800 13px Tajawal,Tahoma;touch-action:none";
+ document.body.appendChild(run2);run2.addEventListener("pointerdown",e=>{secondRunning=true;run2.setPointerCapture(e.pointerId)});for(const event of ["pointerup","pointercancel","lostpointercapture"])run2.addEventListener(event,()=>secondRunning=false);
  const ctl=document.createElement("div");ctl.id="student2Controls";ctl.style.cssText="display:none;position:fixed;z-index:18;bottom:calc(35px + env(safe-area-inset-bottom,0px));right:8%;width:118px;height:118px;border:2px solid #fff8;border-radius:50%;background:#193d5b88;touch-action:none";
  ctl.innerHTML='<div style="position:absolute;inset:36px;border-radius:50%;background:#e9f7ff99;pointer-events:none" id="student2Knob"></div>';document.body.appendChild(ctl);
  let pid=null;
@@ -1120,10 +1123,10 @@ ch.rotation.y=fa;
 const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
 if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  const v=Math.hypot(joy2.x,joy2.y);
- if(v>.12){const speed=8*dt,xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
+ if(v>.12){const speed=(secondRunning?15:8)*dt,xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
  if(!hit(xx,zyad.position.z))zyad.position.x=xx;
  if(!hit(zyad.position.x,zz))zyad.position.z=zz;
- zyad.rotation.y=Math.atan2(joy2.x,joy2.y);
+ zyad.rotation.y=Math.atan2(joy2.x,joy2.y);zyadYaw=zyad.rotation.y+Math.PI;
  }
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
@@ -1140,7 +1143,7 @@ updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!doc
   R.setViewport(0,0,half,h);R.setScissor(0,0,half,h);R.render(S,cam);
   cam2.aspect=(w-half)/h;cam2.updateProjectionMatrix();
   cam2.up.set(0,1,0);
-  cam2.position.set(zyad.position.x+Math.sin(zyadYaw)*zyadDistance,5+Math.sin(zyadPitch)*zyadDistance,zyad.position.z+Math.cos(zyadYaw)*zyadDistance);
+  cam2.position.set(zyad.position.x+Math.sin(zyadYaw)*zyadDistance,2+Math.sin(zyadPitch)*zyadDistance,zyad.position.z+Math.cos(zyadYaw)*zyadDistance);
   cam2.lookAt(zyad.position.x,1.5,zyad.position.z);
   R.setViewport(half,0,w-half,h);R.setScissor(half,0,w-half,h);R.render(S,cam2);
   R.setScissorTest(false);
