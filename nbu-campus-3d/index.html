@@ -670,31 +670,41 @@ for(const [radius,material,heightOffset] of [[canopyInner,canopyLEDMat,.08],[can
   p.y+=heightOffset;q.y+=heightOffset;canopyBeam(p,q,outer?.13:.11,material);
  }
 }
-// Night match floodlights mounted on the roof ring, aimed at the pitch.
-const stadiumFloodlights=[],stadiumFloodlightLenses=[];
-const floodFixtureMat=mat(0x2b3e4a,{metalness:.6,roughness:.35});
-const floodLensMat=mat(0xe8f7ff,{emissive:0xcdeeff,emissiveIntensity:0,roughness:.2});
-for(let side of [-1,1])for(let n=0;n<6;n++){
- const z=ST.z-49+n*19.6,x=ST.x+side*57;
- const fixture=new THREE.Group();fixture.position.set(x,30,z);S.add(fixture);
- const housing=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.15,.65),floodFixtureMat);
- housing.position.set(0,0,0);fixture.add(housing);
- const lens=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.82),floodLensMat.clone());
- lens.position.set(0,0,.35);fixture.add(lens);stadiumFloodlightLenses.push(lens);
- const light=new THREE.SpotLight(0xf3f9ff,0,180,Math.PI/3.3,.62,1.25);
- light.position.set(x,29,z);
- light.target.position.set(ST.x+side*9,0,ST.z+(z-ST.z)*.72);
- S.add(light,light.target);stadiumFloodlights.push(light);
+// Stadium lighting V2: roof-integrated inward-facing LED floodlight banks.
+// The luminaires point down toward the playing surface, not outward at spectators.
+const stadiumFloodlights=[],stadiumFloodlightLenses=[],stadiumFloodlightBanks=[];
+const floodFixtureMat=mat(0x243b4c,{metalness:.55,roughness:.42});
+const floodTrimMat=mat(0xaabcc5,{metalness:.55,roughness:.35});
+const floodLensBase=mat(0xf3faff,{emissive:0xc9e9ff,emissiveIntensity:0,roughness:.24,side:THREE.DoubleSide});
+for(const side of [-1,1])for(let n=0;n<6;n++){
+ const z=ST.z-49+n*19.6,x=ST.x+side*53;
+ const aim=new THREE.Vector3(ST.x+side*8,1,ST.z+(z-ST.z)*.73);
+ const fixture=new THREE.Group();fixture.position.set(x,30.8,z);
+ fixture.lookAt(aim);S.add(fixture);stadiumFloodlightBanks.push(fixture);
+ const backing=new THREE.Mesh(new THREE.BoxGeometry(3.6,1.35,.48),floodFixtureMat);fixture.add(backing);
+ const trim=new THREE.Mesh(new THREE.BoxGeometry(3.75,1.48,.12),floodTrimMat);trim.position.z=.31;fixture.add(trim);
+ for(let row=0;row<2;row++)for(let col=0;col<5;col++){
+  const lens=new THREE.Mesh(new THREE.PlaneGeometry(.52,.43),floodLensBase.clone());
+  lens.position.set((col-2)*.65,(row-.5)*.57,.39);fixture.add(lens);stadiumFloodlightLenses.push(lens);
+ }
+ const light=new THREE.SpotLight(0xf5faff,0,145,Math.PI/3.2,.86,1.65);
+ light.position.set(x,30.2,z);light.target.position.copy(aim);
+ light.castShadow=false;S.add(light,light.target);stadiumFloodlights.push(light);
+}
+// Two broad overhead fill lights keep the pitch readable without harsh circular pools.
+const stadiumFillLights=[];
+for(const z of [-29,29]){
+ const fill=new THREE.PointLight(0xd9eaff,0,105,1.5);
+ fill.position.set(ST.x,34,ST.z+z);S.add(fill);stadiumFillLights.push(fill);
 }
 function updateStadiumFloodlights(night){
- const active=night>.08;
- const strength=active?Math.min(1,night*1.35):0;
+ const strength=Math.max(0,Math.min(1,(night-.12)/.58));
  const quality=atmosphere.quality;
  stadiumFloodlights.forEach((light,i)=>{
-  // Keep fewer expensive dynamic spotlights on low graphics settings.
-  light.intensity=quality==="low"&&i%2?0:strength*(quality==="high"?110:80);
+  light.intensity=strength*(quality==="low"?(i%2?0:10500):quality==="high"?15500:13000);
  });
- stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=strength*2.4});
+ stadiumFillLights.forEach(light=>{light.intensity=strength*(quality==="low"?1000:1900)});
+ stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=.06+strength*2.1});
 }
 // V3: transparent ETFE-style full-field roof. The 360-degree outer canopy stays opaque,
 // while a high, translucent central cover protects the entire 105x68 pitch.
