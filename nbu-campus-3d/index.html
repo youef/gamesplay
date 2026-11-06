@@ -1305,8 +1305,8 @@ const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.
 const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"]];
 function selectStadiumView(mode){
  stadiumViewMode=mode;
- if(mode==="orbit"){yaw=0;pit=.2;dist=8}
- if(mode==="first"){yaw=0;pit=.08;dist=2}
+ if(mode==="orbit"){yaw=Math.PI;pit=.2;dist=8}
+ if(mode==="first"){yaw=Math.PI;pit=.08;dist=2}
  if(mode==="ball"){dist=2}
  if(mode==="aerial"){dist=60;pit=.7}
  stadiumViewButtons.querySelectorAll("button").forEach(b=>{b.style.background=b.dataset.mode===mode?"#168e8a":"#244c67"});
