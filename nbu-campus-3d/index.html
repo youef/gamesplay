@@ -627,9 +627,51 @@ for(let row=0;row<6;row++){
  }
 }
 COL.push([ST.x-56,southStand-1,ST.x+56,southStand+18]);
-const stadiumRoof=mat(0x27445b,{metalness:.4,roughness:.45,side:THREE.DoubleSide});
-box(116,.7,24,stadiumRoof,ST.x,11.2,standFront-10,0);
-for(const x of [-55,55])for(const z of [standFront-19,standFront+1])box(.65,11,.65,mat(0x8a9ca9),ST.x+x,5.6,z,0);
+// V2 continuous elliptical canopy: a 360-degree upper spectator roof, inspired by modern Saudi stadiums.
+const stadiumRoof=mat(0x183e55,{metalness:.42,roughness:.43,side:THREE.DoubleSide});
+const canopyUnderside=mat(0x54768b,{metalness:.28,roughness:.62,side:THREE.DoubleSide});
+const canopyRibMat=mat(0xd4c39a,{metalness:.6,roughness:.32});
+const canopyLEDMat=mat(0x8dd9d5,{emissive:0x267c80,emissiveIntensity:.8,roughness:.4});
+const canopySegments=96,canopyVertices=[],canopyIndices=[];
+const canopyInner={x:55,z:51},canopyOuter={x:91,z:88};
+function canopyPoint(a,outer){
+ const radius=outer?canopyOuter:canopyInner;
+ return new THREE.Vector3(ST.x+Math.cos(a)*radius.x,outer?25.5:28.5,ST.z+Math.sin(a)*radius.z);
+}
+for(let i=0;i<=canopySegments;i++){
+ const a=i*2*Math.PI/canopySegments;
+ for(const outer of [false,true]){const p=canopyPoint(a,outer);canopyVertices.push(p.x,p.y,p.z)}
+ if(i<canopySegments){const n=i*2;canopyIndices.push(n,n+1,n+2,n+1,n+3,n+2)}
+}
+const canopyGeometry=new THREE.BufferGeometry();
+canopyGeometry.setAttribute("position",new THREE.Float32BufferAttribute(canopyVertices,3));
+canopyGeometry.setIndex(canopyIndices);canopyGeometry.computeVertexNormals();
+const canopyMesh=new THREE.Mesh(canopyGeometry,stadiumRoof);canopyMesh.receiveShadow=true;S.add(canopyMesh);
+function canopyBeam(p,q,r,material){
+ const direction=new THREE.Vector3().subVectors(q,p),beam=new THREE.Mesh(new THREE.CylinderGeometry(r,r,direction.length(),6),material);
+ beam.position.copy(p).add(q).multiplyScalar(.5);
+ beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());
+ S.add(beam);
+}
+for(let i=0;i<canopySegments;i+=4){
+ const a=i*2*Math.PI/canopySegments,inner=canopyPoint(a,false),outer=canopyPoint(a,true);
+ canopyBeam(inner,outer,.19,canopyRibMat);
+ if(i%12===0){
+  const pillar=new THREE.Vector3(outer.x,0,outer.z);
+  canopyBeam(pillar,outer,.38,canopyUnderside);
+  const brace=new THREE.Vector3(outer.x*.0+ST.x+(outer.x-ST.x)*.92,17,ST.z+(outer.z-ST.z)*.92);
+  canopyBeam(brace,inner,.16,canopyRibMat);
+ }
+}
+for(const [radius,material,heightOffset] of [[canopyInner,canopyLEDMat,.08],[canopyOuter,canopyRibMat,.08]]){
+ for(let i=0;i<canopySegments;i++){
+  const a=i*2*Math.PI/canopySegments,b=(i+1)*2*Math.PI/canopySegments;
+  const outer=radius===canopyOuter,p=canopyPoint(a,outer),q=canopyPoint(b,outer);
+  p.y+=heightOffset;q.y+=heightOffset;canopyBeam(p,q,outer?.13:.11,material);
+ }
+}
+// The roof has an open central oculus for daylight and clear views of the pitch.
+
 const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
 stadiumBoard.position.set(ST.x,13.5,standFront-20);
 const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
