@@ -274,17 +274,34 @@ function refreshCustomTrafficRoutes(){
   const signature=next.map(p=>p.join(",")).join("|");
   if(a.customRouteSignature===signature)continue;
   a.customRouteSignature=signature;
-  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;
+  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;a.lastBusStop=null;a.customRouteActive=!!routes[slot];
   a.mesh.position.set(next[0][0],0,next[0][1]);
   a.mesh.rotation.y=Math.atan2(next[1][0]-next[0][0],next[1][1]-next[0][1]);
  }
+}
+// Bus stops are optional player-built waypoints. A bus pauses only while it follows a custom road.
+function busStopAhead(a,start,end,nextProgress,len){
+ if(!a.bus||!a.customRouteActive||!len)return null;
+ const dx=end[0]-start[0],dz=end[1]-start[1],ux=dx/len,uz=dz/len;
+ for(const stop of built){
+  if(stop.type!=="busstop")continue;
+  const along=(stop.x-start[0])*ux+(stop.z-start[1])*uz;
+  const lateral=Math.abs((stop.x-start[0])*uz-(stop.z-start[1])*ux);
+  if(lateral>15||along<4||along>len-4)continue;
+  const stopKey=a.seg+":"+a.direction+":"+stop.x+":"+stop.z;
+  if(a.lastBusStop===stopKey)continue;
+  if(along>=a.progress&&along<=nextProgress+1.5)return {along,key:stopKey};
+ }
+ return null;
 }
 function moveAgent(a,dt){if(a.dwell>0){a.dwell-=dt;return}let start=a.route[a.seg],end=a.route[a.seg+a.direction];if(!end){a.direction*=-1;a.seg=clamp(a.seg,0,a.route.length-1);a.progress=0;return}
 const dx=end[0]-start[0],dz=end[1]-start[1],len=Math.hypot(dx,dz);if(!len){a.seg+=a.direction;return}a.progress=clamp(a.progress,0,len);
 let remain=len-a.progress,target=a.speed;
 for(const j of trafficJunctions){if(Math.hypot(end[0]-j.x,end[1]-j.z)<1&&remain>3&&remain<24){const axis=Math.abs(dx)>Math.abs(dz)?"ew":"ns";if(!signalAllows(axis))target=Math.min(target,Math.max(0,(remain-7)*1.15))}}
 // Keep a forward safety gap between NPC cars and buses.
-const nextProgress=a.progress+Math.min(remain,target*dt);
+let nextProgress=a.progress+Math.min(remain,target*dt);
+const approachingStop=busStopAhead(a,start,end,nextProgress,len);
+if(approachingStop)nextProgress=Math.min(nextProgress,approachingStop.along);
 const nextFraction=clamp(nextProgress/len,0,1),nextX=start[0]+dx*nextFraction,nextZ=start[1]+dz*nextFraction;
 const headingX=dx/len,headingZ=dz/len;
 const blocked=agents.some(other=>{
@@ -297,7 +314,9 @@ const blocked=agents.some(other=>{
  Math.hypot(other.mesh.position.x-nextX,other.mesh.position.z-nextZ)<safeGap;
 });
 if(blocked)return;
-a.progress=nextProgress;const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
+a.progress=nextProgress;
+if(approachingStop&&a.progress>=approachingStop.along-.05){a.lastBusStop=approachingStop.key;a.dwell=3.5}
+const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
 if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.dwell=a.bus?3:1}}}
 function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
 function updateTraffic(dt){trafficClock+=dt;const phase=trafficClock%16;
