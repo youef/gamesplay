@@ -280,7 +280,7 @@ function updateAtmosphere(t,dt){
  S.background.copy(skyNight).lerp(dusty?skyDust:skyDay,day);
  S.fog.color.copy(skyFogNight).lerp(dusty?skyDust:skyFogDay,day);
  S.fog.near=foggy?35:dusty?65:140;S.fog.far=foggy?185:dusty?310:620;
- for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);updateStadiumFloodlights(night);R.toneMappingExposure=.78+day*.48;
+ for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);updateStadiumFloodlights(night);R.toneMappingExposure=.72+day*.46;
  rain.visible=atmosphere.weather==="rain"&&atmosphere.quality!=="low";
  if(rain.visible){rain.position.set(pl.position.x,0,pl.position.z);for(let i=0;i<rainCount;i++){const j=i*3+1;rainPositions[j]-=dt*22;if(rainPositions[j]<1)rainPositions[j]=35}rainGeo.attributes.position.needsUpdate=true}
 }
@@ -694,9 +694,9 @@ function updateStadiumFloodlights(night){
  const strength=Math.max(0,Math.min(1,(night-.12)/.58));
  const low=atmosphere.quality==="low";
  stadiumFloodlights.forEach((light,i)=>{
-  light.intensity=strength*(low&&i%2?0:low?95:145);
+  light.intensity=strength*(low&&i%2?0:low?4:7);
  });
- stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=.02+strength*.85});
+ stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=.01+strength*.28});
 }
 // V3: transparent ETFE-style full-field roof. The 360-degree outer canopy stays opaque,
 // while a high, translucent central cover protects the entire 105x68 pitch.
