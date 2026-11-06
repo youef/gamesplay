@@ -670,7 +670,65 @@ for(const [radius,material,heightOffset] of [[canopyInner,canopyLEDMat,.08],[can
   p.y+=heightOffset;q.y+=heightOffset;canopyBeam(p,q,outer?.13:.11,material);
  }
 }
-// The roof has an open central oculus for daylight and clear views of the pitch.
+// V3: transparent ETFE-style full-field roof. The 360-degree outer canopy stays opaque,
+// while a high, translucent central cover protects the entire 105x68 pitch.
+const roofGlassMat=mat(0x8fcbd5,{transparent:true,opacity:.22,depthWrite:false,metalness:.12,roughness:.18,side:THREE.DoubleSide});
+const roofSecondaryMat=mat(0xb7e3e6,{transparent:true,opacity:.34,depthWrite:false,metalness:.15,roughness:.2,side:THREE.DoubleSide});
+const roofCenterY=35;
+const roofSpanX=116,roofSpanZ=126;
+const roofPanelRows=12,roofPanelCols=16;
+function roofHeight(x,z){
+ const nx=x/(roofSpanX*.5),nz=z/(roofSpanZ*.5);
+ return roofCenterY+5*(1-Math.min(1,nx*nx*.55+nz*nz*.45));
+}
+const roofGlassVertices=[],roofGlassIndices=[];
+for(let iz=0;iz<=roofPanelRows;iz++){
+ const z=-roofSpanZ/2+roofSpanZ*iz/roofPanelRows;
+ for(let ix=0;ix<=roofPanelCols;ix++){
+  const x=-roofSpanX/2+roofSpanX*ix/roofPanelCols;
+  roofGlassVertices.push(ST.x+x,roofHeight(x,z),ST.z+z);
+ }
+}
+for(let iz=0;iz<roofPanelRows;iz++)for(let ix=0;ix<roofPanelCols;ix++){
+ const a=iz*(roofPanelCols+1)+ix,b=a+roofPanelCols+1;
+ roofGlassIndices.push(a,b,a+1,b,b+1,a+1);
+}
+const roofGlassGeometry=new THREE.BufferGeometry();
+roofGlassGeometry.setAttribute("position",new THREE.Float32BufferAttribute(roofGlassVertices,3));
+roofGlassGeometry.setIndex(roofGlassIndices);roofGlassGeometry.computeVertexNormals();
+const roofGlass=new THREE.Mesh(roofGlassGeometry,roofGlassMat);roofGlass.renderOrder=1;S.add(roofGlass);
+// Lattice trusses over the transparent span, lightweight and spaced to preserve visibility.
+for(let ix=0;ix<=roofPanelCols;ix+=2){
+ const x=-roofSpanX/2+roofSpanX*ix/roofPanelCols;
+ for(let iz=0;iz<roofPanelRows;iz++){
+  const z0=-roofSpanZ/2+roofSpanZ*iz/roofPanelRows,z1=-roofSpanZ/2+roofSpanZ*(iz+1)/roofPanelRows;
+  canopyBeam(new THREE.Vector3(ST.x+x,roofHeight(x,z0)+.16,ST.z+z0),new THREE.Vector3(ST.x+x,roofHeight(x,z1)+.16,ST.z+z1),.105,canopyRibMat);
+ }
+}
+for(let iz=0;iz<=roofPanelRows;iz+=2){
+ const z=-roofSpanZ/2+roofSpanZ*iz/roofPanelRows;
+ for(let ix=0;ix<roofPanelCols;ix++){
+  const x0=-roofSpanX/2+roofSpanX*ix/roofPanelCols,x1=-roofSpanX/2+roofSpanX*(ix+1)/roofPanelCols;
+  canopyBeam(new THREE.Vector3(ST.x+x0,roofHeight(x0,z)+.16,ST.z+z),new THREE.Vector3(ST.x+x1,roofHeight(x1,z)+.16,ST.z+z),.105,canopyRibMat);
+ }
+}
+// Illuminated crown around the whole roof and a raised central spine.
+for(let i=0;i<canopySegments;i++){
+ const a=i*2*Math.PI/canopySegments,b=(i+1)*2*Math.PI/canopySegments;
+ const p=canopyPoint(a,true),q=canopyPoint(b,true);p.y+=1.2;q.y+=1.2;
+ canopyBeam(p,q,.12,canopyLEDMat);
+}
+for(let iz=0;iz<roofPanelRows;iz++){
+ const z0=-roofSpanZ/2+roofSpanZ*iz/roofPanelRows,z1=-roofSpanZ/2+roofSpanZ*(iz+1)/roofPanelRows;
+ canopyBeam(new THREE.Vector3(ST.x,roofHeight(0,z0)+.28,ST.z+z0),new THREE.Vector3(ST.x,roofHeight(0,z1)+.28,ST.z+z1),.16,roofSecondaryMat);
+}
+// Roof visual quality follows the existing performance settings; structural canopy remains.
+function syncStadiumRoofQuality(){
+ const low=atmosphere.quality==="low";
+ roofGlass.visible=!low;
+}
+syncStadiumRoofQuality();
+
 
 const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
 stadiumBoard.position.set(ST.x,13.5,standFront-20);
