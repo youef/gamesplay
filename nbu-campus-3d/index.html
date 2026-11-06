@@ -806,7 +806,7 @@ tg.textAlign="center";tg.textBaseline="middle";tg.direction="ltr";
 tg.fillStyle="#f7ca0c";tg.font="900 185px Arial,sans-serif";tg.fillText("ITTIHAD",512,241,905);
 tg.fillStyle="#ffffff";tg.font="900 54px Arial,sans-serif";tg.fillText("BLACK & YELLOW",512,358,860);
 tg.fillStyle="#f7ca0c";tg.font="900 48px Arial,sans-serif";tg.fillText("THE TIGERS",512,470,800);
-const tifoPixels=tg.getImageData(0,0,512,256).data;
+const tifoPixels=tg.getImageData(0,0,1024,512).data;
 function tifoColor(row,seat){
  // North end: an unbroken giant mosaic; other sections wear club colors.
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
@@ -837,32 +837,35 @@ if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=t
 S.add(stadiumCrowdTorso,stadiumCrowdHead);
 // Dedicated 3D crowd tifo banner: readable from the pitch, not tiny individual shirts.
 // The card mosaic remains in the seats behind this raised fan choreography.
-const tifoTexture=new THREE.CanvasTexture(tifoCanvas);
-tifoTexture.colorSpace=THREE.SRGBColorSpace;
-tifoTexture.anisotropy=Math.min(8,R.capabilities.getMaxAnisotropy());
-const tifoBannerMat=new THREE.MeshBasicMaterial({map:tifoTexture,side:THREE.DoubleSide,depthWrite:true});
-const tifoBannerVerts=[],tifoBannerUvs=[],tifoBannerIndices=[];
-const tifoSegments=64;
-for(let j=0;j<=tifoSegments;j++){
- const u=j/tifoSegments,x=(u-.5)*98;
- // Position banner directly in front of the northern grandstand, with shallow curvature.
- const z=ST.z-61.9-8*Math.pow(Math.abs(x)/49,2);
- tifoBannerVerts.push(ST.x+x,3,z,ST.x+x,20.5,z);
- tifoBannerUvs.push(u,0,u,1);
- if(j<tifoSegments){const k=j*2;tifoBannerIndices.push(k,k+1,k+2,k+1,k+3,k+2)}
+// Individual supporters raise coloured cards from their actual seats.
+// No floating banner or overlay: every visible letter is formed by raised cards.
+const tifoCardGeo=new THREE.PlaneGeometry(.85,.68);
+const tifoCardMat=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
+const tifoCardIndices=[];
+for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
+ const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
+ if(angle>Math.PI*1.13&&angle<Math.PI*1.87&&seat%125>=5)tifoCardIndices.push(row*stadiumSeatsPerRow+seat);
 }
-const tifoBannerGeo=new THREE.BufferGeometry();
-tifoBannerGeo.setAttribute("position",new THREE.Float32BufferAttribute(tifoBannerVerts,3));
-tifoBannerGeo.setAttribute("uv",new THREE.Float32BufferAttribute(tifoBannerUvs,2));
-tifoBannerGeo.setIndex(tifoBannerIndices);tifoBannerGeo.computeVertexNormals();
-const tifoBanner=new THREE.Mesh(tifoBannerGeo,tifoBannerMat);
-tifoBanner.renderOrder=2;tifoBanner.frustumCulled=false;S.add(tifoBanner);
-
+const tifoCards=new THREE.InstancedMesh(tifoCardGeo,tifoCardMat,tifoCardIndices.length);
+tifoCards.frustumCulled=false;tifoCards.castShadow=false;
+const tifoDummy=new THREE.Object3D();
+for(let n=0;n<tifoCardIndices.length;n++){
+ const idx=tifoCardIndices[n],row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow;
+ const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
+ tifoDummy.position.set(p.x,p.y+1.85,p.z);
+ tifoDummy.rotation.set(-.18,-angle-Math.PI/2,0);
+ tifoDummy.scale.set(1,1,1);tifoDummy.updateMatrix();
+ tifoCards.setMatrixAt(n,tifoDummy.matrix);
+ tifoCards.setColorAt(n,new THREE.Color(tifoColor(row,seat)));
+}
+tifoCards.instanceMatrix.needsUpdate=true;
+if(tifoCards.instanceColor)tifoCards.instanceColor.needsUpdate=true;
+S.add(tifoCards);
 const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
 function updateStadiumCheering(t){
  if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
  for(const idx of cheeringIndices){
-  if(idx>=stadiumCrowdTorso.count)continue;
+  if(idx>=stadiumCrowdTorso.count||tifoCardIndices.indexOf(idx)!==-1)continue;
   const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
   const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28;
   crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
