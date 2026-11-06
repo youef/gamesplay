@@ -572,6 +572,81 @@ for(const sign of [-1,1]){
  box(.25,3.5,.25,mat(0xf5f5f1),ST.x+9,1.75,z,0);
  for(let t=-8;t<=8;t+=2)box(.04,3,.04,mat(0xe6e9e6),ST.x+t,1.5,z+sign*1.6,0);
 }
+
+// Stadium experience: low-poly animated footballers, crowd, perimeter fence and safe entrances.
+const stadiumActors=[],stadiumCrowd=[];
+const stadiumFenceMat=mat(0x8ca6a9,{transparent:true,opacity:.33,depthWrite:false,metalness:.1,roughness:.4,side:THREE.DoubleSide});
+const stadiumPostMat=mat(0x4a6468,{metalness:.35,roughness:.55});
+function stadiumFence(x1,z1,x2,z2){
+ const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dx,dz),cx=(x1+x2)/2,cz=(z1+z2)/2;
+ const panel=new THREE.Mesh(new THREE.PlaneGeometry(len,4.6),stadiumFenceMat);
+ panel.position.set(cx,2.45,cz);panel.rotation.y=angle;panel.renderOrder=3;S.add(panel);
+ for(let i=0;i<=Math.ceil(len/8);i++){
+  const t=i/Math.ceil(len/8);box(.17,5,.17,stadiumPostMat,x1+dx*t,2.5,z1+dz*t,0);
+ }
+ for(const y of [1,4.7]){const rail=box(.09,.11,len,stadiumPostMat,cx,y,cz,0);rail.rotation.y=angle}
+ COL.push([Math.min(x1,x2)-.2,Math.min(z1,z2)-.2,Math.max(x1,x2)+.2,Math.max(z1,z2)+.2]);
+}
+// Two clear entry openings at the east and west ends; no invisible barriers across gates.
+const fenceLeft=ST.x-88,fenceRight=ST.x+88,fenceNorth=ST.z-62,fenceSouth=ST.z+62;
+stadiumFence(fenceLeft,fenceNorth,fenceRight,fenceNorth);
+stadiumFence(fenceLeft,fenceSouth,fenceRight,fenceSouth);
+stadiumFence(fenceLeft,fenceNorth,fenceLeft,ST.z-8);
+stadiumFence(fenceLeft,ST.z+8,fenceLeft,fenceSouth);
+stadiumFence(fenceRight,fenceNorth,fenceRight,ST.z-8);
+stadiumFence(fenceRight,ST.z+8,fenceRight,fenceSouth);
+for(const side of [-1,1]){
+ const x=ST.x+side*88;
+ for(const z of [ST.z-8,ST.z+8])box(.42,5,.42,stadiumPostMat,x,2.5,z,0);
+}
+const stadiumSkin=mat(0xc68b62),stadiumShorts=mat(0x243244),stadiumJerseys=[mat(0x1467ac),mat(0xf4e8da)];
+const stadiumBoots=mat(0x1b242e),stadiumHair=mat(0x252323);
+function stadiumPerson(x,z,team,scale=1){
+ const g=new THREE.Group(),shirt=stadiumJerseys[team%2];
+ const add=(w,h,d,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);g.add(o);return o};
+ add(.95,1.15,.5,shirt,0,1.7,0);add(.9,.45,.52,stadiumShorts,0,.91,0);
+ const leftLeg=add(.3,.8,.32,stadiumSkin,-.27,.42,0),rightLeg=add(.3,.8,.32,stadiumSkin,.27,.42,0);
+ const leftArm=add(.26,.93,.3,stadiumSkin,-.67,1.64,0),rightArm=add(.26,.93,.3,stadiumSkin,.67,1.64,0);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.38,8,6),stadiumSkin);head.position.y=2.56;g.add(head);
+ add(.72,.16,.65,stadiumHair,0,2.88,0);
+ add(.36,.18,.55,stadiumBoots,-.27,.11,.12);add(.36,.18,.55,stadiumBoots,.27,.11,.12);
+ g.scale.setScalar(scale);g.position.set(x,0,z);S.add(g);
+ return {g,leftLeg,rightLeg,leftArm,rightArm};
+}
+for(let i=0;i<14;i++){
+ const team=i%2,slot=Math.floor(i/2),x=ST.x+(team?1:-1)*(7+(slot%3)*11),z=ST.z-22+Math.floor(slot/3)*22+(slot%3)*4;
+ const actor=stadiumPerson(x,z,team,.94);
+ stadiumActors.push({...actor,baseX:x,baseZ:z,seed:i*1.72,team});
+}
+const ball=new THREE.Mesh(new THREE.SphereGeometry(.75,12,8),mat(0xf8f8f0,{roughness:.64}));ball.position.set(ST.x,.85,ST.z);ball.castShadow=true;S.add(ball);
+const crowdColors=[mat(0xe7e9e5),mat(0x1674b2),mat(0x253e63),mat(0xd0ad75),mat(0x2e846d)];
+for(let row=0;row<7;row++)for(let i=0;i<31;i++){
+ const x=ST.x-49+i*3.25,z=standFront-row*2.8-.4;
+ if(Math.abs(x-ST.x)<4||Math.abs(x-(ST.x+27))<2||Math.abs(x-(ST.x-27))<2)continue;
+ const crowd=new THREE.Group(),color=crowdColors[(i+row*3)%crowdColors.length];
+ const torso=new THREE.Mesh(new THREE.BoxGeometry(.68,.9,.44),color);torso.position.y=.63;crowd.add(torso);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.27,6,5),stadiumSkin);head.position.y=1.34;crowd.add(head);
+ crowd.position.set(x,1.1+row*.72,z);S.add(crowd);stadiumCrowd.push({g:crowd,phase:i*.87+row*.46});
+}
+function updateStadium(t,dt){
+ if(!dt)return;
+ const nearStadium=Math.hypot(pl.position.x-ST.x,pl.position.z-ST.z)<260;
+ if(!nearStadium)return;
+ const time=t*.001;
+ for(const a of stadiumActors){
+  const p=time*.8+a.seed;
+  a.g.position.x=a.baseX+Math.sin(p)*3.2;
+  a.g.position.z=a.baseZ+Math.cos(p*.72)*4.4;
+  a.g.rotation.y=Math.atan2(Math.cos(p)*3.2,-Math.sin(p*.72)*3.2);
+  const stride=Math.sin(p*5);
+  a.leftLeg.rotation.x=stride*.43;a.rightLeg.rotation.x=-stride*.43;
+  a.leftArm.rotation.x=-stride*.28;a.rightArm.rotation.x=stride*.28;
+ }
+ ball.position.set(ST.x+Math.sin(time*.65)*23,.82+Math.abs(Math.sin(time*2.4))*.35,ST.z+Math.cos(time*.9)*16);
+ ball.rotation.x+=dt*2;ball.rotation.z+=dt*1.4;
+ if(atmosphere.quality!=="low")for(const c of stadiumCrowd)c.g.position.y=1.1+Math.floor((c.g.position.y-1.1)/.72+.5)*.72+Math.sin(time*2+c.phase)*.015;
+}
+
 const sl=lab("ملعب الجامعة","#b04a3a",3.6);sl.position.set(ST.x,12,ST.z);
 // نخيل وإنارة
 const trm=mat(0x8a6a45),lfm=mat(0x3f8a45);
@@ -1299,7 +1374,7 @@ organizeSettings();let last=0,lastMiniDraw=-Infinity;
 (function loop(t){requestAnimationFrame(loop);const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
 if(ipadGamepadEnabled&&!ipadPaused&&navigator.getGamepads){const pad=Array.from(navigator.getGamepads()).find(Boolean);if(pad){const dead=v=>Math.abs(v)>.18?v:0;joy.x=dead(pad.axes[0]||0);joy.y=dead(pad.axes[1]||0);if(pad.axes.length>=4){yaw+=dead(pad.axes[2]||0)*dt*2;pit=Math.max(-.15,Math.min(1.25,pit+dead(pad.axes[3]||0)*dt))}if(pad.buttons[0]&&pad.buttons[0].pressed&&!ipadPauseBtnHeld){ipadPauseBtnHeld=true;ipadHaptic()}if(!pad.buttons[0]||!pad.buttons[0].pressed)ipadPauseBtnHeld=false;}}
 if(ipadPaused){joy.x=joy.y=0;}
-if(!ipadPaused)updateAtmosphere(t,dt);if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
+if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
