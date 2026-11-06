@@ -162,7 +162,7 @@ const G=[{n:"بوابة 1 – الشمالية",x:0,z:-200,o:"h"},{n:"بوابة
 const DIST={n:"ضاحية الملك فهد",x:-410,z:30,w:240,d:150};
 const CITY={n:"طريق عرعر",x:-615,z:32};
 const AIR={n:"مطار عرعر",x:500,z:-330,w:210,d:115};
-const COL=[];
+const COL=[];const removedCampusBuildings=new Set(),campusBuildingGroups=new Map();
 // V3.6: recover when the primary Three.js CDN is blocked or unavailable.
 function startCampus(){
  const fontReady=document.fonts&&document.fonts.load?document.fonts.load("800 40px Tajawal").catch(()=>{}):Promise.resolve();
@@ -433,14 +433,14 @@ function makeGate(g){
 G.forEach(g=>{g.ix=g.o==="h"?0:(g.x<0?1:-1);g.iz=g.o==="h"?(g.z<0?1:-1):0;makeGate(g)});
 // المباني
 const wtex=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.fillStyle="#2b4766";g.fillRect(10,12,44,34);g.fillStyle="#7fa6cc";g.fillRect(10,12,44,12);g.fillStyle="#cfcfcf";g.fillRect(0,56,64,8)});
-B.forEach(b=>{const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshLambertMaterial({map:t,color:b.c})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
+B.forEach(b=>{const groupStart=S.children.length;const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshLambertMaterial({map:t,color:b.c})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
 const m=new THREE.Mesh(new THREE.BoxGeometry(b.w,b.h,b.d),[mx,mx,mt,mt,mz,mz]);m.position.set(b.x,b.h/2,b.z);m.castShadow=m.receiveShadow=true;S.add(m);
 box(b.w+1,.8,b.d+1,mat(0x9a8f7d),b.x,b.h+.4,b.z);box(6,2,6,mat(0xaaaaaa),b.x-b.w/4,b.h+1.8,b.z);box(4,1.5,4,mat(0xaaaaaa),b.x+b.w/4,b.h+1.6,b.z+2);
 const sz=b.ds==="n"?-1:1,dz=b.z+sz*b.d/2,cm=mat(0xf0e8d8);
 box(12,.7,6,cm,b.x,5,dz+sz*3);box(.8,5,.8,cm,b.x-5,2.5,dz+sz*5.4);box(.8,5,.8,cm,b.x+5,2.5,dz+sz*5.4);
 box(5.5,3.6,.3,mat(0x1d4f7a,{emissive:0x0a2540}),b.x,1.8,dz+sz*.1,0);box(16,.3,8,mat(0xe9e0cc),b.x,.15,dz+sz*4,0);
 const s=lab(b.n,"#1d3a5f",3.6);s.position.set(b.x,b.h+6,b.z);
-COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
+const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();for(const mesh of meshes)wrapper.add(mesh);wrapper.userData.campusBuilding=b.n;S.add(wrapper);campusBuildingGroups.set(b.n,wrapper);COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
 // الملعب
 const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
 ell(ST.rx+16,ST.rz+16,0xc9bfa8,.1);ell(ST.rx,ST.rz,0xb04a3a,.2);ell(ST.rx-9,ST.rz-9,0x2f56a3,.3);ell(ST.rx-14,ST.rz-14,0x3f8a4a,.4);
@@ -833,9 +833,9 @@ const spent=()=>built.reduce((sum,o)=>sum+buildMoney(o),0);
 const balance=()=>Math.max(0,1600000+budgetBonus-spent());
 const coins=n=>Math.round(n).toLocaleString("ar-SA")+" ر.س";
 function toastBuild(t){const v=$("buildToast");v.textContent=t;v.style.display="block";clearTimeout(buildMessageTime);buildMessageTime=setTimeout(()=>v.style.display="none",3300)}
-function storeBuild(){evaluateMissions();try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:3,built,creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
+function storeBuild(){evaluateMissions();try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:4,built,removedCampusBuildings:[...removedCampusBuildings],creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
 function validItem(o){if(!o||typeof o!=="object"||!buildDefs[o.type]||o.type==="erase"||!Number.isFinite(o.x)||!Number.isFinite(o.z)||o.x<WORLD.buildMinX||o.x>WORLD.buildMaxX||o.z<WORLD.buildMinZ||o.z>WORLD.buildMaxZ)return false;if(buildDefs[o.type].path){return o.end&&Number.isFinite(o.end.x)&&Number.isFinite(o.end.z)&&o.end.x>=WORLD.buildMinX&&o.end.x<=WORLD.buildMaxX&&o.end.z>=WORLD.buildMinZ&&o.end.z<=WORLD.buildMaxZ&&Math.hypot(o.end.x-o.x,o.end.z-o.z)>=10&&Math.hypot(o.end.x-o.x,o.end.z-o.z)<=230}return Number.isInteger(o.rot)&&o.rot>=0&&o.rot<=3}
-function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;budgetBonus=Number.isFinite(dat.budgetBonus)?clamp(dat.budgetBonus,0,5000000):0;missionDone=dat.missionDone&&typeof dat.missionDone==="object"?dat.missionDone:{};drivenMeters=Number.isFinite(dat.drivenMeters)?clamp(dat.drivenMeters,0,1000000):0;atAirport=!!dat.atAirport;atCity=!!dat.atCity;redrawBuild();evaluateMissions()}}catch(e){built=[]}}
+function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){if(Array.isArray(dat.removedCampusBuildings)){for(const name of dat.removedCampusBuildings){if(B.some(b=>b.n===name))removedCampusBuildings.add(name)}syncCampusBuildings()}built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;budgetBonus=Number.isFinite(dat.budgetBonus)?clamp(dat.budgetBonus,0,5000000):0;missionDone=dat.missionDone&&typeof dat.missionDone==="object"?dat.missionDone:{};drivenMeters=Number.isFinite(dat.drivenMeters)?clamp(dat.drivenMeters,0,1000000):0;atAirport=!!dat.atAirport;atCity=!!dat.atCity;redrawBuild();evaluateMissions()}}catch(e){built=[]}}
 // Original modular low-poly 3D fuel station for the default scene and player-built stations.
 function makeFuelStation(parent){
  const c={floor:0x8d969c,curb:0xc8c6bc,white:0xf1f3ef,navy:0x183d55,teal:0x08a4a5,glass:0x3d819b,roof:0x203c54,amber:0xf7cb67,black:0x29343b,red:0xc34d44};
@@ -946,16 +946,38 @@ function renderMissions(){const target=$("missionsList");target.replaceChildren(
 function evaluateMissions(){let newly=0;for(const m of missionDefs){if(!missionDone[m.id]&&m.check()){missionDone[m.id]=true;budgetBonus+=m.reward;newly++}}
 if(newly){toastBuild("🎉 أكملت "+newly+" مهمة وربحت مكافأة! ");updateBuildHud()}renderMissions()}
 function selectBuild(t){buildTool=t;buildStart=null;updateBuildHud()}
+function syncCampusBuildings(){
+ for(const [name,group] of campusBuildingGroups)group.visible=!removedCampusBuildings.has(name);
+}
+function removeCampusBuilding(name){
+ if(!B.some(b=>b.n===name))return;
+ removedCampusBuildings.add(name);syncCampusBuildings();storeBuild();toastBuild("تمت إزالة "+name+" من مخطط لعبتك — يمكن استعادته");
+}
+function restoreCampusBuilding(name){
+ removedCampusBuildings.delete(name);syncCampusBuildings();storeBuild();toastBuild("تمت استعادة "+name);
+}
+function setupCampusEditor(){
+ const panel=document.createElement("section");panel.id="campusEditor";panel.dir="rtl";
+ panel.style.cssText="display:none;position:fixed;z-index:31;left:12px;top:12%;width:min(370px,calc(100vw - 24px));max-height:72vh;overflow:auto;padding:12px;background:#f8f7f1;color:#182e35;border:2px solid #138369;border-radius:15px;box-shadow:0 10px 30px #0006;font:700 14px Tajawal,Tahoma";
+ panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>🏗️ إدارة مباني الجامعة</b><button data-close>✕</button></div><p>احذف أي مبنى من المخطط أو أعده لاحقًا. هذا التعديل محلي في لعبتك فقط.</p><div data-list></div>';
+ document.body.appendChild(panel);
+ panel.querySelector("[data-close]").onclick=()=>panel.style.display="none";
+ const button=document.createElement("button");button.textContent="🏢 حذف / استعادة مباني الجامعة";button.onclick=()=>{panel.style.display="block";renderCampusEditor()};$("settingsActions").append(button);
+ function renderCampusEditor(){
+  const list=panel.querySelector("[data-list]");list.replaceChildren();
+  for(const b of B){const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;border-bottom:1px solid #ccd5cf";const title=document.createElement("span");title.textContent=b.n;const action=document.createElement("button");const removed=removedCampusBuildings.has(b.n);action.textContent=removed?"↩ استعادة":"🗑️ حذف";action.style.cssText="border:0;border-radius:8px;background:"+(removed?"#168064":"#b94b43")+";color:white;padding:8px;cursor:pointer";action.onclick=()=>{if(removed)restoreCampusBuilding(b.n);else removeCampusBuilding(b.n);renderCampusEditor()};row.append(title,action);list.append(row)}
+ }
+}
 function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMaxX||z-d/2<WORLD.buildMinZ||z+d/2>WORLD.buildMaxZ)return true;
  if(Math.abs(x)<ST.rx+w/2&&Math.abs(z-ST.z)<ST.rz+d/2)return true;if(Math.abs(x-DIST.x)<DIST.w/2+w/2&&Math.abs(z-DIST.z)<DIST.d/2+d/2)return true;if(Math.abs(x-AIR.x)<AIR.w/2+w/2&&Math.abs(z-AIR.z)<AIR.d/2+d/2)return true;
- for(const b of B)if(Math.abs(x-b.x)<(w+b.w)/2+2&&Math.abs(z-b.z)<(d+b.d)/2+2)return true;
+ for(const b of B)if(!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<(w+b.w)/2+2&&Math.abs(z-b.z)<(d+b.d)/2+2)return true;
  for(const o of built){const q=buildDefs[o.type];if(q.path)continue;const qw=o.rot%2?q.d:q.w,qd=o.rot%2?q.w:q.d;if(Math.abs(x-o.x)<(w+qw)/2+2&&Math.abs(z-o.z)<(d+qd)/2+2)return true}return false;
 }
 function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد الأعلى للعناصر، احذف بعض الإضافات";
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
  if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(o.type!=="bridge"&&!roadTouchesNetwork(o))return "يجب ربط الطريق بالشبكة الحالية";if(o.type!=="bridge"&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
   for(let i=0;i<=len;i+=5){const t=i/len,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
-   for(const b of B)if(Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
+   for(const b of B)if(!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
    if(Math.abs(x)<ST.rx+d.width/2&&Math.abs(z-ST.z)<ST.rz+d.width/2)return "المسار يتداخل مع الملعب";
    for(const b of built){const bd=buildDefs[b.type];if(bd.path)continue;const w=b.rot%2?bd.d:bd.w,q=b.rot%2?bd.w:bd.d;if(Math.abs(x-b.x)<w/2+d.width/2&&Math.abs(z-b.z)<q/2+d.width/2)return "المسار يتداخل مع مبنى أضفته"}
   }
@@ -966,7 +988,7 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
 function selectGround(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);return buildRay.ray.intersectPlane(buildPlane,buildHit)?{x:snap(buildHit.x),z:snap(buildHit.z)}:null}
 function previewFromPointer(e){const p=selectGround(e);if(p){$("builderGuide").textContent=buildDefs[buildTool].label+" | X: "+p.x+" ، Z: "+p.z+(buildStart?" | المس لتثبيت النهاية":" | المس للتشييد")}}
 function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);
- const hits=buildRay.intersectObjects(buildGroups,true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
+ const hits=buildRay.intersectObjects([...buildGroups,...campusBuildingGroups.values()].filter(g=>g.visible),true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const campusName=node.userData.campusBuilding;if(campusName){removeCampusBuilding(campusName);return}const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
 function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){const nearest=closestRoadPoint(p,18);if(!nearest&&buildTool!=="bridge"){toastBuild("ابدأ من الطريق الموجود: قرّب المؤشر من حافة شارع أو تقاطع");return}buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
@@ -1011,7 +1033,7 @@ $("importBuild").onclick=()=>$("buildFile").click();
 $("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const fileText=typeof file.text==="function"?await file.text():await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error("تعذر قراءة الملف"));reader.readAsText(file,"UTF-8")});const data=JSON.parse(fileText);if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?Math.max(budgetBonus,clamp(data.budgetBonus,0,5000000)):budgetBonus;missionDone=data.missionDone&&typeof data.missionDone==="object"&&!Array.isArray(data.missionDone)?Object.fromEntries(missionDefs.map(m=>[m.id,!!(missionDone[m.id]||data.missionDone[m.id])])):missionDone;drivenMeters=Number.isFinite(data.drivenMeters)?Math.max(drivenMeters,clamp(data.drivenMeters,0,1000000)):drivenMeters;atAirport=atAirport||!!data.atAirport;atCity=atCity||!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();updateModes();setupSettings();
+restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();
 function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
