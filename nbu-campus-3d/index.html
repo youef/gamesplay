@@ -183,14 +183,14 @@ const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"h
 // V3.16: recover from GPU context loss on iPad without a blank canvas.
 $("c").addEventListener("webglcontextlost",event=>{event.preventDefault();$("ld").style.display="flex";$("ld").textContent="توقف محرك الرسوم مؤقتًا. جارٍ انتظار استعادة WebGL…";});
 $("c").addEventListener("webglcontextrestored",()=>{window.location.reload();});
-R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.4:2));R.shadowMap.enabled=true;
+R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.25:1.8));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.18;
 const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
 const cam=new THREE.PerspectiveCamera(60,1,.5,1500);
 const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",rs);rs();
 S.add(new THREE.HemisphereLight(0xdff0ff,0xb59a6a,.8));
 const sun=new THREE.DirectionalLight(0xfff1d6,1.15);sun.castShadow=true;sun.shadow.mapSize.set(matchMedia("(pointer: coarse)").matches?1024:2048,matchMedia("(pointer: coarse)").matches?1024:2048);const sc=sun.shadow.camera;sc.left=sc.bottom=-70;sc.right=sc.top=70;sc.far=320;S.add(sun,sun.target);
 // Physically based materials for architectural surfaces and infrastructure.
-const atmosphere={hour:14,auto:true,weather:"clear",quality:"balanced",lastUpdate:-1};
+const atmosphere={hour:14,auto:true,weather:"clear",quality:"balanced",lastUpdate:-1};let atmosphereFrame=0;
 const skyDay=new THREE.Color(0x9fcff0),skyNight=new THREE.Color(0x091629),skyDust=new THREE.Color(0xb8a18a);
 const skyFogDay=new THREE.Color(0xb9dcf2),skyFogNight=new THREE.Color(0x16253c);
 const ambient=S.children.find(o=>o.isHemisphereLight);
@@ -209,13 +209,13 @@ function updateAtmosphere(t,dt){
  S.background.copy(skyNight).lerp(dusty?skyDust:skyDay,day);
  S.fog.color.copy(skyFogNight).lerp(dusty?skyDust:skyFogDay,day);
  S.fog.near=foggy?35:dusty?65:140;S.fog.far=foggy?185:dusty?310:620;
- for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);
+ for(const light of nightLights)light.intensity=night*(atmosphere.quality==="high"?1.1:.65);R.toneMappingExposure=.78+day*.48;
  rain.visible=atmosphere.weather==="rain"&&atmosphere.quality!=="low";
  if(rain.visible){rain.position.set(pl.position.x,0,pl.position.z);for(let i=0;i<rainCount;i++){const j=i*3+1;rainPositions[j]-=dt*22;if(rainPositions[j]<1)rainPositions[j]=35}rainGeo.attributes.position.needsUpdate=true}
 }
 function setupAtmosphere(){
  const wrap=document.createElement("div");wrap.id="atmospherePanel";wrap.dir="rtl";
- wrap.style.cssText="position:fixed;z-index:27;top:calc(54px + env(safe-area-inset-top,0px));left:8px;display:flex;flex-wrap:wrap;gap:5px;max-width:48vw;padding:7px;border-radius:14px;background:#173248d9;backdrop-filter:blur(10px);color:#fff;font:700 12px Tahoma";
+ wrap.style.cssText="position:fixed;z-index:27;top:calc(54px + env(safe-area-inset-top,0px));left:8px;display:flex;flex-wrap:wrap;gap:5px;max-width:48vw;padding:7px;border-radius:14px;background:#173248ed;backdrop-filter:blur(10px);color:#fff;font:700 12px Tahoma";
  wrap.innerHTML='<label>☀️ الوقت <select id="atmTime"><option value="auto">تلقائي</option><option value="7">صباح</option><option value="14">نهار</option><option value="18">غروب</option><option value="23">ليل</option></select></label><label>🌦️ الجو <select id="atmWeather"><option value="clear">صحو</option><option value="rain">مطر</option><option value="dust">غبار</option><option value="fog">ضباب</option></select></label><label>⚙️ الجودة <select id="atmQuality"><option value="balanced">متوازن</option><option value="low">اقتصادي</option><option value="high">مرتفع</option></select></label>';
  document.body.appendChild(wrap);
  for(const id of ["atmTime","atmWeather","atmQuality"])document.getElementById(id).style.cssText="border:0;border-radius:7px;background:#e7f4f8;color:#123044;padding:5px;font:700 12px Tahoma";
@@ -472,8 +472,19 @@ B.forEach(b=>{const groupStart=S.children.length;const nf=Math.max(2,Math.round(
 const m=new THREE.Mesh(new THREE.BoxGeometry(b.w,b.h,b.d),[mx,mx,mt,mt,mz,mz]);m.position.set(b.x,b.h/2,b.z);m.castShadow=m.receiveShadow=true;S.add(m);
 box(b.w+1,.8,b.d+1,mat(0x9a8f7d),b.x,b.h+.4,b.z);box(6,2,6,mat(0xaaaaaa),b.x-b.w/4,b.h+1.8,b.z);box(4,1.5,4,mat(0xaaaaaa),b.x+b.w/4,b.h+1.6,b.z+2);
 const sz=b.ds==="n"?-1:1,dz=b.z+sz*b.d/2,cm=mat(0xf0e8d8);
+ // Architectural detailing: glazed entrance, stone piers and contrasting horizontal bands.
+ const facadeGlass=mat(0x74a7c0,{roughness:.19,metalness:.22,transparent:true,opacity:.87});
+ const facadeStone=mat(0xe5ded0,{roughness:.88});
+ for(const offset of [-b.w*.38,b.w*.38])box(1.1,b.h-2,1.2,facadeStone,b.x+offset,(b.h-2)/2,dz+sz*.65,0);
+ for(let level=1;level<Math.floor(b.h/4.2);level++)box(b.w+.22,.23,b.d+.22,facadeStone,b.x,level*4.2,b.z,0);
+ for(let offset=-b.w/2+9;offset<b.w/2-5;offset+=9){
+  if(Math.abs(offset)<7)continue;
+  box(4.6,2.1,.13,facadeGlass,b.x+offset,2.7,dz+sz*.23,0);
+  box(4.9,.13,.3,facadeStone,b.x+offset,3.85,dz+sz*.28,0);
+ }
+
 box(12,.7,6,cm,b.x,5,dz+sz*3);box(.8,5,.8,cm,b.x-5,2.5,dz+sz*5.4);box(.8,5,.8,cm,b.x+5,2.5,dz+sz*5.4);
-box(5.5,3.6,.3,mat(0x1d4f7a,{emissive:0x0a2540}),b.x,1.8,dz+sz*.1,0);box(16,.3,8,mat(0xe9e0cc),b.x,.15,dz+sz*4,0);
+box(5.5,3.6,.3,facadeGlass,b.x,1.8,dz+sz*.1,0);box(.15,3.6,.45,facadeStone,b.x,1.8,dz+sz*.38,0);box(16,.3,8,mat(0xe9e0cc),b.x,.15,dz+sz*4,0);
 const s=lab(b.n,"#1d3a5f",3.6);s.position.set(b.x,b.h+6,b.z);
 const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();for(const mesh of meshes)wrapper.add(mesh);wrapper.userData.campusBuilding=b.n;S.add(wrapper);campusBuildingGroups.set(b.n,wrapper);COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
 // الملعب
@@ -1138,7 +1149,7 @@ mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0
 built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
 mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle=carMode?"#ffb000":"#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
 setupAtmosphere();let last=0,lastMiniDraw=-Infinity;
-(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;updateAtmosphere(t,dt);if(Math.floor(t/50)%2===0){for(let i=0;i<windPalms.length;i++)windPalms[i].rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016)}
+(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;updateAtmosphere(t,dt);if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
