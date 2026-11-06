@@ -561,7 +561,7 @@ const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();for(co
 // الملعب
 const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
 ell(ST.rx+16,ST.rz+16,0xc9bfa8,.1);ell(ST.rx,ST.rz,0xb04a3a,.2);ell(ST.rx-9,ST.rz-9,0x2f56a3,.3);// Rectangular, fully green football playing surface (68m x 105m), not an oval.
-const grassField=new THREE.Mesh(new THREE.BoxGeometry(68,.24,105),mat(0x32834b,{roughness:1}));
+const grassField=new THREE.Mesh(new THREE.BoxGeometry(68,.24,105),new THREE.MeshStandardMaterial({color:0x236e35,roughness:1,metalness:0,emissive:0x071a09,emissiveIntensity:.12}));
 grassField.position.set(ST.x,.53,ST.z);grassField.receiveShadow=true;S.add(grassField);
 // Correctly scaled 105 x 68 metre football field, with all FIFA-style field markings.
 const pitch={length:105,width:68,y:.665};
@@ -694,7 +694,7 @@ function updateStadiumFloodlights(night){
  const strength=Math.max(0,Math.min(1,(night-.12)/.58));
  const low=atmosphere.quality==="low";
  stadiumFloodlights.forEach((light,i)=>{
-  light.intensity=strength*(low&&i%2?0:low?4:7);
+  light.intensity=strength*(low&&i%2?0:low?1.1:1.8);
  });
  stadiumFloodlightLenses.forEach(lens=>{lens.material.emissiveIntensity=.01+strength*.28});
 }
@@ -1347,8 +1347,8 @@ $("closeBuildDock").onclick=()=>{document.body.classList.remove("showBuildDock")
 let stadiumViewMode="orbit";
 const stadiumViewPanel=document.createElement("div");
 stadiumViewPanel.id="stadiumViewPanel";
-stadiumViewPanel.style.cssText="position:fixed;z-index:20;bottom:calc(110px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:none;max-width:min(95vw,550px);padding:9px;background:#102c40e8;border:1px solid #ffffff55;border-radius:15px;color:white;box-shadow:0 8px 25px #0006;direction:rtl";
-const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.cssText="display:flex;flex-wrap:wrap;justify-content:center;gap:6px";
+stadiumViewPanel.style.cssText="position:fixed;z-index:20;bottom:calc(95px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:none;width:min(92vw,480px);padding:6px;background:#102c40e8;border:1px solid #ffffff55;border-radius:15px;color:white;box-shadow:0 8px 25px #0006;direction:rtl";
+const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.cssText="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;scrollbar-width:none";
 const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"]];
 function selectStadiumView(mode){
  stadiumViewMode=mode;
@@ -1360,14 +1360,18 @@ function selectStadiumView(mode){
 }
 for(const [mode,label] of stadiumViewOptions){
  const b=document.createElement("button");b.type="button";b.dataset.mode=mode;b.textContent=label;
- b.style.cssText="background:#244c67;color:#fff;border:1px solid #7796a9;border-radius:9px;padding:8px;font:700 12px Tajawal,Tahoma;touch-action:manipulation";
+ b.style.cssText="background:#244c67;color:#fff;border:1px solid #7796a9;border-radius:8px;padding:8px 9px;white-space:nowrap;flex:0 0 auto;font:700 12px Tajawal,Tahoma;touch-action:manipulation";
  b.onclick=()=>selectStadiumView(mode);stadiumViewButtons.append(b);
 }
-const stadiumViewHint=document.createElement("div");stadiumViewHint.textContent="اسحب الشاشة لتغيير زاوية المشاهدة، وبإصبعين للتقريب والإبعاد. يمكنك التبديل بين 5 كاميرات.";stadiumViewHint.style.cssText="font:500 11px Tajawal,Tahoma;text-align:center;padding-top:6px";
-stadiumViewPanel.append(stadiumViewButtons,stadiumViewHint);document.body.append(stadiumViewPanel);
+const stadiumViewHint=document.createElement("div");stadiumViewHint.textContent="اسحب الشاشة لتغيير زاوية المشاهدة، وبإصبعين للتقريب والإبعاد. يمكنك التبديل بين 5 كاميرات.";stadiumViewHint.style.cssText="display:none;font:500 11px Tajawal,Tahoma;text-align:center;padding-top:6px";
+const stadiumViewToggle=document.createElement("button");
+stadiumViewToggle.type="button";stadiumViewToggle.textContent="📷 زوايا المشاهدة ▾";
+stadiumViewToggle.style.cssText="display:block;width:100%;background:transparent;color:#fff;border:0;padding:5px;font:700 13px Tajawal,Tahoma;touch-action:manipulation";
+stadiumViewToggle.onclick=()=>{const open=stadiumViewButtons.style.display==="none";stadiumViewButtons.style.display=open?"flex":"none";stadiumViewToggle.textContent=open?"📷 زوايا المشاهدة ▴":"📷 زوايا المشاهدة ▾"};
+stadiumViewPanel.append(stadiumViewToggle,stadiumViewButtons,stadiumViewHint);document.body.append(stadiumViewPanel);
 selectStadiumView("orbit");
 function leaveStand(){if(!seated)return;stadiumViewPanel.style.display="none";seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
-$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;selectStadiumView("orbit");stadiumViewPanel.style.display="block";$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
+$("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.58;dist=18;ch.rotation.x=-.18;selectStadiumView("orbit");stadiumViewPanel.style.display="block";stadiumViewButtons.style.display="none";stadiumViewToggle.textContent="📷 زوايا المشاهدة ▾";$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
 $("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
