@@ -265,21 +265,45 @@ function makeGate(g){
  for(const z of [-2.87,2.87])attachEmblemPair(root,0,15.7,z,7.4,7.4);
  p(9,3.8,4.5,white,23,1.9,-3);p(9,.45,5,navy,23,4.05,-3);
  for(const z of [-.6,1.1])p(2.8,1.9,.1,0x4d8c9a,23,2.2,z);
- // Security booth and two uniformed staff.
- for(const x of [-24,24]){
-  p(5,3.5,4,white,x,1.75,8);
-  p(5.5,.5,4.5,green,x,3.75,8);
-  p(4,1.7,.15,0x4e92aa,x,2.4,5.94);
-  for(const side of [-1,1]){
-   const gx=x+side*1.4;
-   p(.8,1.5,.55,navy,gx,1.25,4);
-   p(.65,.7,.55,metal,gx,2.36,4);
-   const head=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xb68a64));head.position.set(gx,2.86,4);root.add(head);
-   p(.78,.2,.65,navy,gx,3.2,4);
-  }
+ // Separate entry and exit lanes, with the security control room in the median.
+ // Each lane stays clear for traffic at x=-9 and x=+9.
+ p(6.2,.28,24,stone,0,.14,0);
+ p(6.2,.4,24,green,0,.44,0);
+ // Central glazed security room with a raised roof, visible counters and guards at windows.
+ p(5.8,3.7,8.8,white,0,2.25,1);
+ p(6.5,.55,9.5,navy,0,4.5,1);
+ p(6.7,.2,9.7,gold,0,4.88,1);
+ for(const side of [-1,1]){
+  p(.14,2.2,5.4,0x4c9cb3,side*2.98,2.65,1);
+  p(.22,.17,5.6,green,side*3.1,3.77,1);
+  p(.8,.65,2.4,stone,side*3.2,1.42,1);
  }
- // Swing arms remain outside the central roadway when open.
- for(const x of [-12,12]){p(.65,1.25,.65,gold,x,.9,5);p(6,.17,.24,white,x+(x<0?-3:3),1.6,5)}
+ for(const z of [-3.46,5.46])p(3.6,2.2,.15,0x4c9cb3,0,2.65,z);
+ // Uniformed guard model: distinct head, cap, body, arms and legs.
+ function guard(x,z,angle=0){
+  const human=new THREE.Group();human.position.set(x,0,z);human.rotation.y=angle;root.add(human);
+  const hp=(w,h,d,color,px,py,pz)=>part(human,w,h,d,color,px,py,pz);
+  for(const side of [-1,1])hp(.38,1.05,.45,navy,side*.25,.55,0);
+  hp(1.05,1.45,.62,navy,0,1.77,0);
+  for(const side of [-1,1])hp(.25,1.25,.34,navy,side*.68,1.7,0);
+  hp(.25,.25,.25,0xb98562,0,2.63,0);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.37,12,10),mat(0xb98562));head.position.y=2.88;human.add(head);
+  hp(.82,.2,.77,navy,0,3.24,0);
+  hp(.3,.08,.36,navy,0,3.21,-.4);
+  hp(.4,.1,.12,gold,0,2.12,-.34);
+ }
+ // Two guards visible at the central control-room side windows.
+ guard(-1.65,1,Math.PI/2);guard(1.65,1,-Math.PI/2);
+ // Two guards outside, one overseeing each lane.
+ guard(-14,7,0);guard(14,7,Math.PI);
+ // Entry / exit signage, direction arrows and independently positioned barrier arms.
+ const laneSign=(text,x)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const ctx=c.getContext("2d");ctx.fillStyle="#075a42";ctx.fillRect(0,0,256,96);ctx.font="bold 49px Tajawal,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.fillText(text,128,50);const tex=new THREE.CanvasTexture(c);for(const z of [-3.1,3.1]){const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.6,2.48),new THREE.MeshBasicMaterial({map:tex,side:THREE.FrontSide}));sign.position.set(x,9,z);sign.rotation.y=z<0?Math.PI:0;root.add(sign)}};
+ laneSign("دخول",-9);laneSign("خروج",9);
+ for(const x of [-9,9]){
+  p(.65,1.3,.65,gold,x+(x<0?3.3:-3.3),.7,8);
+  p(5.2,.18,.26,white,x+(x<0?.7:-.7),1.45,8);
+  p(.25,.1,4.4,white,x,.17,16);
+ }
  // Pavement markers and low walls with repeated green university trim.
  for(const x of [-32,32]){
   p(15,2,1.1,stone,x,1,-5);
@@ -295,7 +319,7 @@ function makeGate(g){
   body(2.6,1.1,5.2,direction===1?0xf4f5f3:0x41677e,0,1.1,0);
   body(2.3,.85,2.9,0x6396ac,0,2,0);
   for(const side of [-1,1])for(const z of [-1.65,1.65]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.3,10),mat(0x22272d));wheel.rotation.z=Math.PI/2;wheel.position.set(side*1.38,.65,z);car.add(wheel)}
-  car.position.set(direction*6,0,direction===1?-36:36);car.rotation.y=direction===1?0:Math.PI;
+  car.position.set(direction*9,0,direction===1?-36:36);car.rotation.y=direction===1?0:Math.PI;
   gateCars.push({car,direction,progress:0,offset:direction===1?-36:36});
  }
 }
