@@ -649,8 +649,6 @@ function updateStadiumFloodlights(night){
  stadiumFieldFill.intensity=strength*(low?.3:.6);
  stadiumLampLenses.forEach(lens=>{lens.material.emissiveIntensity=.03+strength*.55});
 }
-const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
-stadiumBoard.position.set(ST.x,24,ST.z-ST.rz-30);
 // Seat locations are computed from the new curved bowl, not the removed stands.
 const standSeats=[];
 [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
@@ -890,7 +888,6 @@ function stadiumVideoScreen(x,y,z,rotation){
  const display=new THREE.Mesh(new THREE.PlaneGeometry(20.7,10.1),stadiumScreenMaterial);
  display.position.set(x+Math.sin(rotation)*.42,y,z+Math.cos(rotation)*.42);display.rotation.y=rotation;S.add(display);
 }
-stadiumVideoScreen(ST.x,20,ST.z-60,0);
 stadiumVideoScreen(ST.x,20,ST.z+60,Math.PI);
 let stadiumScreenLastDraw=-1;
 function drawStadiumScreen(m){
