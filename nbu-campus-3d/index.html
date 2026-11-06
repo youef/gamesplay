@@ -199,7 +199,36 @@ const fl=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0xdccdaa));fl.rotat
 // الطرق
 const dash=hz=>cvt(hz?256:64,hz?64:256,(g,w,h)=>{g.fillStyle="#363b42";g.fillRect(0,0,w,h);for(let i=0;i<1400;i++){g.fillStyle=Math.random()<.5?"#454b53":"#2e343b";g.fillRect(Math.random()*w,Math.random()*h,1.5,1.5)}g.fillStyle="#e5dfc9";hz?g.fillRect(0,h/2-2,w/2,4):g.fillRect(w/2-2,0,4,h/2)});
 function road(x1,z1,x2,z2,w){const hz=z1===z2,len=hz?Math.abs(x2-x1):Math.abs(z2-z1),t=dash(hz);t.repeat.set(hz?len/8:1,hz?1:len/8);const m=new THREE.Mesh(new THREE.PlaneGeometry(hz?len:w,hz?w:len),new THREE.MeshLambertMaterial({map:t}));m.rotation.x=-Math.PI/2;m.position.set((x1+x2)/2,.06,(z1+z2)/2);m.receiveShadow=true;S.add(m)}
-[[-186,-186,186,-186],[-186,186,186,186],[-186,-186,-186,186],[186,-186,186,186],[-200,-88,200,-88],[0,-200,0,-88],[-100,-186,-100,200],[-200,-88,-320,-88],[200,-88,320,-88],[0,-200,0,-320],[-100,200,-100,320]].forEach(r=>road(r[0],r[1],r[2],r[3],8));
+// Rebuilt coherent campus road hierarchy. Every entrance lane meets the perimeter collector.
+const campusRoads=[];
+function campusRoad(x1,z1,x2,z2,width=8){
+ if(x1!==x2&&z1!==z2)throw Error("Campus roads must be axis aligned");
+ campusRoads.push({x1,z1,x2,z2,width});
+ road(x1,z1,x2,z2,width);
+}
+const addH=(z,a,b,w=9)=>campusRoad(a,z,b,z,w);
+const addV=(x,a,b,w=9)=>campusRoad(x,a,x,b,w);
+// Continuous ring-road collectors, each joined at exact common coordinates.
+addH(-185,-185,185,12);addH(170,-185,185,12);
+addV(-185,-185,170,12);addV(185,-185,170,12);
+// Central streets and collector branches through the campus, avoiding building footprints.
+addH(-88,-260,260,11);addH(20,-185,185,10);
+addV(-100,-185,170,10);addV(130,-185,170,10);
+// Northern entrance: two physically aligned lanes at x -9 and +9, joined to north ring.
+for(const x of [-9,9])addV(x,-260,-185,7);
+addH(-245,-9,9,7);
+// Southern entrance: lanes aligned to gate center x=-100.
+for(const x of [-109,-91])addV(x,170,260,7);
+addH(245,-109,-91,7);
+// Eastern entrance: rotated gate means lanes at z=-97 and z=-79.
+for(const z of [-97,-79])addH(z,185,260,7);
+addV(245,-97,-79,7);
+// Western entrance: corresponding paired lanes connected to the cross-campus collector.
+for(const z of [-97,-79])addH(z,-260,-185,7);
+addV(-245,-97,-79,7);
+// Service connectors linking the internal network to the perimeter at shared intersections.
+addH(170,-185,-100,10);addH(170,130,185,10);
+addH(-185,-100,130,10);
 // السور
 const perimeterWallSegments=[];
 function wall(x1,z1,x2,z2){perimeterWallSegments.push({x1,z1,x2,z2});const w=Math.abs(x2-x1)+1.4,d=Math.abs(z2-z1)+1.4,cx=(x1+x2)/2,cz=(z1+z2)/2;box(w,4.2,d,mat(0xe6dcc6),cx,2.1,cz);box(w+.4,.4,d+.4,mat(0xb9a883),cx,4.4,cz);COL.push([cx-w/2,cz-d/2,cx+w/2,cz+d/2])}
@@ -402,10 +431,10 @@ const face=new THREE.Mesh(new THREE.BoxGeometry(1.7,4.4,.65),mat(0x19222b));face
 const leds=[0xe24836,0xe2ba35,0x46cb63].map((c,k)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),mat(c,{emissive:c,emissiveIntensity:.2}));m.position.set(0,7.45-k*1.25,.5);o.add(m);return m});signalBulbs.push({axis,leds,junction:j})}});
 // منخفض التفاصيل لسيارات النقل العام والسيارات المدنية؛ مسارات تمثيلية
 const transitRoutes=[
- [[-640,20],[-100,20],[430,20],[430,-300],[580,-300]],
- [[-535,20],[-100,20],[-100,-88],[0,-88]],
- [[-520,20],[-100,20],[430,20],[430,-250]],
- [[-500,20],[-280,20],[-100,20],[70,20]]
+ [[-260,-88],[-185,-88],[-100,-88],[130,-88],[185,-88],[260,-88]],
+ [[-100,170],[-100,20],[-100,-88],[-100,-185]],
+ [[185,170],[185,20],[185,-88],[185,-185]],
+ [[-185,170],[-185,20],[-185,-88],[-185,-185]]
 ];
 const agents=[];let trafficClock=0,trafficEnabled=true,trafficSeconds=0;
 function makeRoadVehicle(bus,color){const root=new THREE.Group();S.add(root);let w=bus?4.6:3.1,d=bus?11:6.2,h=bus?3.3:1.25;
