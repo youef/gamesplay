@@ -629,7 +629,43 @@ for(let row=0;row<6;row++){
 COL.push([ST.x-56,southStand-1,ST.x+56,southStand+18]);
 // Upper roof and central transparent cover removed by request. The stadium's curved outer walls remain.
 function syncStadiumRoofQuality(){}
-function updateStadiumFloodlights(){}
+// Independent open-air stadium floodlight towers behind the 60,000-seat stands.
+// Keep the field readable at night without recreating the removed roof.
+const stadiumFloodlights=[],stadiumLampLenses=[];
+const towerSteel=mat(0x667985,{metalness:.5,roughness:.52});
+const towerHousing=mat(0x233b4b,{metalness:.42,roughness:.5});
+const towerLens=mat(0xe5f1f7,{emissive:0xc2dce9,emissiveIntensity:0,roughness:.3});
+for(const side of [-1,1])for(const end of [-1,1]){
+ const x=ST.x+side*99,z=ST.z+end*96,height=38;
+ for(const dx of [-1.5,1.5])for(const dz of [-1.5,1.5]){
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(.25,.36,height,6),towerSteel);
+  leg.position.set(x+dx,height/2,z+dz);S.add(leg);
+ }
+ for(let h=8;h<height;h+=8){
+  box(4,.25,.24,towerSteel,x,h,z);
+  box(.24,.25,4,towerSteel,x,h,z);
+ }
+ const bank=new THREE.Group();bank.position.set(x,height+1,z);
+ bank.lookAt(ST.x,2,ST.z);S.add(bank);
+ const housing=new THREE.Mesh(new THREE.BoxGeometry(7,3,.65),towerHousing);bank.add(housing);
+ for(let row=0;row<3;row++)for(let col=0;col<7;col++){
+  const lens=new THREE.Mesh(new THREE.BoxGeometry(.72,.66,.12),towerLens.clone());
+  lens.position.set((col-3)*.92,(row-1)*.85,.41);bank.add(lens);stadiumLampLenses.push(lens);
+ }
+ const light=new THREE.SpotLight(0xe4efff,0,210,Math.PI/3.1,.9,1.5);
+ light.position.set(x,height,z);light.target.position.set(ST.x+side*13,1,ST.z+end*22);
+ light.castShadow=false;S.add(light,light.target);stadiumFloodlights.push(light);
+}
+// Additional subtle ambient field fill prevents isolated pools of light.
+const stadiumFieldFill=new THREE.PointLight(0xc7def5,0,95,2);
+stadiumFieldFill.position.set(ST.x,24,ST.z);S.add(stadiumFieldFill);
+function updateStadiumFloodlights(night){
+ const strength=Math.max(0,Math.min(1,(night-.12)/.65));
+ const low=atmosphere.quality==="low";
+ stadiumFloodlights.forEach((light,i)=>{light.intensity=strength*(low&&i%2?0:low?3:5)});
+ stadiumFieldFill.intensity=strength*(low?.3:.6);
+ stadiumLampLenses.forEach(lens=>{lens.material.emissiveIntensity=.03+strength*.55});
+}
 const stadiumBoard=lab("ملعب جامعة الحدود الشمالية","#173e60",2.5);
 stadiumBoard.position.set(ST.x,13.5,standFront-20);
 const standSeats=[-36,-18,0,18,36].map(x=>({x:ST.x+x,z:standFront-13.8,y:4.5}));
