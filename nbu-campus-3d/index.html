@@ -975,14 +975,14 @@ function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMa
 }
 function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد الأعلى للعناصر، احذف بعض الإضافات";
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
- if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(o.type!=="bridge"&&!roadTouchesNetwork(o))return "يجب ربط الطريق بالشبكة الحالية";if(o.type!=="bridge"&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
+ if(d.path){const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(o.type!=="bridge"&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
   for(let i=0;i<=len;i+=5){const t=i/len,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
    for(const b of B)if(!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
    if(Math.abs(x)<ST.rx+d.width/2&&Math.abs(z-ST.z)<ST.rz+d.width/2)return "المسار يتداخل مع الملعب";
    for(const b of built){const bd=buildDefs[b.type];if(bd.path)continue;const w=b.rot%2?bd.d:bd.w,q=b.rot%2?bd.w:bd.d;if(Math.abs(x-b.x)<w/2+d.width/2&&Math.abs(z-b.z)<q/2+d.width/2)return "المسار يتداخل مع مبنى أضفته"}
   }
  }else{const w=o.rot%2?d.d:d.w,q=o.rot%2?d.w:d.d;if(footprintBlocked(o.x,o.z,w,q))return "المكان مشغول أو خارج السور"}
- if(!creativeMode&&buildMoney(o)>balance())return "الميزانية غير كافية — جرّب وضع الإنشاء الحر";
+ if(!creativeMode&&buildMoney(o)>balance())return "الميزانية غير كافية — فعّل وضع الإنشاء الحر من أدوات البناء";
  return null;
 }
 function selectGround(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);return buildRay.ray.intersectPlane(buildPlane,buildHit)?{x:snap(buildHit.x),z:snap(buildHit.z)}:null}
@@ -991,7 +991,7 @@ function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFr
  const hits=buildRay.intersectObjects([...buildGroups,...campusBuildingGroups.values()].filter(g=>g.visible),true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const campusName=node.userData.campusBuilding;if(campusName){removeCampusBuilding(campusName);return}const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
 function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
- if(d.path&&!buildStart){const nearest=closestRoadPoint(p,18);if(!nearest&&buildTool!=="bridge"){toastBuild("ابدأ من الطريق الموجود: قرّب المؤشر من حافة شارع أو تقاطع");return}buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
+ if(d.path&&!buildStart){const nearest=closestRoadPoint(p,26);buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 // Centralized settings: reuse existing game controls without duplicating handlers.
@@ -1016,7 +1016,7 @@ $("modeStrategy").onclick=()=>{if(!buildMode)toggleBuilder();updateModes()};
 $("viewStrategy").onclick=()=>{strategy2D=!strategy2D;updateModes()};
 $("panStrategy").onclick=()=>{strategyPan=true;buildStart=null;updateModes()};
 $("placeStrategy").onclick=()=>{strategyPan=false;updateModes()};
-function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=true;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=false;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
