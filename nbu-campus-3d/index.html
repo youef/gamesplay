@@ -1039,7 +1039,7 @@ addEventListener("blur",releaseControls);document.addEventListener("visibilitych
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
 setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
-const hit=(x,z)=>COL.some(c=>x>c[0]-1&&x<c[2]+1&&z>c[1]-1&&z<c[3]+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
+const hit=(x,z)=>B.some(b=>!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+1&&Math.abs(z-b.z)<b.d/2+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
 const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx=v=>(v-WORLD.minX)*k,mz=v=>(v-WORLD.minZ)*k;
 function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
 mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
