@@ -804,18 +804,18 @@ function setupStudents(){
 
 // Multi-touch gestures: pinch to zoom, one finger to pan the strategy camera.
 const pointerGap=()=>{const pts=[...activePointers.values()];return pts.length<2?0:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)};
-cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}dr={x:e.clientX,y:e.clientY}});
+cvs.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);if(buildMode){if(activePointers.size===1){mapDrag={x:e.clientX,y:e.clientY,moved:false};pinchMoved=false;if(!strategyPan&&buildDefs[buildTool]?.path&&!buildStart)roadDragOrigin=selectGround(e)}else{pinchDistance=pointerGap();pinchMoved=true;if(mapDrag)mapDrag.moved=true}return}dr={x:e.clientX,y:e.clientY}});
 cvs.addEventListener("pointermove",e=>{
  if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(buildMode){
   if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0)dist=clamp(dist*pinchDistance/gap,8,65);pinchDistance=gap;pinchMoved=true;if(mapDrag)mapDrag.moved=true;return}
-  if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4)mapDrag.moved=true;if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}
-  if(!strategyPan&&!pinchMoved)previewFromPointer(e);return
+  if(mapDrag){const dx=e.clientX-mapDrag.x,dy=e.clientY-mapDrag.y;if(Math.hypot(dx,dy)>4){mapDrag.moved=true;if(roadDragOrigin)roadDragMoved=true}if(strategyPan){const scale=2*Math.max(120,dist*15)*Math.tan(Math.PI/6)/Math.max(1,cvs.clientHeight);strategyCenter.x=clamp(strategyCenter.x-dx*scale,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z-dy*scale,WORLD.minZ+50,WORLD.maxZ-50)}mapDrag.x=e.clientX;mapDrag.y=e.clientY}
+  if(!strategyPan&&!pinchMoved){if(roadDragOrigin&&roadDragMoved)previewRoad(roadDragOrigin,selectGround(e));else previewFromPointer(e)}return
  }
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
-cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!mapDrag.moved&&!pinchMoved&&activePointers.size===1)placeFromPointer(e);activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
-const cancelPointer=e=>{activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
+cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved){const start=snapRoadEndpoint(roadDragOrigin),endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:buildTool==="bridge"?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
+const cancelPointer=e=>{clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
 cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
 cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else dist=clamp(dist+e.deltaY*.01,5,20)},{passive:false});
 const js=$("js"),kn=$("kn");let jp=false;
@@ -904,7 +904,7 @@ G.forEach((g,i)=>{const k=document.createElement("button");k.className="g";k.tex
 [["ضاحية الملك فهد",DIST.x,DIST.z,1,0],["الطريق إلى عرعر",CITY.x,CITY.z,1,0],["مطار عرعر",AIR.x-55,AIR.z+70,1,0]].forEach(r=>{const k=document.createElement("button");k.className="g";k.textContent=r[0];k.onclick=()=>tp(r[1],r[2],r[3],r[4]);$("bar").appendChild(k)});
 
 // ========== منشئ الحرم الجامعي: نسخة 1 — منفصل عن بيانات الحرم المرجعية ==========
-const BUILD_KEY="nbu-campus-builder-v1";
+const BUILD_KEY="nbu-campus-builder-v1";const BUILD_SLOTS_KEY="nbu-campus-builder-slots-v1";
 const buildDefs={
  road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر",cost:1200,path:true,width:11},
  college:{label:"🏫 كلية",cost:165000,w:28,d:23,h:18,color:0xb8ccdf},lab:{label:"🔬 معامل",cost:110000,w:22,d:19,h:13,color:0xb9d7ce},library:{label:"📚 مكتبة",cost:120000,w:27,d:21,h:13,color:0xe2ceb0},admin:{label:"🏢 إدارة",cost:130000,w:25,d:20,h:17,color:0xd3cadf},
@@ -914,6 +914,20 @@ const buildDefs={
 const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
+let roadDragOrigin=null,roadDragMoved=false;
+const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
+function previewRoad(a,b){
+ if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
+ const end=buildTool==="bridge"?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
+ if(length<2){roadPreview.visible=false;return}
+ const candidate={type:buildTool,x:a.x,z:a.z,end};
+ roadPreview.visible=true;roadPreview.position.set((a.x+end.x)/2,buildTool==="bridge"?5.7:.38,(a.z+end.z)/2);
+ roadPreview.rotation.y=Math.atan2(end.x-a.x,end.z-a.z);
+ roadPreview.scale.set(buildDefs[buildTool].width,1,length);
+ roadPreview.material.color.setHex(length>=10&&!canBuild(candidate)?0x23e0a5:0xff6c5e);
+}
+function clearRoadPreview(){roadPreview.visible=false;roadDragOrigin=null;roadDragMoved=false}
+
 const snap=v=>Math.round(v/5)*5;
 // Snap to the actual permanent road centerlines as well as player-built paths.
 function roadSegments(){
@@ -1120,10 +1134,10 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
  return null;
 }
 function selectGround(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);return buildRay.ray.intersectPlane(buildPlane,buildHit)?{x:snap(buildHit.x),z:snap(buildHit.z)}:null}
-function previewFromPointer(e){const p=selectGround(e);if(p){$("builderGuide").textContent=buildDefs[buildTool].label+" | X: "+p.x+" ، Z: "+p.z+(buildStart?" | المس لتثبيت النهاية":" | المس للتشييد")}}
+function previewFromPointer(e){const p=selectGround(e);if(p){if(buildStart&&buildDefs[buildTool].path)previewRoad(buildStart,p);$("builderGuide").textContent=buildDefs[buildTool].label+" | X: "+p.x+" ، Z: "+p.z+(buildStart?" | المس لتثبيت النهاية":" | المس للتشييد")}}
 function eraseAtPointer(e){const rect=cvs.getBoundingClientRect();buildRay.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),cam);
  const hits=buildRay.intersectObjects([...buildGroups,...campusBuildingGroups.values()].filter(g=>g.visible),true);if(hits.length){let node=hits[0].object;while(node.parent&&!Number.isInteger(node.userData.buildId))node=node.parent;const campusName=node.userData.campusBuilding;if(campusName){removeCampusBuilding(campusName);return}const id=node.userData.buildId;if(Number.isInteger(id)&&id>=0&&id<built.length){built.splice(id,1);redoStack=[];redrawBuild();storeBuild();toastBuild("تم حذف العنصر واسترجاع تكلفته")}}else toastBuild("اضغط على عنصر أنشأته لحذفه")}
-function placeFromPointer(e){e.preventDefault();if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
+function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){const nearest=closestRoadPoint(p,26);buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
@@ -1150,7 +1164,18 @@ $("modeStrategy").onclick=()=>{if(!buildMode)toggleBuilder();updateModes()};
 $("viewStrategy").onclick=()=>{strategy2D=!strategy2D;updateModes()};
 $("panStrategy").onclick=()=>{strategyPan=true;buildStart=null;updateModes()};
 $("placeStrategy").onclick=()=>{strategyPan=false;updateModes()};
-function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=false;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+function setupBlueprintSlots(){
+ const host=document.createElement("div");host.dir="rtl";host.style.cssText="display:flex;flex-wrap:wrap;gap:5px;margin:7px 0";
+ host.innerHTML='<select id="blueprintSlot" aria-label="مخطط الجامعة"><option value="1">مخطط ١</option><option value="2">مخطط ٢</option><option value="3">مخطط ٣</option></select><button id="saveBlueprint">💾 حفظ مخطط</button><button id="loadBlueprint">📂 استعادة مخطط</button>';
+ $("buildDock").appendChild(host);
+ const slot=()=>document.getElementById("blueprintSlot").value;
+ document.getElementById("saveBlueprint").onclick=()=>{try{const all=JSON.parse(localStorage.getItem(BUILD_SLOTS_KEY)||"{}");all[slot()]={built:JSON.parse(JSON.stringify(built)),removedCampusBuildings:[...removedCampusBuildings],creativeMode,budgetBonus,missionDone};localStorage.setItem(BUILD_SLOTS_KEY,JSON.stringify(all));toastBuild("💾 تم حفظ المخطط "+slot())}catch(e){toastBuild("تعذر حفظ المخطط: مساحة التخزين غير كافية")}};
+ document.getElementById("loadBlueprint").onclick=()=>{try{const all=JSON.parse(localStorage.getItem(BUILD_SLOTS_KEY)||"{}"),data=all[slot()];if(!data||!Array.isArray(data.built))return toastBuild("لا يوجد مخطط محفوظ في هذه الخانة");if(data.built.length>maxObjects||data.built.some(o=>!validItem(o)))return toastBuild("المخطط غير صالح");if(!confirm("استعادة المخطط ستستبدل التصميم الحالي. متابعة؟"))return;
+ built=data.built.map(o=>JSON.parse(JSON.stringify(o)));removedCampusBuildings.clear();for(const name of data.removedCampusBuildings||[])if(B.some(b=>b.n===name))removedCampusBuildings.add(name);syncCampusBuildings();creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?data.budgetBonus:0;missionDone=data.missionDone||{};redoStack=[];buildStart=null;clearRoadPreview();redrawBuild();storeBuild();toastBuild("📂 تمت استعادة المخطط "+slot())
+ }catch(e){toastBuild("تعذر استعادة المخطط")}};
+}
+setupBlueprintSlots();
+function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;clearRoadPreview();if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=false;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
