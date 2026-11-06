@@ -747,7 +747,7 @@ function stadiumVideoScreen(x,y,z,rotation){
  const surround=new THREE.Mesh(new THREE.BoxGeometry(22,11.5,.7),mat(0x152d39,{metalness:.5}));
  surround.position.set(x,y,z);surround.rotation.y=rotation;S.add(surround);
  const display=new THREE.Mesh(new THREE.PlaneGeometry(20.7,10.1),stadiumScreenMaterial);
- display.position.set(x,y,z+.42);display.rotation.y=rotation;S.add(display);
+ display.position.set(x+Math.sin(rotation)*.42,y,z+Math.cos(rotation)*.42);display.rotation.y=rotation;S.add(display);
 }
 stadiumVideoScreen(ST.x,20,ST.z-60,0);
 stadiumVideoScreen(ST.x,20,ST.z+60,Math.PI);
