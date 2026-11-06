@@ -10,6 +10,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171c24;--fg:#eef1f5;--card:#222a36;--line:#38425a;--acc:#35c2b6;--navy:#8fb4e6}}
 :root[data-theme="dark"]{--bg:#171c24;--fg:#eef1f5;--card:#222a36;--line:#38425a;--acc:#35c2b6;--navy:#8fb4e6}
 html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg);font-family:Tajawal,Tahoma,"Segoe UI",sans-serif;touch-action:none;user-select:none}
+html,body,body *,body *::before,body *::after{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}
+canvas,img,svg,button,[role="button"]{-webkit-user-drag:none}
+#c,#js,#kn,#mini{touch-action:none!important}
+input,textarea,[contenteditable="true"]{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+
 #c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;gap:8px;padding:10px;overflow-x:auto;scrollbar-width:none;z-index:5}
 #bar button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--fg);font:700 14px Tajawal,Tahoma,sans-serif;padding:8px 14px;border-radius:20px;cursor:pointer}
@@ -154,6 +159,14 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 </head>
 <body>
 <canvas id="c"></canvas>
+<script>
+(function(){
+ const editable=el=>!!(el&&el.closest&&el.closest('input,textarea,[contenteditable="true"]'));
+ for(const type of ['contextmenu','selectstart','dragstart','copy','cut']){
+  document.addEventListener(type,e=>{if(!editable(e.target))e.preventDefault()},{capture:true});
+ }
+})();
+</script>
 <div id="ld">جارٍ تجهيز الحرم الجامعي…</div>
 <div id="bar"><button id="closeLocations" class="uiClose" aria-label="إغلاق المواقع">✕ إغلاق</button></div>
 <canvas id="mini" width="260" height="260"></canvas>
