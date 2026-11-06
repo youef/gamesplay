@@ -55,6 +55,14 @@ html,body{height:100%;margin:0;overflow:hidden;background:#9fcff0;color:var(--fg
 #bar,#tools,#strategyBar,#buildDock,#buildHud,#builderGuide,#mini,#status,#hint{transition:opacity .16s}
 body.cleanUi #bar,body.cleanUi #tools,body.cleanUi #strategyBar,body.cleanUi #buildDock,body.cleanUi #buildHud,body.cleanUi #builderGuide,body.cleanUi #mini,body.cleanUi #status,body.cleanUi #hint,body.cleanUi #showTools,body.cleanUi #showLocations{display:none!important}
 body.cleanUi #settingsToggle{display:block!important}
+/* Minimal default HUD: everything optional lives in the settings drawer. */
+#status,#hint,#bar,#tools,#strategyBar,#buildHud,#builderGuide,#showTools,#showLocations{display:none!important}
+#buildDock{display:none!important}
+body.showBuildDock #buildDock:not(.collapsed){display:block!important}
+#settingsHelp{display:block!important;line-height:1.8;font-size:13px}
+#settingsHelp p{margin:7px 0}
+#settingsDisplay button{min-height:38px}
+body.cleanUi #buildDock{display:none!important}
 #bar{padding-right:135px}
 #strategyBar{top:calc(60px + env(safe-area-inset-top,0px))}
 #showTools,#showLocations{display:none!important}
@@ -112,11 +120,11 @@ body.cleanUi #settingsToggle{display:block!important}
 <div id="ld">جارٍ تجهيز الحرم الجامعي…</div>
 <div id="bar"><button id="closeLocations" class="uiClose" aria-label="إغلاق المواقع">✕ إغلاق</button></div>
 <canvas id="mini" width="260" height="260"></canvas>
-<div id="hint">على الآيباد: حرّك العصا اليسرى للمشي، واسحب يمين الشاشة لتدوير الكاميرا، واضغط دخول قرب المباني</div>
+<div id="hint" aria-hidden="true">على الآيباد: حرّك العصا اليسرى للمشي، واسحب يمين الشاشة لتدوير الكاميرا، واضغط دخول قرب المباني</div>
 <div id="js"><div id="kn"></div></div>
 <button id="showTools" aria-label="فتح قائمة الأدوات" aria-expanded="true">☰ القوائم</button><button id="showLocations" aria-label="فتح قائمة المواقع" aria-expanded="true">📍 المواقع</button><div id="tools"><button id="closeTools" class="uiClose" aria-label="إغلاق قائمة الأدوات">✕ إغلاق</button><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
-<button id="settingsToggle" aria-expanded="false" aria-controls="gameSettings">⚙️ الإعدادات</button><div id="gameSettings" role="dialog" aria-label="إعدادات اللعبة" aria-hidden="true"><div class="settingsHeader"><strong>⚙️ الإعدادات والتحكم</strong><button id="settingsClose" aria-label="إغلاق الإعدادات">✕</button></div><div class="settingsScroll"><details open><summary>🎮 نمط اللعب</summary><div id="settingsModes"></div></details><details><summary>🗺️ الخريطة والبناء</summary><div id="settingsMap"></div></details><details><summary>👁️ العرض والواجهات</summary><div id="settingsDisplay"></div></details><details><summary>🛠️ أدوات ومهام</summary><div id="settingsActions"></div></details></div></div><div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button></div><div id="buildHud" aria-live="polite"></div>
+<button id="settingsToggle" aria-expanded="false" aria-controls="gameSettings">⚙️ الإعدادات</button><div id="gameSettings" role="dialog" aria-label="إعدادات اللعبة" aria-hidden="true"><div class="settingsHeader"><strong>⚙️ الإعدادات والتحكم</strong><button id="settingsClose" aria-label="إغلاق الإعدادات">✕</button></div><div class="settingsScroll"><details open><summary>🎮 نمط اللعب</summary><div id="settingsModes"></div></details><details><summary>🗺️ الخريطة والبناء</summary><div id="settingsMap"></div></details><details><summary>👁️ العرض والواجهات</summary><div id="settingsDisplay"></div></details><details><summary>🛠️ أدوات ومهام</summary><div id="settingsActions"></div></details><details><summary>❔ التلميحات ومعلومات اللعبة</summary><div id="settingsHelp"><p>على الآيباد: حرّك عصا التحكم للمشي، واسحب على الشاشة لتدوير الكاميرا. في الاستراتيجية: اسحب الخريطة بإصبع، وقرّب أو صغّر بإصبعين. في البناء: اختر الأداة وحدد موقعها على الأرض.</p><p>هذه محاكاة لعب تقريبية وليست مخططًا مساحيًا معتمدًا. تشمل البناء والقيادة والنقل والإشارات والمهمات.</p></div></details></div></div><div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button></div><div id="buildHud" aria-live="polite"></div>
 <div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم النهاية؛ يتم وصل الأطراف القريبة تلقائيًا.</div>
 <section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي"><button id="closeBuildDock" class="uiClose" aria-label="إغلاق لوحة البناء">✕ إغلاق الأدوات</button>
   <div id="buildHint">اختر أداة ثم المس الأرض لإضافة عنصر.</div>
@@ -133,7 +141,7 @@ body.cleanUi #settingsToggle{display:block!important}
 <div id="driveControls"><button id="brakeBtn" type="button">🛑 فرامل</button><button id="gasBtn" type="button">⏩ بنزين</button></div>
 <section id="missionsPanel" aria-label="مهمات اللعبة"><button id="closeMissions" class="uiClose" aria-label="إغلاق المهمات">✕ إغلاق</button><h3>🎯 مهمات التطوير والاستكشاف</h3><div id="missionsList"></div><p>مكافآت المهمات تضيف رصيدًا إلى ميزانية البناء. تقدّمك محفوظ على جهازك.</p></section>
 <div id="interInfo"></div><div id="roomBtns"></div><button id="closeRooms" aria-label="إغلاق قائمة القاعات">✕ إغلاق القاعات</button><button id="showRooms" aria-label="فتح قائمة القاعات">🚪 القاعات</button><button id="leave">خروج من المبنى ↩</button>
-<button id="sitStand" aria-label="الجلوس في مدرج الملعب">🪑 الجلوس بالمدرج</button><button id="standUp" aria-label="القيام من المقعد">↩ القيام</button><button id="enter">دخول</button><div id="status">محاكاة لعب تقريبية وليست مخططًا مساحيًا • 🏗️ بناء | 🚗 قيادة | 🚌 نقل | 🚦 إشارات | 🎯 مهمات</div>
+<button id="sitStand" aria-label="الجلوس في مدرج الملعب">🪑 الجلوس بالمدرج</button><button id="standUp" aria-label="القيام من المقعد">↩ القيام</button><button id="enter">دخول</button><div id="status" aria-hidden="true"></div>
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -476,7 +484,7 @@ $("closeLocations").onclick=()=>toggleUiList("bar","showLocations",false);
 $("showLocations").onclick=()=>toggleUiList("bar","showLocations");
 $("closeRooms").onclick=()=>{$("roomBtns").classList.add("collapsed");$("showRooms").style.display="block";$("closeRooms").style.display="none"};
 $("showRooms").onclick=()=>{$("roomBtns").classList.remove("collapsed");$("showRooms").style.display="none";$("closeRooms").style.display="block"};
-$("closeBuildDock").onclick=()=>{$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء"};
+$("closeBuildDock").onclick=()=>{document.body.classList.remove("showBuildDock");$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء"};
 function leaveStand(){if(!seated)return;seated=false;pl.position.set(seatOrigin.x,0,seatOrigin.z);pit=.42;dist=11;ch.rotation.x=0;$("standUp").style.display="none";$("sitStand").style.display="block"}
 $("sitStand").onclick=()=>{if(buildMode||carMode||inside)return;seatOrigin={x:pl.position.x,z:pl.position.z};const seat=standSeats[2];pl.position.set(seat.x,seat.y,seat.z);seated=true;topView=false;$("tour").classList.remove("active");yaw=0;fa=0;pit=.15;dist=5;ch.rotation.x=-.18;$("sitStand").style.display="none";$("standUp").style.display="block";hint.style.opacity=0};
 $("standUp").onclick=leaveStand;
@@ -621,7 +629,7 @@ function setupSettings(){
  for(const [target,ids] of Object.entries(sections))for(const id of ids){const source=$(id),copy=document.createElement("button");copy.textContent=source.textContent;copy.dataset.target=id;copy.onclick=()=>{source.click();copy.textContent=source.textContent;syncSettings()};$(target).append(copy)}
  const hide=document.createElement("button");hide.id="hideUi";hide.textContent="👁️ إخفاء كل الواجهات";hide.onclick=()=>{document.body.classList.toggle("cleanUi");syncSettings();closeSettings()};$("settingsDisplay").append(hide);
  const showLocations=document.createElement("button");showLocations.textContent="📍 إظهار/إخفاء المواقع";showLocations.onclick=()=>{$("bar").classList.toggle("collapsed")};$("settingsDisplay").append(showLocations);
- const showBuilder=document.createElement("button");showBuilder.textContent="🏗️ إظهار/إخفاء لوحة البناء";showBuilder.onclick=()=>{if(!buildMode)toggleBuilder();else $("buildDock").classList.toggle("collapsed")};$("settingsMap").append(showBuilder);
+ const showBuilder=document.createElement("button");showBuilder.id="showBuilderSettings";showBuilder.textContent="🏗️ إظهار أدوات البناء";showBuilder.onclick=()=>{if(!buildMode)toggleBuilder();document.body.classList.toggle("showBuildDock");$("buildDock").classList.remove("collapsed");syncSettings()};$("settingsMap").append(showBuilder);
  $("settingsToggle").onclick=()=>setSettings(!$("gameSettings").classList.contains("on"));
  $("settingsClose").onclick=closeSettings;
  addEventListener("keydown",e=>{if(e.code==="Escape")closeSettings()});
@@ -629,7 +637,7 @@ function setupSettings(){
 }
 function setSettings(show){$("gameSettings").classList.toggle("on",show);$("gameSettings").setAttribute("aria-hidden",String(!show));$("settingsToggle").setAttribute("aria-expanded",String(show));if(show)syncSettings()}
 function closeSettings(){setSettings(false)}
-function syncSettings(){for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
+function syncSettings(){const buildButton=$("showBuilderSettings");if(buildButton)buildButton.textContent=document.body.classList.contains("showBuildDock")?"✕ إخفاء أدوات البناء":"🏗️ إظهار أدوات البناء";for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
 function updateModes(){for(const id of ["modeWalk","modeDrive","modeStrategy"])$(id).classList.remove("active");$(buildMode?"modeStrategy":carMode?"modeDrive":"modeWalk").classList.add("active");for(const id of ["viewStrategy","panStrategy","placeStrategy"])$(id).style.display=buildMode?"block":"none";$("viewStrategy").textContent=strategy2D?"🔲 2D علوي":"🏙️ 3D مائل";$("viewStrategy").classList.toggle("active",strategy2D);$("panStrategy").classList.toggle("active",strategyPan);$("placeStrategy").classList.toggle("active",!strategyPan);$("builderGuide").textContent=strategyPan?"✋ اسحب الخريطة بإصبعك دون تحريك اللاعب. اختر «بناء» لوضع الطرق والمباني.":"🛣️ المس الأرض للبناء؛ اضغط «تحريك الخريطة» للتنقل دون إضافة عناصر."}
 $("modeWalk").onclick=()=>{if(buildMode)toggleBuilder();if(carMode)$("drive").click();updateModes()};
 $("modeDrive").onclick=()=>{if(buildMode)toggleBuilder();if(!carMode)$("drive").click();updateModes()};
@@ -637,7 +645,7 @@ $("modeStrategy").onclick=()=>{if(!buildMode)toggleBuilder();updateModes()};
 $("viewStrategy").onclick=()=>{strategy2D=!strategy2D;updateModes()};
 $("panStrategy").onclick=()=>{strategyPan=true;buildStart=null;updateModes()};
 $("placeStrategy").onclick=()=>{strategyPan=false;updateModes()};
-function toggleBuilder(){if(seated)leaveStand();buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=true;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;if(buildMode){exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=true;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
