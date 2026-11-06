@@ -113,6 +113,24 @@ body.cleanUi #buildDock{display:none!important}
 #buildFile{display:none}
 #builderGuide{position:fixed;top:calc(124px + env(safe-area-inset-top,0px));right:50%;transform:translateX(50%);background:#fffef7;color:#18263b;border-radius:12px;padding:9px 13px;font-size:12px;z-index:8;display:none;max-width:80vw;box-shadow:0 2px 10px #0003}
 @media(max-width:700px){#buildDock{left:6px;right:6px;bottom:calc(5px + env(safe-area-inset-bottom,0px));padding:8px}#buildDock button{font-size:12px;padding:8px 9px}#buildDock .cmdRow{flex-wrap:nowrap;overflow-x:auto}#buildHud{top:calc(60px + env(safe-area-inset-top,0px));right:46%;max-width:62vw;font-size:11px}#buildToast{bottom:calc(174px + env(safe-area-inset-bottom,0px))}#builderGuide{top:calc(115px + env(safe-area-inset-top,0px));font-size:11px}}
+/* iPad landscape safe-area HUD and distraction-free play */
+@media (orientation:landscape) and (pointer:coarse){
+ #mini{top:calc(52px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));width:94px;height:94px}
+ #hint{font-size:12px;bottom:calc(14px + env(safe-area-inset-bottom));max-width:40vw;pointer-events:none}
+ #js{left:calc(16px + env(safe-area-inset-left));bottom:calc(20px + env(safe-area-inset-bottom))}
+ body.splitStudents #js{left:calc(20px + env(safe-area-inset-left))!important;right:auto!important}
+ body.splitStudents #student2Controls{right:calc(20px + env(safe-area-inset-right))!important}
+ #studentModeMenu{top:calc(8px + env(safe-area-inset-top))!important;left:calc(8px + env(safe-area-inset-left))!important}
+}
+#ipadHudBar{position:fixed;z-index:31;right:calc(8px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top));display:flex;gap:5px;direction:rtl}
+#ipadHudBar button{border:1px solid #ffffff80;border-radius:12px;padding:8px 10px;background:#142e43dd;color:white;font:800 13px Tajawal,Tahoma;backdrop-filter:blur(8px)}
+#ipadPause{position:fixed;inset:0;z-index:95;background:#09192bcc;backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:calc(18px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left))}
+#ipadPause.open{display:flex}
+#ipadPauseCard{width:min(410px,90vw);max-height:86vh;overflow:auto;background:#18364cf5;border:1px solid #ffffff55;border-radius:22px;padding:22px;color:white;direction:rtl;box-shadow:0 24px 70px #0009}
+#ipadPauseCard button,#ipadPauseCard select{border:1px solid #ffffff55;border-radius:12px;padding:11px;background:#31566e;color:white;font:700 14px Tajawal,Tahoma}
+#ipadPauseCard .pauseActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #showLocations,body.hudFocus #settingsToggle,body.hudFocus #atmospherePanel,body.hudFocus #hint{display:none!important}
+#mini{transform-origin:top left;transition:transform .2s}
 </style>
 </head>
 <body>
@@ -179,6 +197,27 @@ function loadThreeFallback(){
 }
 loadThreeFallback();
 function init(){
+let ipadPaused=false,ipadFocus=false,ipadMapScale=1,ipadSound=true,ipadVibration=false,ipadGamepadEnabled=true,ipadPauseBtnHeld=false;
+const hudBar=document.createElement("div");hudBar.id="ipadHudBar";hudBar.innerHTML='<button id="ipadPauseBtn" aria-label="إيقاف مؤقت">⏸</button><button id="ipadFocusBtn" aria-label="إخفاء القوائم">◉</button><button id="ipadMapBtn" aria-label="تكبير الخريطة">🗺️</button>';document.body.appendChild(hudBar);
+const pauseOverlay=document.createElement("div");pauseOverlay.id="ipadPause";pauseOverlay.setAttribute("role","dialog");pauseOverlay.setAttribute("aria-modal","true");pauseOverlay.setAttribute("aria-label","إيقاف اللعبة مؤقتًا");
+pauseOverlay.innerHTML='<div id="ipadPauseCard"><h2 style="margin:0 0 6px">⏸ اللعبة متوقفة مؤقتًا</h2><p style="opacity:.75;font-size:13px">إعدادات الآيباد والتحكم</p><label style="display:block;margin:12px 0">🎮 يد التحكم <select id="ipadPad"><option value="on">مفعلة</option><option value="off">معطلة</option></select></label><label style="display:block;margin:12px 0">🔔 الصوت <select id="ipadSound"><option value="on">مفعل</option><option value="off">صامت</option></select></label><label style="display:block;margin:12px 0">📳 الاهتزاز <select id="ipadVibrate"><option value="off">معطل</option><option value="on">مفعل إذا كان مدعومًا</option></select></label><div class="pauseActions"><button id="ipadResume">▶ متابعة</button><button id="ipadSettingsOpen">⚙️ الإعدادات</button><button id="ipadMapZoom">🗺️ تكبير الخريطة</button><button id="ipadFocusToggle">◉ إخفاء القوائم</button></div></div>';
+document.body.appendChild(pauseOverlay);
+function toggleIpadPause(value){ipadPaused=typeof value==="boolean"?value:!ipadPaused;pauseOverlay.classList.toggle("open",ipadPaused);if(ipadPaused){joy.x=joy.y=joy2.x=joy2.y=0;secondRunning=false;for(const key of Object.keys(K))K[key]=0;touchGas=touchBrake=false}}
+function toggleIpadFocus(){ipadFocus=!ipadFocus;document.body.classList.toggle("hudFocus",ipadFocus)}
+function toggleIpadMap(){ipadMapScale=ipadMapScale===1?1.65:ipadMapScale===1.65?2.1:1;document.getElementById("mini").style.transform="scale("+ipadMapScale+")"}
+document.getElementById("ipadPauseBtn").onclick=()=>toggleIpadPause();
+document.getElementById("ipadResume").onclick=()=>toggleIpadPause(false);
+document.getElementById("ipadFocusBtn").onclick=toggleIpadFocus;
+document.getElementById("ipadFocusToggle").onclick=()=>{toggleIpadFocus();toggleIpadPause(false)};
+document.getElementById("ipadMapBtn").onclick=toggleIpadMap;
+document.getElementById("ipadMapZoom").onclick=toggleIpadMap;
+document.getElementById("ipadSettingsOpen").onclick=()=>{toggleIpadPause(false);document.getElementById("settingsToggle").click()};
+document.getElementById("ipadPad").onchange=e=>ipadGamepadEnabled=e.target.value==="on";
+document.getElementById("ipadSound").onchange=e=>{ipadSound=e.target.value==="on";document.querySelectorAll("audio,video").forEach(el=>el.muted=!ipadSound)};
+document.getElementById("ipadVibrate").onchange=e=>ipadVibration=e.target.value==="on";
+function ipadHaptic(){if(ipadVibration&&navigator.vibrate)navigator.vibrate(12)}
+hudBar.addEventListener("click",ipadHaptic);
+
 const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});
 // V3.16: recover from GPU context loss on iPad without a blank canvas.
 $("c").addEventListener("webglcontextlost",event=>{event.preventDefault();$("ld").style.display="flex";$("ld").textContent="توقف محرك الرسوم مؤقتًا. جارٍ انتظار استعادة WebGL…";});
@@ -716,7 +755,7 @@ pl.position.set(0,0,-188);
 const car=new THREE.Group();S.add(car);const carBox=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;car.add(m);return m};carBox(3.6,1.1,7.2,0xb23830,0,1.1,0);carBox(3.1,.9,3.2,0x90c7df,0,1.95,.2);carBox(2.8,.22,1.2,0x2b3440,0,2.52,.32);[-1,1].forEach(s=>{[-1,1].forEach(f=>{const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.82,.82,.55,14),mat(0x222));wheel.rotation.z=Math.PI/2;wheel.position.set(s*1.95,.7,f*2.38);wheel.castShadow=true;car.add(wheel)})});car.visible=false;
 // التحكم
 const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:-100,z:0},mapDrag=null;const activePointers=new Map();let pinchDistance=0,pinchMoved=false;let yaw=Math.PI,pit=.42,dist=11,near=null,open=false,ph=0,fa=0,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
-addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
+addEventListener("keydown",e=>{if(e.code==="Escape"&&ipadPaused){toggleIpadPause(false);return}if(ipadPaused)return;if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();K[e.code]=1;if(e.code==="KeyE"||e.code==="Enter")inside?exitBuilding():open?cl():near&&op(near);if(e.code==="Escape")cl();if(e.code.startsWith("Arrow"))e.preventDefault()});
 addEventListener("keyup",e=>K[e.code]=0);
 let dr=null;const cvs=$("c");
 function createSecondStudent(){
@@ -1149,7 +1188,9 @@ mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0
 built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
 mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle=carMode?"#ffb000":"#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
 setupAtmosphere();let last=0,lastMiniDraw=-Infinity;
-(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1e3||0);last=t;updateAtmosphere(t,dt);if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
+(function loop(t){requestAnimationFrame(loop);const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
+if(ipadGamepadEnabled&&!ipadPaused&&navigator.getGamepads){const pad=Array.from(navigator.getGamepads()).find(Boolean);if(pad){const dead=v=>Math.abs(v)>.18?v:0;joy.x=dead(pad.axes[0]||0);joy.y=dead(pad.axes[1]||0);if(pad.axes.length>=4){yaw+=dead(pad.axes[2]||0)*dt*2;pit=Math.max(-.15,Math.min(1.25,pit+dead(pad.axes[3]||0)*dt))}if(pad.buttons[0]&&pad.buttons[0].pressed&&!ipadPauseBtnHeld){ipadPauseBtnHeld=true;ipadHaptic()}if(!pad.buttons[0]||!pad.buttons[0].pressed)ipadPauseBtnHeld=false;}}
+if(!ipadPaused)updateAtmosphere(t,dt);if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
