@@ -664,7 +664,7 @@ function stadiumCrowdEnabled(index){
 }
 function syncStadiumCrowdQuality(){
  const quality=atmosphere.quality;
- const count=quality==="low"?6000:quality==="balanced"?18000:60000;
+ const count=stadiumCapacity; // Keep every section populated; low quality uses reduced render resolution instead.
  if(typeof stadiumCrowdTorso!=="undefined"){
   stadiumCrowdTorso.count=count;stadiumCrowdHead.count=count;
  }
@@ -824,7 +824,7 @@ for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat+
  const idx=row*stadiumSeatsPerRow+seat;
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
  const p=bowlLocation(row,angle);
- const aisle=seat%125<5;
+ const aisle=seat%125<5 && !(angle>Math.PI*1.13&&angle<Math.PI*1.87);
  crowdDummy.position.set(p.x,p.y+.45,p.z);
  crowdDummy.rotation.set(0,-angle+Math.PI/2,0);
  crowdDummy.scale.set(aisle?.001:1,aisle?.001:1,aisle?.001:1);
@@ -839,12 +839,12 @@ S.add(stadiumCrowdTorso,stadiumCrowdHead);
 // The card mosaic remains in the seats behind this raised fan choreography.
 // Individual supporters raise coloured cards from their actual seats.
 // No floating banner or overlay: every visible letter is formed by raised cards.
-const tifoCardGeo=new THREE.PlaneGeometry(.85,.68);
+const tifoCardGeo=new THREE.PlaneGeometry(1.12,.78);
 const tifoCardMat=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
 const tifoCardIndices=[];
 for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
- if(angle>Math.PI*1.13&&angle<Math.PI*1.87&&seat%125>=5)tifoCardIndices.push(row*stadiumSeatsPerRow+seat);
+ if(angle>Math.PI*1.13&&angle<Math.PI*1.87)tifoCardIndices.push(row*stadiumSeatsPerRow+seat);
 }
 const tifoCards=new THREE.InstancedMesh(tifoCardGeo,tifoCardMat,tifoCardIndices.length);
 tifoCards.frustumCulled=false;tifoCards.castShadow=false;
@@ -861,11 +861,12 @@ for(let n=0;n<tifoCardIndices.length;n++){
 tifoCards.instanceMatrix.needsUpdate=true;
 if(tifoCards.instanceColor)tifoCards.instanceColor.needsUpdate=true;
 S.add(tifoCards);
+const tifoCardIndexSet=new Set(tifoCardIndices);
 const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
 function updateStadiumCheering(t){
  if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
  for(const idx of cheeringIndices){
-  if(idx>=stadiumCrowdTorso.count||tifoCardIndices.indexOf(idx)!==-1)continue;
+  if(idx>=stadiumCrowdTorso.count||tifoCardIndexSet.has(idx))continue;
   const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
   const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28;
   crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
