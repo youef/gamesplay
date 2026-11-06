@@ -653,7 +653,7 @@ if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 let playerMode="single",singleStudent="fawaz";
 const zyad=new THREE.Group(),zyadAvatar=new THREE.Group(),cam2=new THREE.PerspectiveCamera(60,1,.5,1500);
-const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false;
+const joy2={x:0,y:0};let zyadYaw=Math.PI,zyadPitch=.42,zyadDistance=11,secondRunning=false,student2Steps=0;
 S.add(zyad);zyad.add(zyadAvatar);
 
 const skin=mat(0xc08a5c),wh=mat(0xf7f6f1),dk=mat(0x2a2a2a),Cy=THREE.CylinderGeometry,Sp=THREE.SphereGeometry;
@@ -683,11 +683,11 @@ function createSecondStudent(){
 function setStudentMode(mode,student){
  playerMode=mode;singleStudent=student||singleStudent;
  const split=mode==="split";document.body.classList.toggle("splitStudents",split);
- zyad.visible=split||singleStudent==="zyad";if(split){zyad.position.set(pl.position.x+5,0,pl.position.z+5);joy2.x=joy2.y=0;}
+ zyad.visible=split||singleStudent==="zyad";if(split){zyad.position.set(pl.position.x+5,0,pl.position.z+5);joy2.x=joy2.y=0;secondRunning=false;}
  ch.visible=(!carMode||buildMode)&&(!(!split&&singleStudent==="zyad"));
  if(!split&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const ctl=document.getElementById("student2Controls");if(ctl)ctl.style.display=split?"block":"none";const run2=document.getElementById("student2Run");if(run2)run2.style.display=split?"block":"none";const divider=document.getElementById("studentDivider");if(divider)divider.style.display=split?"block":"none";
- const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";
+ const labels=document.getElementById("studentLabels");if(labels)labels.style.display=split?"flex":"none";const primaryStick=document.getElementById("js");if(primaryStick){primaryStick.style.left=split?"8%":"";primaryStick.style.right=split?"auto":"";}
  document.querySelectorAll("[data-student-mode]").forEach(b=>b.classList.toggle("active",b.dataset.studentMode===mode+(mode==="single"?"-"+singleStudent:"")));
 }
 function setupStudents(){
@@ -1123,12 +1123,12 @@ ch.rotation.y=fa;
 const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
 if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  const v=Math.hypot(joy2.x,joy2.y);
- if(v>.12){const speed=(secondRunning?15:8)*dt,xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
+ if(v>.12){const speed=(secondRunning?15:8)*dt;student2Steps+=speed*v;const xx=clamp(zyad.position.x+joy2.x/v*speed*v,WORLD.minX+3,WORLD.maxX-3),zz=clamp(zyad.position.z+joy2.y/v*speed*v,WORLD.minZ+3,WORLD.maxZ-3);
  if(!hit(xx,zyad.position.z))zyad.position.x=xx;
  if(!hit(zyad.position.x,zz))zyad.position.z=zz;
- zyad.rotation.y=Math.atan2(joy2.x,joy2.y);zyadYaw=zyad.rotation.y+Math.PI;
+ zyad.rotation.y=Math.atan2(joy2.x,joy2.y);zyadYaw=zyad.rotation.y+Math.PI;zyadAvatar.rotation.z=Math.sin(t*.014)*(secondRunning?.07:.04);
  }
- }else if(playerMode==="single"&&singleStudent==="zyad"){zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
+ }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
  const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.position.set(p.x+60,p.y+90,p.z+40);sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
 near=null;let best=12;if(!inside)B.forEach(b=>{const d=Math.hypot(Math.max(b.x-b.w/2-p.x,0,p.x-b.x-b.w/2),Math.max(b.z-b.d/2-p.z,0,p.z-b.z-b.d/2));if(d<best){best=d;near=b}});
