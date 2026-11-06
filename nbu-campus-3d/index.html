@@ -643,8 +643,12 @@ function stadiumCrowdEnabled(index){
  return index%divisor===0;
 }
 function syncStadiumCrowdQuality(){
- for(let i=0;i<stadiumCrowd.length;i++)stadiumCrowd[i].g.visible=stadiumCrowdEnabled(i);
- stadiumCrowdSettings.visibleCount=stadiumCrowd.filter(c=>c.g.visible).length;
+ const quality=atmosphere.quality;
+ const count=quality==="low"?6000:quality==="balanced"?18000:60000;
+ if(typeof stadiumCrowdTorso!=="undefined"){
+  stadiumCrowdTorso.count=count;stadiumCrowdHead.count=count;
+ }
+ stadiumCrowdSettings.visibleCount=count;
 }
 const stadiumScore={blue:0,white:0,lastGoal:0};
 const stadiumScoreboard=document.createElement("div");
@@ -733,17 +737,59 @@ for(let team=0;team<2;team++)for(let i=0;i<11;i++){
  stadiumActors.push({...actor,baseX:x,baseZ:z,seed:i*1.72+team*.7,team,role:pos.role||"field",index:i});
 }
 const ball=new THREE.Mesh(new THREE.SphereGeometry(.75,12,8),mat(0xf8f8f0,{roughness:.64}));ball.position.set(ST.x,.85,ST.z);ball.castShadow=true;S.add(ball);
-const crowdColors=[mat(0xe7e9e5),mat(0x1674b2),mat(0x253e63),mat(0xd0ad75),mat(0x2e846d)];
-for(let side=0;side<2;side++)for(let row=0;row<(side===0?7:6);row++)for(let i=0;i<31;i++){
- const x=ST.x-49+i*3.25,z=side===0?standFront-row*2.8-.4:southStand+row*2.8+.4;
- if(Math.abs(x-ST.x)<4||Math.abs(x-(ST.x+27))<2||Math.abs(x-(ST.x-27))<2)continue;
- const crowd=new THREE.Group(),color=crowdColors[(i+row*3+side)%crowdColors.length];
- const torso=new THREE.Mesh(new THREE.BoxGeometry(.68,.9,.44),color);torso.position.y=.63;crowd.add(torso);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.27,6,5),stadiumSkin);head.position.y=1.34;crowd.add(head);
- const baseY=1.1+row*.72;
- crowd.position.set(x,baseY,z);crowd.rotation.y=side===0?0:Math.PI;S.add(crowd);
- stadiumCrowd.push({g:crowd,phase:i*.87+row*.46+side,baseY});
+// 60,000-seat continuous elliptical bowl. Instancing avoids 120,000 individual draw calls.
+const stadiumCapacity=60000,stadiumRows=60,stadiumSeatsPerRow=1000;
+const stadiumTierBase=mat(0x8fa4b3,{roughness:.87,side:THREE.DoubleSide});
+const stadiumAisleMat=mat(0xd4bd87,{roughness:.75});
+const stadiumSeatMat=mat(0x205b84,{roughness:.8});
+const stadiumTierVertices=[],stadiumTierIndices=[];
+const stadiumBowlInner={x:43,z:56},stadiumBowlOuter={x:83,z:82};
+function bowlLocation(row,angle){
+ const f=(row+.5)/stadiumRows;
+ return {x:ST.x+Math.cos(angle)*(stadiumBowlInner.x+(stadiumBowlOuter.x-stadiumBowlInner.x)*f),
+ z:ST.z+Math.sin(angle)*(stadiumBowlInner.z+(stadiumBowlOuter.z-stadiumBowlInner.z)*f),
+ y:1.1+f*19};
 }
+// Continuous stepped grandstand surface all around the pitch.
+for(let row=0;row<stadiumRows;row++){
+ const f0=row/stadiumRows,f1=(row+1)/stadiumRows;
+ for(let j=0;j<128;j++){
+  const a=j*Math.PI*2/128,b=(j+1)*Math.PI*2/128;
+  const y=1+f0*19,base=stadiumTierVertices.length/3;
+  for(const [f,theta] of [[f0,a],[f1,a],[f0,b],[f1,b]]){
+   stadiumTierVertices.push(ST.x+Math.cos(theta)*(43+40*f),y,ST.z+Math.sin(theta)*(56+26*f));
+  }
+  stadiumTierIndices.push(base,base+1,base+2,base+1,base+3,base+2);
+ }
+}
+const bowlGeo=new THREE.BufferGeometry();
+bowlGeo.setAttribute("position",new THREE.Float32BufferAttribute(stadiumTierVertices,3));
+bowlGeo.setIndex(stadiumTierIndices);bowlGeo.computeVertexNormals();
+const bowlMesh=new THREE.Mesh(bowlGeo,stadiumTierBase);bowlMesh.receiveShadow=true;S.add(bowlMesh);
+const crowdTorsoGeo=new THREE.BoxGeometry(.42,.65,.35);
+const crowdHeadGeo=new THREE.SphereGeometry(.19,5,4);
+const crowdTorsoMat=new THREE.MeshLambertMaterial({color:0xffffff});
+const crowdHeadMat=new THREE.MeshLambertMaterial({color:0xe6c7aa});
+const stadiumCrowdTorso=new THREE.InstancedMesh(crowdTorsoGeo,crowdTorsoMat,stadiumCapacity);
+const stadiumCrowdHead=new THREE.InstancedMesh(crowdHeadGeo,crowdHeadMat,stadiumCapacity);
+stadiumCrowdTorso.frustumCulled=false;stadiumCrowdHead.frustumCulled=false;
+stadiumCrowdTorso.castShadow=false;stadiumCrowdHead.castShadow=false;
+const crowdDummy=new THREE.Object3D(),crowdPalette=[0xe7e9e5,0x1674b2,0x253e63,0xd0ad75,0x2e846d,0xd4dbe0];
+for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
+ const idx=row*stadiumSeatsPerRow+seat;
+ const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
+ const p=bowlLocation(row,angle);
+ const aisle=seat%125<5;
+ crowdDummy.position.set(p.x,p.y+.45,p.z);
+ crowdDummy.rotation.set(0,-angle+Math.PI/2,0);
+ crowdDummy.scale.set(aisle?.001:1,aisle?.001:1,aisle?.001:1);
+ crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
+ crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
+ stadiumCrowdTorso.setColorAt(idx,new THREE.Color(crowdPalette[(row*7+seat*3)%crowdPalette.length]));
+}
+stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
+if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=true;
+S.add(stadiumCrowdTorso,stadiumCrowdHead);
 syncStadiumCrowdQuality();
 // Autonomous possession-based exhibition match: chase, pass, shoot, save and restart.
 // Real-time in-world LED scoreboard showing simulated match and time remaining.
