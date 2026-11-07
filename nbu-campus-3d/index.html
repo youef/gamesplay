@@ -898,18 +898,24 @@ S.add(tifoCards);
 // Coordinated flash choreography: all supporters lower and raise their cards together.
 // Hold the complete mosaic for 6 seconds, then hide it for 2 seconds.
 function updateTifoFlash(t){
- const phase=(t*.001)%8;
- const raised=phase<6;
+ // Crowd choreography: hold raised cards, lower together, then raise again.
+ const phase=(t*.001)%12;
+ const raised=phase<8.5;
  if(tifoCards.visible!==raised)tifoCards.visible=raised;
+ // Flash briefly as a coordinated wave without exposing a gap through the middle.
+ if(raised&&phase>6.8&&phase<8.5)tifoCards.material.opacity=.84+.16*Math.abs(Math.sin(t*.012));
+ else tifoCards.material.opacity=1;
+ tifoCards.material.transparent=true;
 }
 const tifoCardIndexSet=new Set(tifoCardIndices);
-const cheeringIndices=Array.from({length:400},(_,i)=>Math.floor(i*stadiumCapacity/400));let lastCheerUpdate=0;
+const cheeringIndices=Array.from({length:600},(_,i)=>Math.floor(i*stadiumCapacity/600));let lastCheerUpdate=0;
 function updateStadiumCheering(t){
  if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
  for(const idx of cheeringIndices){
   if(idx>=stadiumCrowdTorso.count||tifoCardIndexSet.has(idx))continue;
   const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
-  const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28;
+  const cheerBoost=stadiumMatch.goalFlash>0?2.2:1;
+  const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28*cheerBoost;
   crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
   crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
  }
