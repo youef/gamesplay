@@ -1053,6 +1053,25 @@ tifoCards.renderOrder=50;
 S.add(tifoCards);
 // Coordinated flash choreography: all supporters lower and raise their cards together.
 // Hold the complete mosaic for 6 seconds, then hide it for 2 seconds.
+// Phase 3: lightweight supporter flags with subtle synchronized motion.
+const supporterFlags=new THREE.Group();S.add(supporterFlags);
+const flagCloth=[new THREE.MeshBasicMaterial({color:0xf3c21d,side:THREE.DoubleSide}),new THREE.MeshBasicMaterial({color:0x111820,side:THREE.DoubleSide}),new THREE.MeshBasicMaterial({color:0x2b6ab4,side:THREE.DoubleSide})];
+const flagPoles=mat(0xb4bdc5,{metalness:.4,roughness:.5});
+const flagActors=[];
+for(let i=0;i<36;i++){
+ const angle=(i+.5)*Math.PI*2/36,p=bowlLocation(13+(i%4)*8,angle);
+ const g=new THREE.Group();g.position.set(p.x,p.y+1.1,p.z);g.rotation.y=-angle+Math.PI/2;
+ const pole=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,2.7,5),flagPoles);
+ pole.position.y=1.25;g.add(pole);
+ const flag=new THREE.Mesh(new THREE.PlaneGeometry(1.35,.85),flagCloth[angle>Math.PI*1.13&&angle<Math.PI*1.87?i%2:2]);
+ flag.position.set(.68,2.13,0);g.add(flag);
+ supporterFlags.add(g);flagActors.push(g);
+}
+let lastFlagAnimation=0;
+function animateSupporterFlags(t){
+ if(t-lastFlagAnimation<80)return;lastFlagAnimation=t;
+ for(let i=0;i<flagActors.length;i++)flagActors[i].rotation.z=Math.sin(t*.002+i*.85)*.18;
+}
 function updateTifoFlash(t){
  // Crowd choreography: hold raised cards, lower together, then raise again.
  const phase=(t*.001)%12;
@@ -1070,7 +1089,7 @@ function updateStadiumCheering(t){
  for(const idx of cheeringIndices){
   if(idx>=stadiumCrowdTorso.count||tifoCardIndexSet.has(idx))continue;
   const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
-  const cheerBoost=stadiumMatch.goalFlash>0?2.2:1;
+  const cheerBoost=stadiumMatch.goalFlash>0?2.2:stadiumMatch.flight?1.4:1;
   const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28*cheerBoost;
   crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
   crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
@@ -1151,6 +1170,7 @@ function updateStadium(t,dt){
  if(m.possessor>=0){const owner=stadiumActors[m.possessor];if(owner)m.possession[owner.team]+=dt;}
  updateStadiumCheering(t);
  updateTifoFlash(t);
+ animateSupporterFlags(t);
  animateStadiumStaff(t);
  if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
