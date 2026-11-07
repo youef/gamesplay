@@ -5,7 +5,7 @@
 function build(roads,requested=11,structures=[]){
  const lines=(Array.isArray(roads)?roads:[]).slice(0,280).filter(r=>{
   if(!r||![r.x1,r.z1,r.x2,r.z2].every(Number.isFinite))return false;
-  return (r.x1===r.x2)!==(r.z1===r.z2)&&Math.hypot(r.x2-r.x1,r.z2-r.z1)>=.5;
+  return Math.hypot(r.x2-r.x1,r.z2-r.z1)>=.5;
  });
  const cuts=lines.map(r=>[{x:r.x1,z:r.z1,y:0},{x:r.x2,z:r.z2,y:0}]);
  const cross=(ax,az,bx,bz)=>ax*bz-az*bx;
