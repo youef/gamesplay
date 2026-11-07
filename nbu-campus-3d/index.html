@@ -1399,13 +1399,14 @@ const stadiumViewPanel=document.createElement("div");
 stadiumViewPanel.id="stadiumViewPanel";
 stadiumViewPanel.style.cssText="position:fixed;z-index:20;bottom:calc(95px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:none;width:min(92vw,480px);padding:6px;background:#102c40e8;border:1px solid #ffffff55;border-radius:15px;color:white;box-shadow:0 8px 25px #0006;direction:rtl";
 const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.cssText="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;scrollbar-width:none";
-const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"]];
+const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"],["tifo","🐯 التيفو كامل"],["tifoClose","🟡 قرب التيفو"],["standHigh","🏟️ أعلى المدرج"],["corner","🚩 ركنية"],["goal","🥅 خلف المرمى"]];
 function selectStadiumView(mode){
  stadiumViewMode=mode;
  if(mode==="orbit"){yaw=Math.PI;pit=.2;dist=8}
  if(mode==="first"){yaw=Math.PI;pit=.08;dist=2}
  if(mode==="ball"){dist=2}
  if(mode==="aerial"){dist=60;pit=.7}
+ if(mode==="tifo"||mode==="tifoClose"||mode==="standHigh"||mode==="corner"||mode==="goal"){pit=.15;dist=20}
  stadiumViewButtons.querySelectorAll("button").forEach(b=>{b.style.background=b.dataset.mode===mode?"#168e8a":"#244c67"});
 }
 for(const [mode,label] of stadiumViewOptions){
@@ -1413,7 +1414,7 @@ for(const [mode,label] of stadiumViewOptions){
  b.style.cssText="background:#244c67;color:#fff;border:1px solid #7796a9;border-radius:8px;padding:8px 9px;white-space:nowrap;flex:0 0 auto;font:700 12px Tajawal,Tahoma;touch-action:manipulation";
  b.onclick=()=>selectStadiumView(mode);stadiumViewButtons.append(b);
 }
-const stadiumViewHint=document.createElement("div");stadiumViewHint.textContent="اسحب الشاشة لتغيير زاوية المشاهدة، وبإصبعين للتقريب والإبعاد. يمكنك التبديل بين 5 كاميرات.";stadiumViewHint.style.cssText="display:none;font:500 11px Tajawal,Tahoma;text-align:center;padding-top:6px";
+const stadiumViewHint=document.createElement("div");stadiumViewHint.textContent="اسحب الشاشة لتغيير زاوية المشاهدة، وبإصبعين للتقريب والإبعاد. يمكنك التبديل بين 10 زوايا مشاهدة، ومنها زاويتان للتيفو.";stadiumViewHint.style.cssText="display:none;font:500 11px Tajawal,Tahoma;text-align:center;padding-top:6px";
 const stadiumViewToggle=document.createElement("button");
 stadiumViewToggle.type="button";stadiumViewToggle.textContent="📷 زوايا المشاهدة ▾";
 stadiumViewToggle.style.cssText="display:block;width:100%;background:transparent;color:#fff;border:0;padding:5px;font:700 13px Tajawal,Tahoma;touch-action:manipulation";
@@ -1855,7 +1856,12 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){
  cam.up.set(0,1,0);
  const target=stadiumViewMode==="ball"?new THREE.Vector3(ST.x+stadiumMatch.ballX,1.6,ST.z+stadiumMatch.ballZ):new THREE.Vector3(ST.x,1.4,ST.z);
- if(stadiumViewMode==="broadcast"){cam.position.set(ST.x+74,32,ST.z-5);cam.lookAt(target)}
+ if(stadiumViewMode==="tifo"){cam.position.set(ST.x,15,ST.z+23);cam.lookAt(ST.x,12,ST.z-75)}
+ else if(stadiumViewMode==="tifoClose"){cam.position.set(ST.x-21,11,ST.z-7);cam.lookAt(ST.x,12,ST.z-73)}
+ else if(stadiumViewMode==="standHigh"){cam.position.set(ST.x+72,25,ST.z+8);cam.lookAt(ST.x,3,ST.z)}
+ else if(stadiumViewMode==="corner"){cam.position.set(ST.x+37,5.5,ST.z+56);cam.lookAt(ST.x,2,ST.z)}
+ else if(stadiumViewMode==="goal"){cam.position.set(ST.x,5,ST.z+59);cam.lookAt(ST.x,2,ST.z)}
+ else if(stadiumViewMode==="broadcast"){cam.position.set(ST.x+74,32,ST.z-5);cam.lookAt(target)}
  else if(stadiumViewMode==="aerial"){cam.position.set(ST.x+Math.sin(yaw)*dist,Math.max(35,dist*1.2),ST.z+Math.cos(yaw)*dist);cam.lookAt(target)}
  else{
   const eye=new THREE.Vector3(pl.position.x,pl.position.y+1.5,pl.position.z);
