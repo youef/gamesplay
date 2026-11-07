@@ -199,7 +199,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./strategy-bridges.js?v=d614bc66"></script>
 <script src="./strategy-road-network.js?v=6d11be6d"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
-<script src="./strategy-plan-json.js?v=b2e7ead9"></script>
+<script src="./strategy-plan-json.js?v=78295c3f"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -1807,7 +1807,7 @@ const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 let roadDragOrigin=null,roadDragMoved=false,roadDragPointer=null;
-let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null,blueprintTool=null;
+let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null,blueprintTool=null,roadPlanTool=null;
 const editMarker=new THREE.Mesh(new THREE.BoxGeometry(1,.08,1),new THREE.MeshBasicMaterial({
  color:0xffc44e,transparent:true,opacity:.48,depthWrite:false,side:THREE.DoubleSide
 }));
@@ -2409,6 +2409,7 @@ function eraseAtPointer(e){
 }
 function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);
  if(blueprintTool&&blueprintTool.isPlacing()){if(blueprintTool.place(p))return;}
+ if(roadPlanTool&&roadPlanTool.isPlacing()){if(roadPlanTool.place(p))return;}
  if(buildTool==="select"){
   if(!p)return toastBuild("اضغط داخل المخطط");
   if(editMoveTarget){const issue=plannerMoveTo(selectedEdit,p);editMoveTarget=false;return toastBuild(issue||"✅ نُقل العنصر إلى المكان الجديد")}
@@ -2517,10 +2518,11 @@ function addPlanItemsBatch(items){
 }
 function setupPlanJsonImport(){
  if(!window.CampusStrategyPlanJSON)return;
- window.CampusStrategyPlanJSON.createUI({
+ roadPlanTool=window.CampusStrategyPlanJSON.createUI({
   host:$("buildDock"),
   onApprove:addPlanItemsBatch,
-  onNotice:toastBuild
+  onNotice:toastBuild,
+  startPlacement:()=>{selectBuild("select");strategyPan=false;updateModes()}
  });
 }
 
