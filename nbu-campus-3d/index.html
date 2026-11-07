@@ -1789,12 +1789,13 @@ const buildDefs={
  road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر",cost:1200,path:true,width:11},
  college:{label:"🏫 كلية",cost:165000,w:28,d:23,h:18,color:0xb8ccdf},lab:{label:"🔬 معامل",cost:110000,w:22,d:19,h:13,color:0xb9d7ce},library:{label:"📚 مكتبة",cost:120000,w:27,d:21,h:13,color:0xe2ceb0},admin:{label:"🏢 إدارة",cost:130000,w:25,d:20,h:17,color:0xd3cadf},
  park:{label:"🌳 حديقة",cost:18000,w:30,d:24},plaza:{label:"🏙️ ساحة",cost:12500,w:25,d:25},trees:{label:"🌴 نخيل",cost:1400,w:8,d:8},lamp:{label:"💡 إنارة",cost:2500,w:8,d:8},parking:{label:"🅿️ مواقف",cost:23000,w:32,d:24},fountain:{label:"⛲ نافورة",cost:28000,w:16,d:16},busstop:{label:"🚌 محطة باص",cost:9000,w:15,d:12},gasstation:{label:"⛽ محطة خدمات 3D",cost:65000,w:25,d:22},signal:{label:"🚦 إشارة",cost:3800,w:8,d:8},crosswalk:{label:"🚶 معبر مشاة",cost:5500,w:13,d:9},roundabout:{label:"🔄 دوّار",cost:19000,w:22,d:22},
- erase:{label:"🧽 إزالة عنصر"}
+ select:{label:"🎯 تحديد / نقل"},erase:{label:"🧽 إزالة عنصر"}
 };
 const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 let roadDragOrigin=null,roadDragMoved=false,roadDragPointer=null;
+let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null;
 const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
 function previewRoad(a,b){
  if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
@@ -1861,9 +1862,9 @@ const spent=()=>built.reduce((sum,o)=>sum+buildMoney(o),0);
 const balance=()=>Math.max(0,1600000+budgetBonus-spent());
 const coins=n=>Math.round(n).toLocaleString("ar-SA")+" ر.س";
 function toastBuild(t){const v=$("buildToast");v.textContent=t;v.style.display="block";clearTimeout(buildMessageTime);buildMessageTime=setTimeout(()=>v.style.display="none",3300)}
-function storeBuild(){evaluateMissions();try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:4,built,removedCampusBuildings:[...removedCampusBuildings],creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
-function validItem(o){if(!o||typeof o!=="object"||!buildDefs[o.type]||o.type==="erase"||!Number.isFinite(o.x)||!Number.isFinite(o.z)||o.x<WORLD.buildMinX||o.x>WORLD.buildMaxX||o.z<WORLD.buildMinZ||o.z>WORLD.buildMaxZ)return false;if(buildDefs[o.type].path){return o.end&&Number.isFinite(o.end.x)&&Number.isFinite(o.end.z)&&o.end.x>=WORLD.buildMinX&&o.end.x<=WORLD.buildMaxX&&o.end.z>=WORLD.buildMinZ&&o.end.z<=WORLD.buildMaxZ&&Math.hypot(o.end.x-o.x,o.end.z-o.z)>=10&&Math.hypot(o.end.x-o.x,o.end.z-o.z)<=230}return Number.isInteger(o.rot)&&o.rot>=0&&o.rot<=3}
-function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){if(dat.built.length>maxObjects||dat.built.some(o=>!validItem(o)))throw new Error("invalid saved plan");if(Array.isArray(dat.removedCampusBuildings)){for(const name of dat.removedCampusBuildings){if(B.some(b=>b.n===name))removedCampusBuildings.add(name)}syncCampusBuildings()}built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;budgetBonus=Number.isFinite(dat.budgetBonus)?clamp(dat.budgetBonus,0,5000000):0;missionDone=dat.missionDone&&typeof dat.missionDone==="object"?dat.missionDone:{};drivenMeters=Number.isFinite(dat.drivenMeters)?clamp(dat.drivenMeters,0,1000000):0;atAirport=!!dat.atAirport;atCity=!!dat.atCity;redrawBuild();evaluateMissions()}}catch(e){console.warn("Saved campus layout could not be restored",e);built=[];removedCampusBuildings.clear();syncCampusBuildings();redrawBuild()}}
+function storeBuild(){evaluateMissions();try{localStorage.setItem(BUILD_KEY,JSON.stringify({version:5,built,removedCampusBuildings:[...removedCampusBuildings],campusBuildingPositions,defaultRoads:saveFixedRoads(),creativeMode,budgetBonus,missionDone,drivenMeters,atAirport,atCity}))}catch(e){toastBuild("تعذر الحفظ في المتصفح. استخدم زر حفظ ملف.")}}
+function validItem(o){if(!o||typeof o!=="object"||!buildDefs[o.type]||(o.type==="erase"||o.type==="select")||!Number.isFinite(o.x)||!Number.isFinite(o.z)||o.x<WORLD.buildMinX||o.x>WORLD.buildMaxX||o.z<WORLD.buildMinZ||o.z>WORLD.buildMaxZ)return false;if(buildDefs[o.type].path){return o.end&&Number.isFinite(o.end.x)&&Number.isFinite(o.end.z)&&o.end.x>=WORLD.buildMinX&&o.end.x<=WORLD.buildMaxX&&o.end.z>=WORLD.buildMinZ&&o.end.z<=WORLD.buildMaxZ&&Math.hypot(o.end.x-o.x,o.end.z-o.z)>=10&&Math.hypot(o.end.x-o.x,o.end.z-o.z)<=230}return Number.isInteger(o.rot)&&o.rot>=0&&o.rot<=3}
+function restoreBuild(){try{const dat=JSON.parse(localStorage.getItem(BUILD_KEY)||"null");if(dat&&Array.isArray(dat.built)){if(dat.built.length>maxObjects||dat.built.some(o=>!validItem(o)))throw new Error("invalid saved plan");if(Array.isArray(dat.removedCampusBuildings)){for(const name of dat.removedCampusBuildings){if(B.some(b=>b.n===name))removedCampusBuildings.add(name)}syncCampusBuildings()}if(dat.campusBuildingPositions&&typeof dat.campusBuildingPositions==="object")for(const [name,v] of Object.entries(dat.campusBuildingPositions)){const b=B.find(q=>q.n===name);if(b&&v&&[v.x,v.z,v.rot].every(Number.isFinite)&&v.rot>=0&&v.rot<=3)campusBuildingPositions[name]={x:v.x,z:v.z,rot:v.rot}}syncBuildingTransforms();if(Array.isArray(dat.defaultRoads))restoreFixedRoads(dat.defaultRoads);built=dat.built.filter(validItem).slice(0,maxObjects).map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!dat.creativeMode;budgetBonus=Number.isFinite(dat.budgetBonus)?clamp(dat.budgetBonus,0,5000000):0;missionDone=dat.missionDone&&typeof dat.missionDone==="object"?dat.missionDone:{};drivenMeters=Number.isFinite(dat.drivenMeters)?clamp(dat.drivenMeters,0,1000000):0;atAirport=!!dat.atAirport;atCity=!!dat.atCity;redrawBuild();evaluateMissions()}}catch(e){console.warn("Saved campus layout could not be restored",e);built=[];removedCampusBuildings.clear();syncCampusBuildings();restoreFixedRoads(null);redrawBuild()}}
 // Original modular low-poly 3D fuel station for the default scene and player-built stations.
 function makeFuelStation(parent){
  const c={floor:0x8d969c,curb:0xc8c6bc,white:0xf1f3ef,navy:0x183d55,teal:0x08a4a5,glass:0x3d819b,roof:0x203c54,amber:0xf7cb67,black:0x29343b,red:0xc34d44};
@@ -1975,16 +1976,14 @@ const missionDefs=[
 function renderMissions(){const target=$("missionsList");target.replaceChildren();for(const m of missionDefs){const el=document.createElement("div");el.className="mission"+(missionDone[m.id]?" done":"");const head=document.createElement("b");head.textContent=(missionDone[m.id]?"✅ ":"○ ")+m.title;const detail=document.createElement("small");detail.textContent=m.detail+" • مكافأة "+coins(m.reward);el.append(head,detail);target.append(el)}}
 function evaluateMissions(){let newly=0;for(const m of missionDefs){if(!missionDone[m.id]&&m.check()){missionDone[m.id]=true;budgetBonus+=m.reward;newly++}}
 if(newly){toastBuild("🎉 أكملت "+newly+" مهمة وربحت مكافأة! ");updateBuildHud()}renderMissions()}
-function selectBuild(t){buildTool=t;buildStart=null;updateBuildHud()}
-function syncCampusBuildings(){
- for(const [name,group] of campusBuildingGroups)group.visible=!removedCampusBuildings.has(name);
-}
+function selectBuild(t){buildTool=t;buildStart=null;editMoveTarget=false;updateBuildHud()}
+function syncCampusBuildings(){syncBuildingTransforms();}
 function removeCampusBuilding(name){
  if(!B.some(b=>b.n===name))return;
- removedCampusBuildings.add(name);syncCampusBuildings();storeBuild();toastBuild("تمت إزالة "+name+" من مخطط لعبتك — يمكن استعادته");
+ recordPlannerHistory();removedCampusBuildings.add(name);syncCampusBuildings();storeBuild();toastBuild("تمت إزالة "+name+" من مخطط لعبتك — يمكن استعادته");
 }
 function restoreCampusBuilding(name){
- removedCampusBuildings.delete(name);syncCampusBuildings();storeBuild();toastBuild("تمت استعادة "+name);
+ recordPlannerHistory();removedCampusBuildings.delete(name);syncCampusBuildings();storeBuild();toastBuild("تمت استعادة "+name);
 }
 function setupCampusEditor(){
  const panel=document.createElement("section");panel.id="campusEditor";panel.dir="rtl";
