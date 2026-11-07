@@ -987,6 +987,15 @@ function updateStadium(t,dt){
   if(p>=1){
    m.flight=null;
    if(Math.abs(m.ballZ)>=52.5&&Math.abs(m.ballX)<=3.66){
+    const defendingTeam=m.ballZ>0?0:1;
+    const goalie=stadiumActors.find(a=>a.role==="goalkeeper"&&a.team===defendingTeam);
+    const saveChance=goalie?Math.max(.08,.43-Math.abs(m.ballX)*.065):0;
+    if(Math.random()<saveChance){
+     m.event="تصدي رائع من الحارس! 🧤";m.eventTime=m.elapsed;
+     if(goalie){goalie.g.rotation.z=m.ballX>=0?-.55:.55;goalie.leftArm.rotation.z=-.8;goalie.rightArm.rotation.z=.8;}
+     stadiumReset(defendingTeam);
+     return;
+    }
     const scorer=m.ballZ>0?"blue":"white";stadiumScore[scorer]++;
     m.event="هدف! 🎉";m.eventTime=m.elapsed;m.goalFlash=3;
     // Goalkeeper attempts a late dive; coaching staff react to the goal.
@@ -1007,7 +1016,7 @@ function updateStadium(t,dt){
   const owner=stadiumActors[m.possessor]||stadiumActors[9];
   m.ballX=owner.g.position.x-ST.x;m.ballZ=owner.g.position.z-ST.z+(owner.team===0?1:-1)*1.1;
   ball.position.set(ST.x+m.ballX,.85,ST.z+m.ballZ);
-  const pressure=stadiumActors.some(a=>a.team!==owner.team&&Math.hypot(a.g.position.x-owner.g.position.x,a.g.position.z-owner.g.position.z)<3);
+  const pressure=stadiumActors.some(a=>a.team!==owner.team&&Math.hypot(a.g.position.x-owner.g.position.x,a.g.position.z-owner.g.position.z)<4.5);
   if(Math.random()<dt*(pressure?1.3:.4)){
    const sign=owner.team===0?1:-1,attackZ=sign*52.5;
    if(Math.abs(attackZ-m.ballZ)<24&&Math.random()<.55){
@@ -1029,7 +1038,7 @@ function updateStadium(t,dt){
   else if(a.role!=="goalkeeper"){
    const chase=Math.hypot(a.g.position.x-ST.x-m.ballX,a.g.position.z-ST.z-m.ballZ);
    if(a.team!==(stadiumActors[m.possessor]||a).team&&chase<19){tx=ST.x+m.ballX;tz=ST.z+m.ballZ}
-  }else{tx=ST.x+Math.max(-3,Math.min(3,m.ballX*.18));tz=a.baseZ}
+  }else{tx=ST.x+Math.max(-3.1,Math.min(3.1,m.ballX*.5));tz=a.baseZ+(Math.abs(m.ballZ)>30?(a.team===0?2:-2):0)}
   tx=Math.max(ST.x-32,Math.min(ST.x+32,tx));tz=Math.max(ST.z-49,Math.min(ST.z+49,tz));
   const dx=tx-a.g.position.x,dz=tz-a.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(a.role==="goalkeeper"?3:5.8));
   if(d>.01){a.g.position.x+=dx/d*step;a.g.position.z+=dz/d*step;a.g.rotation.y=Math.atan2(dx,dz)}
