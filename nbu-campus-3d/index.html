@@ -888,6 +888,44 @@ for(let j=0;j<48;j++){
  rib.rotation.y=Math.atan2(dx,dz);rib.scale.z=length;
  bowlArchitecture.add(rib);
 }
+// Lightweight architectural seating: instanced seat backs and VIP gallery.
+const stadiumSeatGeometry=new THREE.BoxGeometry(.76,.55,.12);
+const stadiumSeatMaterials=[mat(0xe5b722,{roughness:.75}),mat(0x171b20,{roughness:.8}),mat(0x1d5391,{roughness:.8})];
+const stadiumSeatMeshes=stadiumSeatMaterials.map(m=>new THREE.InstancedMesh(stadiumSeatGeometry,m,4800));
+const stadiumSeatCounters=[0,0,0],seatInstance=new THREE.Object3D();
+for(let row=1;row<stadiumRows;row+=3){
+ for(let seat=0;seat<stadiumSeatsPerRow;seat+=4){
+  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
+  if(seat%42<3)continue; // keep circulation aisles clear
+  const p=bowlLocation(row,angle),clubNorth=angle>Math.PI*1.13&&angle<Math.PI*1.87;
+  const colorIndex=clubNorth||Math.sin(angle*7+row*.3)>-.35?(row%5===0?1:0):2;
+  const idx=stadiumSeatCounters[colorIndex]++;
+  if(idx>=4800)continue;
+  seatInstance.position.set(p.x,p.y+.5,p.z);
+  seatInstance.rotation.set(0,-angle+Math.PI/2,0);
+  seatInstance.updateMatrix();stadiumSeatMeshes[colorIndex].setMatrixAt(idx,seatInstance.matrix);
+ }
+}
+stadiumSeatMeshes.forEach((mesh,i)=>{mesh.count=Math.min(4800,stadiumSeatCounters[i]);mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=false;mesh.receiveShadow=false;S.add(mesh)});
+const vipRail=mat(0xe1b955,{metalness:.58,roughness:.3});
+for(const side of [-1,1]){
+ const gallery=box(5,.5,28,mat(0x202933,{roughness:.75}),ST.x+side*82,21.7,ST.z);
+ const vipGlass=box(.12,2,28,mat(0x79b8c9,{transparent:true,opacity:.3,depthWrite:false}),ST.x+side*79.4,23,ST.z);
+ box(.2,.14,28,vipRail,ST.x+side*79.4,24,ST.z);
+ for(let k=-3;k<=3;k++){
+  const chair=box(1.1,.65,.65,mat(0x1b222a),ST.x+side*82,22.4,ST.z+k*3.5);
+ }
+}
+// Visible numbered outer access portals. Entry remains controlled by spectator seating UI.
+const portalSteel=mat(0x8799a5,{metalness:.6,roughness:.35});
+for(const [x,z,rot,num] of [[ST.x,ST.z-94,0,1],[ST.x+88,ST.z,Math.PI/2,2],[ST.x,ST.z+94,0,3],[ST.x-88,ST.z,Math.PI/2,4]]){
+ const portal=new THREE.Group();portal.position.set(x,0,z);portal.rotation.y=rot;S.add(portal);
+ for(const dx of [-4.5,4.5]){
+  const pillar=new THREE.Mesh(new THREE.BoxGeometry(.5,5,.6),portalSteel);pillar.position.set(dx,2.5,0);portal.add(pillar);
+ }
+ const lintel=new THREE.Mesh(new THREE.BoxGeometry(9.5,.55,.7),portalSteel);lintel.position.y=5.15;portal.add(lintel);
+ const sign=new THREE.Mesh(new THREE.BoxGeometry(4.5,.7,.2),accentGold);sign.position.set(0,5.8,0);portal.add(sign);
+}
 const crowdTorsoGeo=new THREE.BoxGeometry(.42,.65,.35);
 const crowdHeadGeo=new THREE.SphereGeometry(.19,5,4);
 const crowdTorsoMat=new THREE.MeshLambertMaterial({color:0xffffff});
