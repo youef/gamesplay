@@ -123,7 +123,7 @@ const example={
   {type:"bridgeCircle",x:110,z:0}
  ]
 };
-function createUI({host,onApprove,onNotice}){
+function createUI({host,onApprove,onNotice,startPlacement}){
  const section=document.createElement("section");section.dir="rtl";section.id="campus-ai-road-plan";
  section.style.cssText="display:grid;gap:8px;margin:8px 0;padding:12px;border:1px solid #84c6c6;border-radius:13px;background:#102e46;color:#fff;font:600 12px Tajawal,Tahoma";
  const title=document.createElement("strong");title.textContent="🤖 استيراد مخطط طرق من ملف AI / JSON";
@@ -154,7 +154,7 @@ function createUI({host,onApprove,onNotice}){
   b.style.cssText="min-height:38px;border-radius:9px;background:#1a526e;color:white;border:1px solid #8ab8ca;font:700 12px Tajawal,Tahoma;padding:7px";
   buttons.append(b);return b;
  }
- let roads=[],items=[];
+ let roads=[],items=[],placing=false;
  function update(){
   const ctx=preview.getContext("2d"),w=320,h=205;
   if(!ctx)return;
@@ -188,13 +188,19 @@ function createUI({host,onApprove,onNotice}){
    const text=typeof source.text==="function"?await source.text():await new Promise((ok,fail)=>{
     const reader=new FileReader();reader.onload=()=>ok(reader.result);reader.onerror=()=>fail(Error("فشل قراءة الملف"));reader.readAsText(source,"UTF-8");
    });
-   roads=parse(text);update();onNotice("✅ جاهز للمعاينة: "+roads.length+" عنصرًا");
+   placing=false;roads=parse(text);update();onNotice("✅ جاهز للمعاينة: "+roads.length+" عنصرًا");
   }catch(e){roads=[];items=[];info.textContent=e.message;onNotice("⚠️ "+e.message);update()}
   finally{file.value=""}
  };
 
+ btn("📍 اختيار موضع المخطط باللمس",()=>{
+  if(!roads.length)return onNotice("حمّل الصورة المرجعية أو مخطط النخيل أولًا");
+  placing=true;
+  if(startPlacement)startPlacement();
+  onNotice("📍 المس مكانًا على أرض الخريطة لاختيار مركز المخطط؛ لن تُضاف الطرق حتى اعتمادك");
+ });
  btn("🗺️ مخطط الصور الأربع — عرعر",()=>{
-  roads=parse(JSON.stringify(ararScreenshotPreset));
+  placing=false;roads=parse(JSON.stringify(ararScreenshotPreset));
   // A quiet, otherwise buildable corner is used for first preview only;
   // the player can move, rotate, zoom and review before any road gets built.
   cx.value="-425";cz.value="125";scale.value=".7";angle.value="0";
@@ -247,9 +253,21 @@ function createUI({host,onApprove,onNotice}){
   info.textContent="أُضيف: "+result.added+"، تم تجاوز: "+result.skipped+" — يمكن التراجع عن الاستيراد دفعة واحدة.";
   onNotice("🗺️ تم اعتماد "+result.added+" من "+items.length+" عنصرًا بعد فحص التعارضات");
  });
- btn("🧽 مسح المعاينة",()=>{roads=[];items=[];update();info.textContent="تم مسح المعاينة دون تعديل اللعبة"});
+ btn("🧽 مسح المعاينة",()=>{placing=false;roads=[];items=[];update();info.textContent="تم مسح المعاينة دون تعديل اللعبة"});
  section.append(title,intro,file,inputs,preview,info,buttons);host.append(section);update();
- return {get count(){return items.length}};
+ return {
+  get count(){return items.length},
+  isPlacing:()=>placing,
+  place(point){
+   if(!placing||!point)return false;
+   if(!Number.isFinite(point.x)||!Number.isFinite(point.z))return false;
+   cx.value=String(Math.round(point.x/5)*5);
+   cz.value=String(Math.round(point.z/5)*5);
+   placing=false;update();
+   onNotice("📍 تحدد مركز مخطط النخيل؛ راجع المعاينة ثم اضغط اعتماد المخطط");
+   return true;
+  }
+ };
 }
 window.CampusStrategyPlanJSON={parse,transform,createUI,example,ararScreenshotPreset};
 })();
