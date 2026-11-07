@@ -54,7 +54,7 @@ window.CampusBridgeKit=function({THREE,part,mat}){
     if(len<1)continue;
     const t=Math.max(0,Math.min(1,((x-o.x)*dx+(z-o.z)*dz)/(len*len)));
     const bend=o.type==="flyover"?Math.min(28,len*.21)*Math.sin(t*Math.PI):0;
-    const nx=-dz/len,nz=dx/len;
+    const nx=dz/len,nz=-dx/len;
     const xx=o.x+t*dx+nx*bend,zz=o.z+t*dz+nz*bend;
     if(Math.hypot(x-xx,z-zz)<=6)result=Math.max(result,elevation(t,len)-.25);
    }
