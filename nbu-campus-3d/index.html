@@ -199,6 +199,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./strategy-bridges.js?v=9bdb287"></script>
 <script src="./strategy-road-network.js?v=0ad6fe6"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
+<script src="./strategy-plan-json.js?v=ae1c8ab"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -2404,6 +2405,33 @@ function addRoadFromBlueprint(a,b){
  recordPlannerHistory();built.push(item);buildGroups.push(buildObject(item));
  updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();return true;
 }
+
+function addPlanItemsBatch(items){
+ if(!Array.isArray(items)||!items.length)return {added:0,skipped:0};
+ let added=0,skipped=0;
+ for(const input of items.slice(0,80)){
+  if(!input||!["road","avenue","bridge","flyover","bridgeCircle"].includes(input.type)){skipped++;continue}
+  const o=input.type==="bridgeCircle"?
+   {type:input.type,x:snap(input.x),z:snap(input.z),rot:0}:
+   {type:input.type,x:snap(input.x),z:snap(input.z),
+    end:{x:snap(input.end?.x),z:snap(input.end?.z)}};
+  const issue=canBuild(o);
+  if(issue){skipped++;continue}
+  if(added===0)recordPlannerHistory();
+  built.push(o);added++;
+ }
+ if(added){redrawBuild();storeBuild();updateBuildHud()}
+ return {added,skipped};
+}
+function setupPlanJsonImport(){
+ if(!window.CampusStrategyPlanJSON)return;
+ window.CampusStrategyPlanJSON.createUI({
+  host:$("buildDock"),
+  onApprove:addPlanItemsBatch,
+  onNotice:toastBuild
+ });
+}
+
 function setupBlueprintImport(){
  if(typeof window.CampusBlueprintImport!=="function")return;
  blueprintTool=window.CampusBlueprintImport({
@@ -2412,7 +2440,7 @@ function setupBlueprintImport(){
  });
  blueprintTool.setVisible(buildMode);
 }
-restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupBlueprintImport();setupStudents();
+restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupBlueprintImport();setupPlanJsonImport();setupStudents();
 function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
