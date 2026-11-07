@@ -2,7 +2,7 @@
 (function(){
 "use strict";
 window.CampusBlueprintImport=function(options){
- const {THREE,scene,host,onRoad,onNotice}=options;
+ const {THREE,scene,host,onRoad,onNotice,startPlacement}=options;
  const KEY="nbu-campus-road-blueprint-v1";
  const root=new THREE.Group();root.name="Uploaded road blueprint reference";scene.add(root);
  const surface=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({
@@ -36,7 +36,7 @@ window.CampusBlueprintImport=function(options){
  const rotateField=numberField("تدوير المخطط (درجات)",0,0,270,90,v=>state.rotation=Math.round(v/90)*90);
  const opacityField=numberField("الشفافية %",40,10,85,5,v=>state.opacity=v/100);
  const panelButtons=document.createElement("div");panelButtons.style.cssText="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px";
- const positionBtn=button("📍 تحديد موقع بالخريطة",()=>{state.placing=true;onNotice("المس موقعًا على الأرض لتثبيت مركز الصورة")});
+ const positionBtn=button("📍 تحديد موقع بالخريطة",()=>{state.placing=true;if(startPlacement)startPlacement();onNotice("المس موقعًا على الأرض لتثبيت مركز الصورة")});
  const autoBtn=button("🔎 استخراج خطوط مقترحة",()=>{if(!state.hasImage)return onNotice("ارفع صورة أولًا");
   manual=false;start=null;autoTrace();drawPreview()});
  const manualBtn=button("✏️ رسم طرق فوق الصورة",()=>{if(!state.hasImage)return onNotice("ارفع صورة أولًا");
