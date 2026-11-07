@@ -194,6 +194,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <button id="sitStand" aria-label="الجلوس في مدرج الملعب">🪑 الجلوس بالمدرج</button><button id="standUp" aria-label="القيام من المقعد">↩ القيام</button><button id="enter">دخول</button><div id="status" aria-hidden="true"></div>
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./it-deanship.js?v=bc9406b"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -202,7 +203,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const B=[
 {n:"كلية الطب",x:-70,z:-135,w:60,d:40,h:22,c:0xcfd8e4,ds:"s",labs:[["معمل التشريح","مجسمات ونماذج تشريحية للسنوات الأولى."],["معمل الأحياء الدقيقة","مزارع وفحوصات ميكروبية."],["معمل الفسيولوجيا","تجارب وظائف الأعضاء."],["مركز المهارات الإكلينيكية","محاكاة مهارات التمريض والفحص."]]},
 {n:"قسم الآداب",x:72,z:-138,w:60,d:38,h:20,c:0xe6d8bd,ds:"s",labs:[["معمل اللغات","تدريب سمعي ونطقي للغات."],["معمل الترجمة","برامج الترجمة والتفريغ."],["استوديو الإعلام","تسجيل ومونتاج صوتي ومرئي."]]},
-{n:"عمادة تقنية المعلومات",x:-145,z:-45,w:44,d:30,h:16,c:0xd3e0d9,ds:"s",labs:[["مختبر الحاسب 1","أجهزة للتدريب والاختبارات."],["مختبر الشبكات","أجهزة توجيه وتبديل للتطبيق العملي."],["مختبر الأمن السيبراني","بيئات اختبار معزولة."],["مختبر الذكاء الاصطناعي","أجهزة بمعالجات رسومية."]]},
+{n:"عمادة تقنية المعلومات",x:-145,z:-45,w:44,d:30,h:17.4,c:0xd3e0d9,ds:"s",labs:[["الدور الأرضي: خدمة العملاء","خدمة العملاء على مقربة من المصعد والمدخل."],["الدور الأرضي: قسم الشبكات","في الجهة اليمنى من الممر."],["الدور الأرضي: الأمن السيبراني","بجوار خدمة العملاء."],["الممر الخلفي: مركز البيانات","غرفة الخوادم الرئيسية في الجزء الخلفي من المبنى."],["المرافق الخلفية","دورات المياه وغرفة عامل النظافة وغرفة الأعمال."],["الدور الأول","الخوادم والأنظمة والدعم الفني والتدريب والمختبرات."],["الدور الثاني","مكتب العميد والاجتماعات وإدارة المشاريع والتطوير."],["السطح","التكييف والاتصالات والطاقة الشمسية وغرفة الصيانة."]]},
 {n:"عمادة شؤون المكتبات",x:-145,z:50,w:40,d:28,h:14,c:0xe0d4c8,ds:"s",labs:[["قاعة الوسائط الرقمية","قواعد بيانات ومصادر إلكترونية."],["قاعات البحث الجماعي","غرف دراسة قابلة للحجز."]]},
 {n:"الكلية التطبيقية",x:-55,z:-45,w:48,d:30,h:16,c:0xd6dbe9,ds:"s",labs:[["معمل الحاسب","تدريب على التطبيقات المكتبية."],["معمل المحاسبة","أنظمة محاسبية للتدريب."],["ورشة مهارات مهنية","تدريب عملي للبرامج التطبيقية."]]},
 {n:"قسم الإدارة العامة",x:85,z:-40,w:52,d:30,h:16,c:0xe3dacb,ds:"s",labs:[["معمل الأنظمة الإدارية","برمجيات إدارة الأعمال."],["قاعة محاكاة الأعمال","ألعاب إدارية وحالات دراسية."]]},
@@ -557,6 +558,21 @@ const sz=b.ds==="n"?-1:1,dz=b.z+sz*b.d/2,cm=mat(0xf0e8d8);
 box(12,.7,6,cm,b.x,5,dz+sz*3);box(.8,5,.8,cm,b.x-5,2.5,dz+sz*5.4);box(.8,5,.8,cm,b.x+5,2.5,dz+sz*5.4);
 box(5.5,3.6,.3,facadeGlass,b.x,1.8,dz+sz*.1,0);box(.15,3.6,.45,facadeStone,b.x,1.8,dz+sz*.38,0);box(16,.3,8,mat(0xe9e0cc),b.x,.15,dz+sz*4,0);
 const s=lab(b.n,"#1d3a5f",3.6);s.position.set(b.x,b.h+6,b.z);
+if(b.n==="عمادة تقنية المعلومات"){
+ // Ground + two upper floors and an accessible maintenance roof.
+ const techTrim=mat(0x1a6888,{metalness:.32,roughness:.48});
+ for(const y of [5.2,10.5,15.8])box(b.w+.8,.24,b.d+.8,techTrim,b.x,y,b.z,0);
+ const glassBlue=mat(0x4894b7,{roughness:.16,metalness:.18});
+ for(const y of [7.55,12.75]){
+  for(const x of [-13,13])for(const z of [-8,8])
+   box(5.2,1.9,.16,glassBlue,b.x+x,y,b.z+z,0);
+ }
+ const roofMetal=mat(0x617986,{metalness:.48,roughness:.53});
+ for(const dx of [-11,1,13])box(5.5,1.5,4.6,roofMetal,b.x+dx,b.h+.75,b.z-4,0);
+ box(b.w+.3,.8,.4,techTrim,b.x,b.h+.25,b.z-b.d/2,0);
+ const techSign=lab("عمادة تقنية المعلومات","#134767",2.25);
+ techSign.position.set(b.x,b.h-1.1,b.z+b.d/2+1.3);
+}
 const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();for(const mesh of meshes)wrapper.add(mesh);wrapper.userData.campusBuilding=b.n;S.add(wrapper);campusBuildingGroups.set(b.n,wrapper);COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
 // الملعب
 const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
@@ -1569,6 +1585,11 @@ const hint=$("hint"),en=$("enter"),pn=$("panel"),pb=$("pb");
 const interior=new THREE.Group();interior.visible=false;S.add(interior);
 const addRoom=(geo,material,x,y,z)=>{const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.receiveShadow=true;interior.add(m);return m};
 const wallM=mat(0xe6e1d6),floorM=mat(0xc2b4a0),deskM=mat(0x957350),screenM=mat(0x29475e),chairM=mat(0x324356);
+ const itCampus=typeof window.ITCampusFactory==="function"
+  ?window.ITCampusFactory({THREE,interior,mat,lab,pl,
+    onNotice:text=>{$("interInfo").textContent=text},
+    onChange:()=>renderRooms()})
+  :null;
 function buildInterior(b){
  while(interior.children.length)interior.remove(interior.children[0]);
  const X=750,Z=0;addRoom(new THREE.BoxGeometry(72,.5,48),floorM,X,-.25,Z);
@@ -1610,11 +1631,16 @@ function enterBuilding(b){
  if(carMode){toastBuild("🚗 اخرج من السيارة أولًا للدخول");return}
  if(b===ST){op(b);return}
  outsidePos={x:pl.position.x,z:pl.position.z,yaw,pit,dist};inside=b;open=false;pn.classList.remove("on");
- buildInterior(b);interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;dist=8;
+ if(b.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.build();
+ else buildInterior(b);
+ interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;
+ dist=b.n==="عمادة تقنية المعلومات"?4.6:8;
  $("leave").style.display="block";$("interInfo").style.display="block";$("interInfo").textContent="داخل " + b.n + " — نموذج تخيلي تعليمي";
  $("roomBtns").style.display="flex";$("roomBtns").classList.remove("collapsed");$("closeRooms").style.display="block";$("showRooms").style.display="none";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
 }
-function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
+function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();
+ if(inside.n==="عمادة تقنية المعلومات"&&itCampus){itCampus.renderRooms(parent);return}
+ inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
 function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
@@ -2087,7 +2113,13 @@ if(carMode&&!open&&!inside&&!buildMode&&!seated){
  if(mv)hint.style.opacity=0;
 }else if(l>.08&&!open&&!buildMode&&!seated){const n=Math.min(1,l),sp=(K.ShiftLeft||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
  const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;
- if(inside){pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}else{if(!wallSweepBlocked(pl.position.x,pl.position.z,nx,pl.position.z,1.05)&&!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!wallSweepBlocked(pl.position.x,pl.position.z,pl.position.x,nz,1.05)&&!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
+ if(inside){
+ if(inside.n==="عمادة تقنية المعلومات"&&itCampus){
+  const newX=clamp(nx,716,784),newZ=clamp(nz,-21,21);
+  if(!itCampus.blocked(pl.position.x,pl.position.z,newX,pl.position.z))pl.position.x=newX;
+  if(!itCampus.blocked(pl.position.x,pl.position.z,pl.position.x,newZ))pl.position.z=newZ;
+ }else{pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}
+}else{if(!wallSweepBlocked(pl.position.x,pl.position.z,nx,pl.position.z,1.05)&&!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!wallSweepBlocked(pl.position.x,pl.position.z,pl.position.x,nz,1.05)&&!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
  const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
 ch.rotation.y=fa;
 const sw=mv&&!carMode?1:0;leg[0].rotation.x=Math.sin(ph)*.6*sw;leg[1].rotation.x=-Math.sin(ph)*.6*sw;arm[0].rotation.x=-Math.sin(ph)*.55*sw;arm[1].rotation.x=Math.sin(ph)*.55*sw;ch.position.y=Math.abs(Math.sin(ph))*.04*sw;
@@ -2133,7 +2165,7 @@ if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter
   else if(stadiumViewMode==="first"){cam.position.copy(eye);cam.lookAt(eye.clone().add(direction))}
   else{cam.position.copy(eye).addScaledVector(direction,-dist);cam.lookAt(eye.clone().addScaledVector(direction,15))}
  }
-}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,1.5,p.z)}
+}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,p.y+1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,p.y+1.5,p.z)}
 near=null;let best=14;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n)||!b.door)return;const d=Math.hypot(p.x-b.door.x,p.z-b.door.z);if(d<best){best=d;near=b}});
 if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
