@@ -197,6 +197,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
 <script src="./strategy-bridges.js?v=760938f"></script>
+<script src="./strategy-blueprint-image.js?v=55501d1"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -1796,7 +1797,7 @@ const maxObjects=180;
 const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),buildHit=new THREE.Vector3();
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 let roadDragOrigin=null,roadDragMoved=false,roadDragPointer=null;
-let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null;
+let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null,blueprintTool=null;
 const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
 function previewRoad(a,b){
  if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
@@ -2265,6 +2266,7 @@ function eraseAtPointer(e){
  toastBuild(issue||"🗑️ تم حذف الطريق أو المبنى. يمكنك التراجع من المحرر.");
 }
 function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(buildTool==="erase"){eraseAtPointer(e);return}const p=selectGround(e);
+ if(blueprintTool&&blueprintTool.isPlacing()){if(blueprintTool.place(p))return;}
  if(buildTool==="select"){
   if(!p)return toastBuild("اضغط داخل المخطط");
   if(editMoveTarget){const issue=plannerMoveTo(selectedEdit,p);editMoveTarget=false;return toastBuild(issue||"✅ نُقل العنصر إلى المكان الجديد")}
@@ -2312,6 +2314,7 @@ function setupBlueprintSlots(){
 setupBlueprintSlots();
 function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;clearRoadPreview();if(buildMode){if(playerMode==="split")setStudentMode("single","fawaz");exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=false;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
+ if(blueprintTool){blueprintTool.setVisible(buildMode);if(!buildMode)blueprintTool.reset()}
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
 $("builderToggle").onclick=toggleBuilder;
@@ -2327,7 +2330,24 @@ $("importBuild").onclick=()=>$("buildFile").click();
 $("buildFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>350000)throw new Error("حجم الملف أكبر من المسموح");const fileText=typeof file.text==="function"?await file.text():await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error("تعذر قراءة الملف"));reader.readAsText(file,"UTF-8")});const data=JSON.parse(fileText);if(!Array.isArray(data.built)||data.built.length>maxObjects||data.built.some(o=>!validItem(o)))throw new Error("مخطط غير متوافق");if(!confirm("استيراد المخطط سيستبدل إضافات البناء الحالية. هل أنت متأكد؟"))return;built=data.built.map(o=>({type:o.type,x:o.x,z:o.z,...(o.end?{end:{x:o.end.x,z:o.end.z}}:{rot:o.rot})}));creativeMode=!!data.creativeMode;budgetBonus=Number.isFinite(data.budgetBonus)?Math.max(budgetBonus,clamp(data.budgetBonus,0,5000000)):budgetBonus;missionDone=data.missionDone&&typeof data.missionDone==="object"&&!Array.isArray(data.missionDone)?Object.fromEntries(missionDefs.map(m=>[m.id,!!(missionDone[m.id]||data.missionDone[m.id])])):missionDone;drivenMeters=Number.isFinite(data.drivenMeters)?Math.max(drivenMeters,clamp(data.drivenMeters,0,1000000)):drivenMeters;atAirport=atAirport||!!data.atAirport;atCity=atCity||!!data.atCity;redoStack=[];redrawBuild();storeBuild();toastBuild("✅ تم استيراد مخطط الجامعة") }catch(err){toastBuild("تعذر الاستيراد: "+err.message)}finally{e.target.value=""}};
 $("resetBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للحذف");if(!confirm("هل تريد إزالة جميع إضافاتك؟ المباني الأساسية ستبقى كما هي."))return;built=[];redoStack=[];buildStart=null;redrawBuild();storeBuild();toastBuild("أزلنا إضافاتك فقط")};
 addEventListener("keydown",e=>{if(e.code==="KeyB"&&!e.repeat&&!(e.target instanceof HTMLInputElement))toggleBuilder();if(buildMode&&e.code==="KeyR"&&!e.repeat)$("rotateBtn").click();if(buildMode&&(e.ctrlKey||e.metaKey)&&e.code==="KeyZ"){e.preventDefault();$(e.shiftKey?"redoBuild":"undoBuild").click()}});
-restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupStudents();
+function addRoadFromBlueprint(a,b){
+ const p={x:snap(a.x),z:snap(a.z)},q={x:snap(b.x),z:snap(b.z)};
+ if(Math.abs(q.x-p.x)>=Math.abs(q.z-p.z))q.z=p.z;else q.x=p.x;
+ if(Math.hypot(q.x-p.x,q.z-p.z)<10)return false;
+ const item={type:"road",x:p.x,z:p.z,end:q};
+ if(canBuild(item))return false;
+ recordPlannerHistory();built.push(item);buildGroups.push(buildObject(item));
+ refreshCustomTrafficRoutes();storeBuild();updateBuildHud();return true;
+}
+function setupBlueprintImport(){
+ if(typeof window.CampusBlueprintImport!=="function")return;
+ blueprintTool=window.CampusBlueprintImport({
+  THREE,scene:S,host:$("buildDock"),onRoad:addRoadFromBlueprint,onNotice:toastBuild,
+  startPlacement:()=>{selectBuild("select");strategyPan=false;updateModes()}
+ });
+ blueprintTool.setVisible(buildMode);
+}
+restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupBlueprintImport();setupStudents();
 function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
