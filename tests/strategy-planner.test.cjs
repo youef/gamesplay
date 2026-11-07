@@ -54,6 +54,32 @@ test('curved flyover and elevated circle build independently',()=>{
  assert.ok(kit.heightAt(71,0,[{type:'bridgeCircle',x:0,z:0}])<1);
 });
 
+test('a car driving under an overpass stays on the ground instead of teleporting',()=>{
+ const sandbox={window:{}};vm.runInNewContext(bridges,sandbox);
+ const kit=sandbox.window.CampusBridgeKit({
+  THREE:{Mesh:class{constructor(){this.position={y:0}}},CylinderGeometry:class{}},
+  part:()=>({rotation:{set(){}}}),mat:()=>({})
+ });
+ const bridge=[{type:'bridge',x:0,z:-80,end:{x:0,z:80}}];
+ assert.ok(kit.heightAt(0,0,bridge)>5);
+ assert.equal(kit.heightAt(0,0,bridge,0),0,'underpass should stay at zero height');
+ let last=0;
+ for(let z=-80;z<=0;z+=.5){
+  const y=kit.heightAt(0,z,bridge,last);
+  assert.ok(y-last<=.8,'no instant rising beyond safe ramp progress');
+  last=y;
+ }
+ assert.ok(last>4,'car reaches elevated road when driven along the access ramp');
+ assert.match(html,/bridgeKit\.heightAt\(p\.x,p\.z,built,car\.position\.y\)/);
+});
+
+test('original and player-built road endpoints can be edited precisely',()=>{
+ assert.match(html,/function plannerSetRoadEndpoints\(sel,coords\)/);
+ assert.match(html,/id="planner-road-endpoints"/);
+ assert.match(html,/const issue=plannerSetRoadEndpoints\(selectedEdit,values\)/);
+ assert.match(html,/refreshCustomTrafficRoutes\(\)/);
+});
+
 test('original roads and buildings can be moved, hidden and restored persistently',()=>{
  assert.match(html,/const deletedFixedRoads=new Set\(\)/);
  assert.match(html,/function redrawFixedRoads\(\)/);
