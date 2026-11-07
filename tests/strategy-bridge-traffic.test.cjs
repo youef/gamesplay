@@ -45,7 +45,7 @@ test('curved connector uses the same bend and ramp profile as the rendered Three
  const elevated=plan.routes.find(r=>r.some(p=>(p[2]||0)>4));
  assert.ok(elevated);
  assert.ok(elevated.some(p=>p[0]>20),'flyover curves laterally');
- assert.ok(elevated.some(p=>Math.abs(p[0])<1&&Math.abs(p[1])<1&&p[2]>4),'center stays elevated');
+ assert.ok(elevated.some(p=>p[0]>20&&Math.abs(p[1])<1&&p[2]>4),'curved bridge center stays elevated along its real offset path');
 });
 test('elevated circular bridge joins four ramps to real nearby roads',()=>{
  const roads=[
