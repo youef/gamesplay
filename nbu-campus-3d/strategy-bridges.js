@@ -46,7 +46,7 @@ window.CampusBridgeKit=function({THREE,part,mat}){
   const island=new THREE.Mesh(new THREE.CylinderGeometry(14,14,.45,24),mat(0x4a8c65));
   island.position.y=.25;group.add(island);
  }
- function heightAt(x,z,objects){
+ function heightAt(x,z,objects,currentHeight=null){
   let result=0;
   for(const o of objects){
    if(["bridge","flyover"].includes(o.type)&&o.end){
@@ -65,6 +65,9 @@ window.CampusBridgeKit=function({THREE,part,mat}){
     if(r>=26&&r<=71&&a<5.7)result=Math.max(result,.25+(71-r)/45*5.5);
    }
   }
+  // A vehicle already driving on the street below an overpass must stay on the
+  // ground. Only an actual ramp with gradual height changes may raise it.
+  if(Number.isFinite(currentHeight)&&result>currentHeight+.8)return Math.max(0,currentHeight);
   return result;
  }
  return {buildFlyover,buildCircle,heightAt,elevation};
