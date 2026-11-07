@@ -1801,6 +1801,31 @@ const buildRay=new THREE.Raycaster(),buildPlane=new THREE.Plane(new THREE.Vector
 let built=[],buildGroups=[],buildLights=[],buildMode=false,buildTool="road",buildStart=null,buildRotation=0,redoStack=[],creativeMode=false,buildMessageTime=0,budgetBonus=0,missionDone={};
 let roadDragOrigin=null,roadDragMoved=false,roadDragPointer=null;
 let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null,blueprintTool=null;
+const editMarker=new THREE.Mesh(new THREE.BoxGeometry(1,.08,1),new THREE.MeshBasicMaterial({
+ color:0xffc44e,transparent:true,opacity:.48,depthWrite:false,side:THREE.DoubleSide
+}));
+editMarker.renderOrder=10;editMarker.visible=false;S.add(editMarker);
+function updatePlannerMarker(){
+ if(!buildMode||!selectedEdit){editMarker.visible=false;return}
+ let x=0,z=0,w=0,d=0,rot=0;
+ if(selectedEdit.kind==="road"){
+  const road=campusRoads[selectedEdit.id];if(!road||deletedFixedRoads.has(road.id)){editMarker.visible=false;return}
+  x=(road.x1+road.x2)/2;z=(road.z1+road.z2)/2;
+  w=road.width+1;d=Math.hypot(road.x2-road.x1,road.z2-road.z1)+1;
+  rot=Math.atan2(road.x2-road.x1,road.z2-road.z1);
+ }else if(selectedEdit.kind==="building"){
+  const b=B.find(x=>x.n===selectedEdit.name);
+  if(!b||removedCampusBuildings.has(b.n)){editMarker.visible=false;return}
+  x=b.x;z=b.z;w=b.w+2;d=b.d+2;rot=(b.rot||0)*Math.PI/2;
+ }else{
+  const o=built[selectedEdit.index];if(!o){editMarker.visible=false;return}
+  x=o.end?(o.x+o.end.x)/2:o.x;z=o.end?(o.z+o.end.z)/2:o.z;
+  w=(buildDefs[o.type].width||buildDefs[o.type].w||15)+2;
+  d=o.end?Math.hypot(o.end.x-o.x,o.end.z-o.z)+1:(buildDefs[o.type].d||15)+2;
+  rot=o.end?Math.atan2(o.end.x-o.x,o.end.z-o.z):(o.rot||0)*Math.PI/2;
+ }
+ editMarker.position.set(x,.28,z);editMarker.rotation.y=rot;editMarker.scale.set(w,1,d);editMarker.visible=true;
+}
 const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
 function previewRoad(a,b){
  if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
@@ -2202,6 +2227,7 @@ function plannerRotateSelected(){
 }
 function refreshPlannerEditor(){
  if(!editInfo)return;
+ updatePlannerMarker();
  const current=selectedEdit;
  editInfo.textContent=plannerSelectionName(current);
  if(!editList)return;
@@ -2343,7 +2369,7 @@ function setupBlueprintSlots(){
 setupBlueprintSlots();
 function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;buildStart=null;clearRoadPreview();if(buildMode){if(playerMode==="split")setStudentMode("single","fawaz");exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=false;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
- if(blueprintTool){blueprintTool.setVisible(buildMode);if(!buildMode)blueprintTool.reset()}
+ if(blueprintTool){blueprintTool.setVisible(buildMode);if(!buildMode)blueprintTool.reset()}updatePlannerMarker()
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
 $("builderToggle").onclick=toggleBuilder;
