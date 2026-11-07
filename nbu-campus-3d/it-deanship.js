@@ -59,7 +59,7 @@ window.ITCampusFactory=function(options){
  let active=false,mapOpen=false,mapDock=null,mapCanvas=null,mapList=null,mapFloorButtons=[],lastMapDraw=0;
  const navigableColors={service:"#0a9b92",network:"#256dba",datacenter:"#335ec8",cyber:"#6f55be",
   office:"#9c773b",bath:"#5497af",cleaner:"#738b4c",training:"#b87b36",roof:"#697f96"};
- const ledScreens=[];
+ const ledScreens=[],elevatorLeaves=[];
  function addWallLabel(group,caption,x,y,z,size=1){
   const sign=lab(caption,"#173b54",size);sign.position.set(x,y,z);group.add(sign);
  }
@@ -72,7 +72,7 @@ window.ITCampusFactory=function(options){
   while(interior.children.length)interior.remove(interior.children[0]);
  }
  function build(){
-  wipe();level=0;groups=[];colliders=[[],[],[],[]];ledScreens.length=0;
+  wipe();level=0;groups=[];colliders=[[],[],[],[]];ledScreens.length=0;elevatorLeaves.length=0;
   for(let i=0;i<4;i++){
    const group=new THREE.Group();group.position.set(750,i*FLOOR_HEIGHT,0);interior.add(group);groups.push(group);
    function shape(w,h,d,material,x,y,z,solid=false){
@@ -125,7 +125,12 @@ window.ITCampusFactory=function(options){
     shape(.2,3.9,6,m.steel,ex-3.2,1.96,ez,true);
     shape(.2,3.9,6,m.steel,ex+3.2,1.96,ez,true);
     shape(6.4,3.9,.2,m.steel,ex,1.96,ez+3,true);
-    shape(6.25,3.3,.09,m.glass,ex,1.8,ez-3.05);
+    // Each lift has two automatic sliding glass doors that open as a visitor approaches.
+    const leftDoor=shape(3.06,3.3,.11,m.glass,ex-1.58,1.8,ez-3.05);
+    const rightDoor=shape(3.06,3.3,.11,m.glass,ex+1.58,1.8,ez-3.05);
+    leftDoor.userData={itElevatorDoor:"left",floor:i};
+    rightDoor.userData={itElevatorDoor:"right",floor:i};
+    elevatorLeaves.push({floor:i,leftDoor,rightDoor,leftX:ex-1.58,rightX:ex+1.58});
     shape(6.4,.38,.3,m.blue,ex,4,ez-3);
     shape(.48,.75,.23,m.screen,ex+4.2,1.5,ez-3);
     const liftLabel=lab("🛗 المصعد","#224969",1.05);
@@ -374,13 +379,21 @@ window.ITCampusFactory=function(options){
   else{
    mapOpen=false;
    // Free the large 3D interior immediately on leaving to keep iPhones responsive.
-   if(groups.length){wipe();groups=[];colliders=[[],[],[],[]];ledScreens.length=0}
+   if(groups.length){wipe();groups=[];colliders=[[],[],[],[]];ledScreens.length=0;elevatorLeaves.length=0}
   }
   if(mapDock){mapDock.style.display=active?"block":"none";updateMapVisibility()}
  }
  function tick(time){
   if(!active)return;
   if(time-lastMapDraw>=190){lastMapDraw=time;renderMiniMap()}
+  // Sliding lift doors: proximity control works on foot and while touring with touch.
+  const distance=Math.hypot(pl.position.x-(750-28),pl.position.z-13.4);
+  for(const lift of elevatorLeaves){
+   if(lift.floor!==level)continue;
+   const opening=distance<7?1.42:0;
+   lift.leftDoor.position.x+=(lift.leftX-opening-lift.leftDoor.position.x)*.18;
+   lift.rightDoor.position.x+=(lift.rightX+opening-lift.rightDoor.position.x)*.18;
+  }
   // Lightweight shared-mesh indicator animation rather than individual lights.
   const pulse=Math.sin(time*.003);
   m.screen.emissiveIntensity=.4+.2*pulse;
