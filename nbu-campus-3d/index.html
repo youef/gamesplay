@@ -197,6 +197,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
 <script src="./strategy-bridges.js?v=760938f"></script>
+<script src="./strategy-road-network.js?v=0ad6fe6"></script>
 <script src="./strategy-blueprint-image.js?v=55501d1"></script>
 <script>
 const $=i=>document.getElementById(i);
@@ -1365,50 +1366,32 @@ for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes
 // V3.8: Build connected multi-segment surface-road routes from snapped endpoints.
 // Only exact snapped endpoints connect; disconnected or intersecting visual segments are not joined.
 function connectedRoadRoutes(){
- const graph=new Map(), key=(x,z)=>x+","+z;
- const link=(a,b,length)=>{if(!graph.has(a))graph.set(a,[]);graph.get(a).push({to:b,length})};
- for(const o of built){
-  if((o.type!=="road"&&o.type!=="avenue")||!o.end)continue;
-  const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);
-  if(!Number.isFinite(len)||len<10||len>230)continue;
-  const a=key(o.x,o.z),b=key(o.end.x,o.end.z);
-  if(a===b)continue;link(a,b,len);link(b,a,len);
- }
- const results=[],seenRoutes=new Set();
- // Bounded DFS keeps route rebuilding cheap on iPad, even with many placed roads.
- for(const start of graph.keys()){
-  const stack=[{node:start,path:[start],distance:0}];
-  let explored=0;
-  while(stack.length&&explored++<600){
-   const cur=stack.pop();
-   if(cur.path.length>=2&&cur.distance>=35){
-    const signature=[cur.path.join("|"),[...cur.path].reverse().join("|")].sort()[0];
-    if(!seenRoutes.has(signature)){
-     seenRoutes.add(signature);results.push({keys:cur.path,length:cur.distance});
-    }
-   }
-   if(cur.path.length>=12)continue;
-   for(const edge of graph.get(cur.node)||[]){
-    if(cur.path.includes(edge.to))continue;
-    stack.push({node:edge.to,path:[...cur.path,edge.to],distance:cur.distance+edge.length});
-   }
-  }
- }
- results.sort((a,b)=>b.length-a.length);
- return results.slice(0,3).map(route=>route.keys.map(k=>k.split(",").map(Number)));
+ if(!window.CampusRoadNetwork)return [];
+ const plan=window.CampusRoadNetwork.build(roadSegments(),11);
+ return plan.routes;
 }
 function refreshCustomTrafficRoutes(){
  const routes=connectedRoadRoutes();
- // Two civilian cars and one campus bus follow player-built connected surface roads.
- for(let slot=0;slot<3;slot++){
-  const a=agents[slot===2?5:slot+2];if(!a)continue;
-  const next=(slot===2?(routes[2]||routes[0]):routes[slot])||a.originalRoute;
+ // Every roaming civilian car and campus bus follows the CURRENT visible road graph.
+ // Deleting a default road must not leave a hidden, obsolete NPC driving route.
+ for(let i=0;i<agents.length;i++){
+  const agent=agents[i],route=routes.length?routes[i%routes.length]:null;
+  if(!route||route.length<2){agent.mesh.visible=false;agent.customRouteSignature="";continue}
+  const next=(i%2?route.slice().reverse():route).map(p=>[p[0],p[1]]);
   const signature=next.map(p=>p.join(",")).join("|");
-  if(a.customRouteSignature===signature)continue;
-  a.customRouteSignature=signature;
-  a.route=next;a.seg=0;a.progress=0;a.direction=1;a.dwell=0;a.lastBusStop=null;a.customRouteActive=!!(slot===2?(routes[2]||routes[0]):routes[slot]);
-  a.mesh.position.set(next[0][0],0,next[0][1]);
-  a.mesh.rotation.y=Math.atan2(next[1][0]-next[0][0],next[1][1]-next[0][1]);
+  agent.mesh.visible=true;
+  if(agent.customRouteSignature===signature)continue;
+  agent.customRouteSignature=signature;
+  agent.route=next;
+  agent.seg=0;agent.direction=1;agent.dwell=0;agent.lastBusStop=null;
+  agent.customRouteActive=true;
+  const x1=next[0][0],z1=next[0][1],x2=next[1][0],z2=next[1][1];
+  const leg=Math.hypot(x2-x1,z2-z1);
+  // Distribute traffic rather than spawning all vehicles in one overlapping pile.
+  agent.progress=Math.max(0,Math.min(Math.max(0,leg-2),(i*17+8)%(Math.max(1,Math.floor(leg-1)))));
+  const f=leg?agent.progress/leg:0;
+  agent.mesh.position.set(x1+(x2-x1)*f,0,z1+(z2-z1)*f);
+  agent.mesh.rotation.y=Math.atan2(x2-x1,z2-z1);
  }
 }
 // Bus stops are optional player-built waypoints. A bus pauses only while it follows a custom road.
@@ -1489,7 +1472,7 @@ function updateGateSecurity(dt){
 function updateTraffic(dt){trafficClock+=dt;updateGateSecurity(dt);const phase=trafficClock%16;
 for(const s of signalBulbs){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
 for(const s of buildLights){const active=s.axis==="ew"?(phase<6?2:phase<8?1:0):(phase<8?0:phase<14?2:1);s.leds.forEach((l,i)=>l.visible=i===active)}
-if(!trafficEnabled)return;for(const a of agents)moveAgent(a,dt)}
+if(!trafficEnabled)return;for(const a of agents)if(a.mesh.visible!==false)moveAgent(a,dt)}
 // الشخصية
 const pl=new THREE.Group(),ch=new THREE.Group();pl.add(ch);S.add(pl);
 let playerMode="single",singleStudent="fawaz";
@@ -2434,14 +2417,29 @@ const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx
 function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
 mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
 mm.strokeStyle="#7c8590";mm.lineWidth=2;mm.strokeRect(mx(-200),mz(-200),400*k,400*k);
-mm.beginPath();mm.moveTo(mx(-200),mz(-88));mm.lineTo(mx(200),mz(-88));mm.moveTo(mx(0),mz(-200));mm.lineTo(mx(0),mz(-88));mm.moveTo(mx(-100),mz(-186));mm.lineTo(mx(-100),mz(200));mm.stroke();
+// Draw the current street geometry: removed roads disappear immediately, moved roads move.
+for(const r of roadSegments()){
+ mm.strokeStyle=r.fixed?"#6f8191":"#138e91";
+ mm.lineWidth=Math.max(1,Math.min(5,r.width*k));
+ mm.beginPath();mm.moveTo(mx(r.x1),mz(r.z1));mm.lineTo(mx(r.x2),mz(r.z2));mm.stroke();
+}
 mm.strokeStyle="#5f6670";mm.lineWidth=5;mm.beginPath();mm.moveTo(mx(-560),mz(20));mm.lineTo(mx(430),mz(20));mm.lineTo(mx(430),mz(-300));mm.lineTo(mx(500),mz(-300));mm.stroke();
 mm.fillStyle="#c59b4c";mm.fillRect(mx(DIST.x-DIST.w/2),mz(DIST.z-DIST.d/2),DIST.w*k,DIST.d*k);
 mm.fillStyle="#8aa4b8";mm.fillRect(mx(AIR.x-AIR.w/2),mz(AIR.z-AIR.d/2),AIR.w*k,AIR.d*k);
 mm.fillStyle="#c0b699";mm.fillRect(mx(ST.x-72),mz(ST.z-167),144*k,70*k);mm.fillStyle="#314b67";mm.beginPath();mm.ellipse(mx(ST.x),mz(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
-B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2),mz(b.z-b.d/2),b.w*k,b.d*k)});
+B.forEach(b=>{if(removedCampusBuildings.has(b.n))return;const fp=footprintOfBuilding(b);mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-fp.w/2),mz(b.z-fp.d/2),fp.w*k,fp.d*k)});
 mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0,7);mm.fill()});
-built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
+built.forEach(o=>{
+ const isBridge=["bridge","flyover"].includes(o.type);
+ mm.strokeStyle=isBridge?"#d99432":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";
+ if(o.end){
+  if(isBridge){mm.lineWidth=2;mm.setLineDash([5,3])}
+  else mm.lineWidth=o.type==="avenue"?4:2;
+  mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke();mm.setLineDash([]);
+ }else if(o.type==="bridgeCircle"){
+  mm.strokeStyle="#dd8a24";mm.lineWidth=3;mm.beginPath();mm.arc(mx(o.x),mz(o.z),26*k,0,Math.PI*2);mm.stroke();
+ }else mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)
+});
 mm.save();mm.translate(mx(pl.position.x),mz(pl.position.z));mm.rotate(-fa+Math.PI);mm.fillStyle=carMode?"#ffb000":"#e53935";mm.strokeStyle="#fff";mm.lineWidth=2;mm.beginPath();mm.moveTo(0,-9);mm.lineTo(6,6);mm.lineTo(-6,6);mm.closePath();mm.fill();mm.stroke();mm.restore()}
 setupAtmosphere();
 function organizeSettings(){
