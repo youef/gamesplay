@@ -2,7 +2,66 @@
    Never executes embedded code or edits the campus before explicit approval. */
 (function(){
 "use strict";
-const TYPES=new Set(["road","avenue","bridge","flyover","bridgeCircle"]);
+const TYPES=new Set(["road","avenue","mapRoad","mapAvenue","bridge","flyover","bridgeCircle"]);
+// Approximate vector street schematic manually traced from four supplied Apple Maps
+// screenshots around Al Nakheel, Dhahiyat King Fahd and Al Khaleej, Arar.
+// There is NO georeferencing, GPS location, or Apple Maps imagery in this preset.
+const ararScreenshotPreset=(()=>{
+ const roads=[];
+ const road=(type,a,b,group)=>{
+  roads.push({type,x1:a[0],z1:a[1],x2:b[0],z2:b[1],group});
+ };
+ const avenue=(points,group)=>{for(let i=1;i<points.length;i++)road("mapAvenue",points[i-1],points[i],group)};
+ const street=(points,group)=>{for(let i=1;i<points.length;i++)road("mapRoad",points[i-1],points[i],group)};
+ // Route 85 and the eastern-side neighborhood are visually prominent in the screenshots.
+ avenue([[-170,105],[-10,153],[170,214]],"85 / 25M — southern highway");
+ // Route 80 is visible along the upper edge of the wide overview.
+ avenue([[-170,-190],[-10,-190],[170,-190]],"80 — northern arterial");
+ // Western edge of the serviced neighborhoods: leave the large vacant tract on
+ // the WEST of this slanted corridor untouched.
+ avenue([[-75,133],[20,-30],[115,-175]],"Al Nakheel western diagonal access");
+ avenue([[-30,147],[62,-10],[151,-137]],"Al Nakheel central distributor");
+ street([[35,168],[115,15],[176,-77]],"Al Nakheel eastern street");
+ // Short links to the northern arterial.
+ street([[115,-175],[115,-190]],"northern access link");
+ street([[151,-137],[151,-190]],"northern district link");
+ street([[176,-77],[176,-190]],"northern continuation");
+ // Interior cross streets and blocks within the inhabited triangular strip.
+ const western=[[-75,133],[20,-30],[115,-175]];
+ const middle=[[-30,147],[62,-10],[151,-137]];
+ const eastern=[[35,168],[115,15],[176,-77]];
+ const position=(p,t)=>{
+  if(t<=.5){const f=t*2;return [Math.round(p[0][0]+(p[1][0]-p[0][0])*f),Math.round(p[0][1]+(p[1][1]-p[0][1])*f)]}
+  const f=(t-.5)*2;return [Math.round(p[1][0]+(p[2][0]-p[1][0])*f),Math.round(p[1][1]+(p[2][1]-p[1][1])*f)];
+ };
+ for(const t of [.09,.18,.27,.36,.45,.54,.63,.72,.81,.9]){
+  const a=position(western,t),m=position(middle,t),b=position(eastern,t);
+  street([a,m,b],"King Fahd / Al Nakheel block cross street");
+ }
+ // Narrow internal local streets in the district; not in the unbuilt central tract.
+ street([[-53,140],[41,-23],[133,-156]],"local parallel 1");
+ street([[5,159],[100,4],[164,-101]],"local parallel 2");
+ // Eastern neighborhoods' side streets branch outward from the last built strip.
+ street([[91,53],[145,75],[185,94]],"King Fahd east branch");
+ street([[119,12],[161,29],[200,43]],"King Fahd branch");
+ street([[148,-32],[182,-13],[215,3]],"Al Nakheel residential link");
+ street([[176,-77],[210,-56]],"Al Nakheel north eastern link");
+ // Southern Al Khaleej district: short streets beyond the 85 corridor, no invented bridges.
+ street([[-130,117],[-155,155]],"Al Khaleej access 1");
+ street([[-61,138],[-77,180]],"Al Khaleej access 2");
+ street([[25,165],[9,203]],"Al Khaleej access 3");
+ street([[95,189],[80,225]],"Al Khaleej access 4");
+ street([[-155,155],[-77,180],[9,203],[80,225]],"Al Khaleej southern local street");
+ return Object.freeze({
+  version:1,
+  title:"مخطط النخيل الجنوبي وضاحية الملك فهد — عرعر (تقريبي)",
+  source:"رسم يدوي مشتق من الصور الأربع التي أرفقها المستخدم، غير معتمد مساحيًا",
+  precision:"schematic-not-georeferenced",
+  notes:"الخطوط القطرية للطرق الرئيسية والأحياء المأهولة فقط؛ المنطقة الرملية الكبيرة تبقى فارغة. لا يتضمن أي موقع GPS أو صور خرائط أو بيانات خاصة.",
+  roads
+ });
+})();
+
 function parse(text){
  if(typeof text!=="string"||text.length>250000)throw Error("ملف المخطط كبير أو غير صالح");
  const obj=JSON.parse(text);
@@ -113,8 +172,8 @@ function createUI({host,onApprove,onNotice}){
   for(let x=0;x<w;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
   for(let y=0;y<h;y+=25){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
   for(const o of items){
-   ctx.strokeStyle=o.type==="bridge"||o.type==="flyover"?"#da8f29":o.type==="avenue"?"#185478":"#138d89";
-   ctx.lineWidth=o.type==="avenue"?5:3;ctx.beginPath();
+   ctx.strokeStyle=o.type==="bridge"||o.type==="flyover"?"#da8f29":["avenue","mapAvenue"].includes(o.type)?"#185478":"#138d89";
+   ctx.lineWidth=["avenue","mapAvenue"].includes(o.type)?5:3;ctx.beginPath();
    if(o.end){ctx.moveTo(tx(o.x),tz(o.z));ctx.lineTo(tx(o.end.x),tz(o.end.z));}
    else{ctx.arc(tx(o.x),tz(o.z),26*factor,0,Math.PI*2)}
    ctx.stroke();
@@ -133,6 +192,23 @@ function createUI({host,onApprove,onNotice}){
   }catch(e){roads=[];items=[];info.textContent=e.message;onNotice("⚠️ "+e.message);update()}
   finally{file.value=""}
  };
+
+ btn("🗺️ مخطط الصور الأربع — عرعر",()=>{
+  roads=parse(JSON.stringify(ararScreenshotPreset));
+  // A quiet, otherwise buildable corner is used for first preview only;
+  // the player can move, rotate, zoom and review before any road gets built.
+  cx.value="-425";cz.value="125";scale.value=".7";angle.value="0";
+  update();
+  info.textContent=roads.length+" مسارًا مستخرجًا يدويًا بصورة تقريبية. المقياس والموقع افتراضيان. عدّلهما قبل الاعتماد.";
+  onNotice("🗺️ جاهز للمراجعة: مخطط تقريبي من صور النخيل وضاحية الملك فهد، وليس خريطة مساحية دقيقة");
+ });
+ btn("⬇️ تنزيل مخطط النخيل JSON",()=>{
+  const blob=new Blob([JSON.stringify(ararScreenshotPreset,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),anchor=document.createElement("a");
+  anchor.href=url;anchor.download="arar-nakheel-king-fahd-schematic.json";
+  document.body.append(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
  btn("📄 تنزيل قالب JSON",()=>{
   const blob=new Blob([JSON.stringify(example,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
@@ -145,8 +221,8 @@ function createUI({host,onApprove,onNotice}){
    "المطلوب: شبكة طرق متصلة منطقيًا مع تقاطعات واضحة، وتجنّب عبور المباني أو تداخل الشوارع دون مبرر. أضف جسور صعود ونزول عند الحاجة، وجسور وصلات منحنية، وجسرًا دائريًا مع تحويلات عند الحاجة فقط.",
    "أخرج JSON فقط دون شرح أو Markdown، بالشكل:",
    JSON.stringify(example,null,2),
-   "استخدم المفتاح roads كمصفوفة بحد أقصى 80 عنصرًا؛ الأنواع المسموحة: road, avenue, bridge, flyover, bridgeCircle.",
-   "الشوارع road و avenue يجب أن تكون مستقيمة أفقية أو عمودية في محورَي X و Z؛ الجسور bridge و flyover تقبل الاتجاه المائل.",
+   "استخدم المفتاح roads كمصفوفة بحد أقصى 80 عنصرًا؛ الأنواع: road, avenue, mapRoad, mapAvenue, bridge, flyover, bridgeCircle.",
+   "الشوارع road و avenue أفقية أو عمودية؛ mapRoad و mapAvenue للشوارع المائلة، والجسور bridge و flyover للطرق المرتفعة فقط.",
    "أطوال الطرق المستقيمة بين 10 و230 وحدة، والجسر الدائري يستخدم x و z كنقطة مركز.",
    "إذا كانت المسافة الفعلية مجهولة فلا تدّع دقة هندسية؛ اعمل بمقياس افتراضي واضح. لا تخترع طرقًا أو مداخل غير ظاهرة في الصورة.",
    "اجعل الإحداثيات نسبية حول المركز (0,0) حتى أستطيع وضع المخطط بمكانه وتدويره وتكبيره في اللعبة.",
@@ -175,5 +251,5 @@ function createUI({host,onApprove,onNotice}){
  section.append(title,intro,file,inputs,preview,info,buttons);host.append(section);update();
  return {get count(){return items.length}};
 }
-window.CampusStrategyPlanJSON={parse,transform,createUI,example};
+window.CampusStrategyPlanJSON={parse,transform,createUI,example,ararScreenshotPreset};
 })();
