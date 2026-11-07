@@ -818,6 +818,8 @@ const stadiumReferee=stadiumPerson(ST.x+3,ST.z+4,2,.96);
 // Referee wears a distinct orange kit; assistants wear matching officials' colors.
 const refereeOrange=mat(0xf47722,{roughness:.85});
 stadiumReferee.g.children.forEach(mesh=>{if(mesh.isMesh&&mesh.geometry?.type==="BoxGeometry"&&mesh.position.y>1.1&&mesh.position.y<2.4)mesh.material=refereeOrange;});
+const refereeYellowCard=new THREE.Mesh(new THREE.BoxGeometry(.24,.36,.025),new THREE.MeshBasicMaterial({color:0xffda23}));
+refereeYellowCard.position.set(.75,2.65,.03);refereeYellowCard.visible=false;stadiumReferee.g.add(refereeYellowCard);
 const stadiumRefWhistle=new THREE.Mesh(new THREE.BoxGeometry(.17,.1,.1),mat(0xe9c446));
 stadiumRefWhistle.position.set(.35,2.1,.3);stadiumReferee.g.add(stadiumRefWhistle);
 const stadiumCoaches=[
@@ -836,6 +838,7 @@ for(const assistant of stadiumAssistants){
 function animateStadiumStaff(t){
  const pulse=Math.sin(t*.0025);
  stadiumReferee.g.position.set(ST.x+3+Math.sin(t*.00035)*9,0,ST.z+4+Math.cos(t*.0004)*14);
+ refereeYellowCard.visible=stadiumMatch.event.includes("بطاقة صفراء")&&stadiumMatch.elapsed-stadiumMatch.eventTime<7;
  stadiumReferee.leftArm.rotation.x=.25+pulse*.25;
  stadiumReferee.rightArm.rotation.x=-.2-pulse*.35;
  stadiumCoaches.forEach((c,i)=>{
@@ -1130,7 +1133,7 @@ function drawStadiumScreen(m){
  g.fillStyle="#ffdd86";g.font="bold 38px Tahoma";g.fillText(m.elapsed-m.eventTime<20?m.event:"المباراة جارية",w/2,460);
  stadiumScreenTexture.needsUpdate=true;
 }
-const stadiumMatch={elapsed:0,possessor:9,ballX:0,ballZ:0,flight:null,goalFlash:0,event:"بداية المباراة",eventTime:0,half:1,shots:[0,0],passes:[0,0],saves:[0,0],fouls:[0,0],offsides:[0,0],possession:[0,0],replayUntil:0,replayTeam:0};
+const stadiumMatch={elapsed:0,possessor:9,ballX:0,ballZ:0,flight:null,goalFlash:0,event:"بداية المباراة",eventTime:0,half:1,shots:[0,0],passes:[0,0],saves:[0,0],fouls:[0,0],offsides:[0,0],possession:[0,0],yellowCards:[0,0],replayUntil:0,replayTeam:0};
 const stadiumStatsBar=document.createElement("div");
 stadiumStatsBar.id="stadiumStatsBar";
 stadiumStatsBar.style.cssText="position:fixed;top:calc(65px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:18;max-width:94vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 10px;border-radius:10px;background:#0d2034cc;color:#fff;font:600 11px Tahoma,sans-serif;pointer-events:none;display:none;direction:rtl";
@@ -1164,7 +1167,7 @@ function updateStadium(t,dt){
  const m=stadiumMatch;
  m.elapsed+=dt*4; // Accelerated match clock, independent from animation frame count.
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
- if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.shots=[0,0];m.passes=[0,0];m.saves=[0,0];m.fouls=[0,0];m.offsides=[0,0];m.possession=[0,0];m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
+ if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.shots=[0,0];m.passes=[0,0];m.saves=[0,0];m.fouls=[0,0];m.offsides=[0,0];m.possession=[0,0];m.yellowCards=[0,0];m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
  stadiumStatsBar.style.display=nearStadium?"block":"none";
  if(!nearStadium){tifoCards.visible=false;return;}
  if(m.possessor>=0){const owner=stadiumActors[m.possessor];if(owner)m.possession[owner.team]+=dt;}
@@ -1175,7 +1178,7 @@ function updateStadium(t,dt){
  if(t-stadiumScreenLastDraw>500){stadiumScreenLastDraw=t;drawStadiumScreen(m)}
  const seconds=Math.floor(m.elapsed%60),minutes=Math.floor(m.elapsed/60);
  stadiumScoreboard.textContent="⚽ الاتحاد "+stadiumScore.blue+" : "+stadiumScore.white+" الهلال | "+String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0")+" | "+(m.elapsed-m.eventTime<18?m.event:"الشوط "+m.half);
- stadiumStatsBar.textContent="🎯 التسديدات "+m.shots[0]+"–"+m.shots[1]+"  ·  🧤 التصديات "+m.saves[0]+"–"+m.saves[1]+"  ·  🚩 التسلل "+m.offsides[0]+"–"+m.offsides[1]+"  ·  ⚖️ الأخطاء "+m.fouls[0]+"–"+m.fouls[1];
+ stadiumStatsBar.textContent="🎯 التسديدات "+m.shots[0]+"–"+m.shots[1]+"  ·  🧤 التصديات "+m.saves[0]+"–"+m.saves[1]+"  ·  🚩 التسلل "+m.offsides[0]+"–"+m.offsides[1]+"  ·  ⚖️ الأخطاء "+m.fouls[0]+"–"+m.fouls[1]+"  ·  🟨 الإنذارات "+m.yellowCards[0]+"–"+m.yellowCards[1];
  if(m.flight){
   const f=m.flight;f.progress=Math.min(1,f.progress+dt/f.duration);
   const p=f.progress;m.ballX=f.x+(f.tx-f.x)*p;m.ballZ=f.z+(f.tz-f.z)*p;
@@ -1215,7 +1218,9 @@ function updateStadium(t,dt){
   const pressure=stadiumActors.some(a=>a.team!==owner.team&&Math.hypot(a.g.position.x-owner.g.position.x,a.g.position.z-owner.g.position.z)<4.5);
   if(pressure&&Math.random()<dt*.035){
     const defending=1-owner.team;m.fouls[defending]++;
-    m.event="خطأ وركلة حرة ⚖️";m.eventTime=m.elapsed;
+    if(Math.random()<.22){m.yellowCards[defending]++;m.event="بطاقة صفراء 🟨";stadiumReferee.rightArm.rotation.z=-1.3;}
+    else m.event="خطأ وركلة حرة ⚖️";
+    m.eventTime=m.elapsed;
     stadiumReferee.rightArm.rotation.z=-1.1;
     m.possessor=stadiumActors.findIndex(a=>a.team===owner.team&&a.role!=="goalkeeper");
    }
