@@ -72,6 +72,13 @@ test('iPhone-friendly navigator loads, opens, changes floors and frees resources
  campus.switchFloor(2);
  assert.equal(player.position.y,10.8);
  assert.equal(campus.level,2);
+ // Approaching the lift on arrival must open the two sliding panels.
+ const liftDoors=interior.children[2].children.filter(n=>n.userData&&n.userData.itElevatorDoor);
+ assert.equal(liftDoors.length,2);
+ const left=liftDoors.find(n=>n.userData.itElevatorDoor==='left');
+ const oldLeftX=left.position.x;
+ campus.tick(400);
+ assert.ok(left.position.x<oldLeftX-.1,'elevator door slides open when the player approaches');
  assert.equal(interior.children.filter(n=>n.visible).length,1);
  // Drawn room pin is a working touch destination.
  const canvas=(function find(node){
