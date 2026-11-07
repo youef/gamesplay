@@ -196,7 +196,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
-<script src="./strategy-bridges.js?v=9bdb287"></script>
+<script src="./strategy-bridges.js?v=d614bc66"></script>
 <script src="./strategy-road-network.js?v=7d1da052"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
 <script src="./strategy-plan-json.js?v=5ed06fe"></script>
@@ -2282,7 +2282,7 @@ function refreshPlannerEditor(){
  const road=current?.kind==="road"?campusRoads[current.id]:
    current?.kind==="built"?built[current.index]:null;
  const props=document.getElementById("planner-road-endpoints");
- if(props){props.hidden=!(road&&(current.kind==="road"||road.end));
+ if(props){props.hidden=!(road&&(current.kind==="road"||road.end));props.style.display=props.hidden?"none":"grid";
   if(road){const points=road.end?[road.x,road.z,road.end.x,road.end.z]:[road.x1,road.z1,road.x2,road.z2];
    for(const [i,value] of points.entries()){
     const input=document.getElementById("planner-coordinate-"+i);if(input)input.value=String(value);
@@ -2676,7 +2676,7 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  if(separation<5&&teamMeetingArmed){teamMeetingArmed=false;teamMeetCount++;toastBuild("🤝 فواز وزياد التقيا! مهمة التعاون رقم "+teamMeetCount)}
  if(hud)hud.textContent="🤝 المسافة بين فواز وزياد: "+Math.round(separation)+" م · لقاءات ناجحة: "+teamMeetCount+(teamMeetingArmed?" · اقتربا إلى 5 م":" · ابتعدا 18 م لإعادة المهمة");
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
- const p=pl.position;car.position.set(p.x,carMode&&bridgeKit?bridgeKit.heightAt(p.x,p.z,built):0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
+ const p=pl.position;car.position.set(p.x,carMode&&bridgeKit?bridgeKit.heightAt(p.x,p.z,built,car.position.y):0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){
  cam.up.set(0,1,0);
  const target=stadiumViewMode==="ball"?new THREE.Vector3(ST.x+stadiumMatch.ballX,1.6,ST.z+stadiumMatch.ballZ):new THREE.Vector3(ST.x,1.4,ST.z);
