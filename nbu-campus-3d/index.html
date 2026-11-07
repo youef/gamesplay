@@ -196,6 +196,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
+<script src="./strategy-bridges.js?v=760938f"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -1587,7 +1588,7 @@ cvs.addEventListener("pointermove",e=>{
  if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0){dist=clamp(dist*pinchDistance/gap,seated?1.5:3,seated?80:65)}pinchDistance=gap;dr=null;return}
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
-cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:buildTool==="bridge"?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
+cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:["bridge","flyover"].includes(buildTool)?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{recordPlannerHistory();built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
 const cancelPointer=e=>{clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
 cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
 cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else{e.preventDefault();dist=clamp(dist+e.deltaY*.018,3,65)}},{passive:false});
@@ -1786,7 +1787,7 @@ function planningRedo(){if(!plannerRedo.length)return toastBuild("لا توجد 
  plannerUndo.push(snapshotPlanner());applyPlannerSnapshot(plannerRedo.pop());toastBuild("↷ تمت إعادة التعديل")}
 
 const buildDefs={
- road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر",cost:1200,path:true,width:11},
+ road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر بطلوع ونزول",cost:1200,path:true,width:11},flyover:{label:"↪️ جسر وصلة منحنية",cost:1500,path:true,width:10},bridgeCircle:{label:"🔄 جسر دائري وتحويلات",cost:280000,w:140,d:140},
  college:{label:"🏫 كلية",cost:165000,w:28,d:23,h:18,color:0xb8ccdf},lab:{label:"🔬 معامل",cost:110000,w:22,d:19,h:13,color:0xb9d7ce},library:{label:"📚 مكتبة",cost:120000,w:27,d:21,h:13,color:0xe2ceb0},admin:{label:"🏢 إدارة",cost:130000,w:25,d:20,h:17,color:0xd3cadf},
  park:{label:"🌳 حديقة",cost:18000,w:30,d:24},plaza:{label:"🏙️ ساحة",cost:12500,w:25,d:25},trees:{label:"🌴 نخيل",cost:1400,w:8,d:8},lamp:{label:"💡 إنارة",cost:2500,w:8,d:8},parking:{label:"🅿️ مواقف",cost:23000,w:32,d:24},fountain:{label:"⛲ نافورة",cost:28000,w:16,d:16},busstop:{label:"🚌 محطة باص",cost:9000,w:15,d:12},gasstation:{label:"⛽ محطة خدمات 3D",cost:65000,w:25,d:22},signal:{label:"🚦 إشارة",cost:3800,w:8,d:8},crosswalk:{label:"🚶 معبر مشاة",cost:5500,w:13,d:9},roundabout:{label:"🔄 دوّار",cost:19000,w:22,d:22},
  select:{label:"🎯 تحديد / نقل"},erase:{label:"🧽 إزالة عنصر"}
@@ -1799,7 +1800,7 @@ let selectedEdit=null,editMoveTarget=false,editInfo=null,editList=null;
 const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
 function previewRoad(a,b){
  if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
- const end=buildTool==="bridge"?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
+ const end=["bridge","flyover"].includes(buildTool)?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
  if(length<2){roadPreview.visible=false;return}
  const candidate={type:buildTool,x:a.x,z:a.z,end};
  roadPreview.visible=true;roadPreview.position.set((a.x+end.x)/2,buildTool==="bridge"?5.7:.38,(a.z+end.z)/2);
@@ -1912,19 +1913,24 @@ function makeFuelStation(parent){
 function glassMaterial(color=0x7fb9d4){return mat(color,{roughness:.1,metalness:.06,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide})}
 function glassPart(parent,w,h,d,color,x,y,z){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),glassMaterial(color));mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=false;mesh.renderOrder=2;parent.add(mesh);return mesh}
 function part(parent,w,h,d,color,x,y,z){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));mesh.position.set(x,y,z);mesh.castShadow=h>1;mesh.receiveShadow=true;parent.add(mesh);return mesh}
+const bridgeKit=window.CampusBridgeKit?window.CampusBridgeKit({THREE,part,mat}):null;
 function buildObject(o){
  const def=buildDefs[o.type],grp=new THREE.Group();grp.userData.buildId=buildGroups.length;let x=o.x,z=o.z;
  if(def.path){
   const ex=o.end.x,ez=o.end.z,len=Math.hypot(ex-x,ez-z);grp.position.set((x+ex)/2,0,(z+ez)/2);grp.rotation.y=Math.atan2(ex-x,ez-z);const width=def.width;
-  const elevated=o.type==="bridge",h=elevated?5.2:.16;
-  part(grp,width,elevated?.65:.17,len,elevated?0x889caa:o.type==="avenue"?0x3d434a:0x4b5058,0,h,0);
-  if(elevated){for(let t=-len/2+7;t<len/2;t+=18){part(grp,1,5,1.2,0xb8ac98,-width/2+1,2.5,t);part(grp,1,5,1.2,0xb8ac98,width/2-1,2.5,t)}part(grp,.3,1.1,len,0xd9a972,-width/2,6,0);part(grp,.3,1.1,len,0xd9a972,width/2,6,0)}
-  else{part(grp,.4,.06,len,0xc6b88e,-width/2-.45,.2,0);part(grp,.4,.06,len,0xc6b88e,width/2+.45,.2,0)}
-  const count=Math.min(60,Math.floor(len/9));for(let i=0;i<count;i++){const t=-len/2+4+i*9;part(grp,.26,.06,3,0xe9e3c7,0,h+(elevated?.36:.12),t)}
+  const elevated=o.type==="bridge"||o.type==="flyover",h=elevated?5.7:.16;
+  if(elevated&&bridgeKit)bridgeKit.buildFlyover(grp,len,width,o.type==="flyover");
+  else{
+   part(grp,width,.17,len,o.type==="avenue"?0x3d434a:0x4b5058,0,h,0);
+   for(const side of [-1,1])part(grp,.4,.06,len,0xc6b88e,side*(width/2+.45),.2,0);
+   const count=Math.min(60,Math.floor(len/9));
+   for(let i=0;i<count;i++){const t=-len/2+4+i*9;part(grp,.26,.06,3,0xe9e3c7,0,h+.12,t)}
+  }
  }else{
   grp.position.set(x,0,z);grp.rotation.y=o.rot*Math.PI/2;
   const w=def.w,d=def.d,h=def.h||0;
-  if(h){part(grp,w,h,d,def.color,0,h/2,0);part(grp,w+1,.6,d+1,0xf2e6d4,0,h+.3,0);glassPart(grp,5,4,.3,0x275b76,0,2,d/2+.17);
+  if(o.type==="bridgeCircle"&&bridgeKit){bridgeKit.buildCircle(grp)}
+  else if(h){part(grp,w,h,d,def.color,0,h/2,0);part(grp,w+1,.6,d+1,0xf2e6d4,0,h+.3,0);glassPart(grp,5,4,.3,0x275b76,0,2,d/2+.17);
    for(let level=0;level<Math.min(4,Math.floor(h/4));level++)for(let t=-w/2+4;t<w/2-2;t+=7){glassPart(grp,3,1.6,.12,0x6088aa,t,3+level*3.7,d/2+.17);glassPart(grp,3,1.6,.12,0x6088aa,t,3+level*3.7,-d/2-.17)}
   }else if(o.type==="park"){
    part(grp,w,.1,d,0x58946a,0,.08,0);part(grp,3,.16,d,0xe0c8a0,0,.18,0);part(grp,w,.16,2.6,0xe0c8a0,0,.18,0);
@@ -2006,7 +2012,7 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
  if(d.path){
  if(!o.end||!Number.isFinite(o.end.x)||!Number.isFinite(o.end.z))return "اختر نقطة نهاية صحيحة";
- const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(o.type!=="bridge"&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
+ const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(!["bridge","flyover"].includes(o.type)&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
  if(o.type!=="bridge")for(const r of roadSegments()){
   const horizontal=Math.abs(o.z-o.end.z)<.1&&Math.abs(r.z1-r.z2)<.1;
   const vertical=Math.abs(o.x-o.end.x)<.1&&Math.abs(r.x1-r.x2)<.1;
@@ -2266,8 +2272,8 @@ function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(bui
  }if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){const nearest=closestRoadPoint(p,26);buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
- const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
- if(issue){toastBuild(issue);return}built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
+ const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:["bridge","flyover"].includes(buildTool)?p:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
+ if(issue){toastBuild(issue);return}recordPlannerHistory();built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 // Centralized settings: reuse existing game controls without duplicating handlers.
 function setupSettings(){
  const sections={settingsModes:["modeWalk","modeDrive","modeStrategy"],settingsMap:["viewStrategy","panStrategy","placeStrategy","zoomBuildIn","zoomBuildOut","panNorth","panSouth","panWest","panEast"],settingsDisplay:["tour","run","trafficToggle","nightToggle","missionsToggle","home"],settingsActions:["builderToggle","creativeBtn","exportBuild","importBuild","resetBuild","maps"]};
@@ -2310,8 +2316,8 @@ function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.class
 Object.keys(buildDefs).forEach(t=>{const b=document.createElement("button");b.textContent=buildDefs[t].label;b.dataset.tool=t;b.onclick=()=>selectBuild(t);$("buildChoices").append(b)});
 $("builderToggle").onclick=toggleBuilder;
 $("rotateBtn").onclick=()=>{buildRotation=(buildRotation+1)%4;toastBuild("تدوير المباني: "+buildRotation*90+"°")};
-$("undoBuild").onclick=()=>{if(!built.length)return toastBuild("لا توجد إضافات للتراجع");redoStack.push(built.pop());buildStart=null;redrawBuild();storeBuild();toastBuild("تم التراجع")};
-$("redoBuild").onclick=()=>{if(!redoStack.length)return toastBuild("لا توجد خطوة لإعادتها");built.push(redoStack.pop());redrawBuild();storeBuild();toastBuild("تمت إعادة الخطوة")};
+$("undoBuild").onclick=planningUndo;
+$("redoBuild").onclick=planningRedo;
 $("zoomBuildIn").onclick=()=>{dist=Math.max(6,dist-2)};$("zoomBuildOut").onclick=()=>{dist=Math.min(29,dist+2)};
 const panBuild=(dx,dz)=>{strategyCenter.x=clamp(strategyCenter.x+dx,WORLD.minX+50,WORLD.maxX-50);strategyCenter.z=clamp(strategyCenter.z+dz,WORLD.minZ+50,WORLD.maxZ-50)};
 $("panNorth").onclick=()=>panBuild(0,-35);$("panSouth").onclick=()=>panBuild(0,35);$("panWest").onclick=()=>panBuild(-35,0);$("panEast").onclick=()=>panBuild(35,0);
@@ -2464,7 +2470,7 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  if(separation<5&&teamMeetingArmed){teamMeetingArmed=false;teamMeetCount++;toastBuild("🤝 فواز وزياد التقيا! مهمة التعاون رقم "+teamMeetCount)}
  if(hud)hud.textContent="🤝 المسافة بين فواز وزياد: "+Math.round(separation)+" م · لقاءات ناجحة: "+teamMeetCount+(teamMeetingArmed?" · اقتربا إلى 5 م":" · ابتعدا 18 م لإعادة المهمة");
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
- const p=pl.position;car.position.set(p.x,0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
+ const p=pl.position;car.position.set(p.x,carMode&&bridgeKit?bridgeKit.heightAt(p.x,p.z,built):0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){
  cam.up.set(0,1,0);
  const target=stadiumViewMode==="ball"?new THREE.Vector3(ST.x+stadiumMatch.ballX,1.6,ST.z+stadiumMatch.ballZ):new THREE.Vector3(ST.x,1.4,ST.z);
