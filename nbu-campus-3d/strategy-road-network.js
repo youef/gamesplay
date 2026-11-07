@@ -8,22 +8,32 @@ function build(roads,requested=11,structures=[]){
   return (r.x1===r.x2)!==(r.z1===r.z2)&&Math.hypot(r.x2-r.x1,r.z2-r.z1)>=.5;
  });
  const cuts=lines.map(r=>[{x:r.x1,z:r.z1,y:0},{x:r.x2,z:r.z2,y:0}]);
- const horizontal=r=>r.z1===r.z2;
- const within=(v,a,b)=>v>=Math.min(a,b)-.01&&v<=Math.max(a,b)+.01;
- for(let i=0;i<lines.length;i++)for(let j=i+1;j<lines.length;j++){
-  const a=lines[i],b=lines[j],ah=horizontal(a),bh=horizontal(b);
-  if(ah!==bh){
-   const h=ah?a:b,v=ah?b:a,ix=v.x1,iz=h.z1;
-   if(within(ix,h.x1,h.x2)&&within(iz,v.z1,v.z2)){
-    cuts[i].push({x:ix,z:iz,y:0});cuts[j].push({x:ix,z:iz,y:0});
-   }
-  }else if(ah&&Math.abs(a.z1-b.z1)<.01){
-   for(const x of [a.x1,a.x2])if(within(x,b.x1,b.x2))cuts[j].push({x,z:a.z1,y:0});
-   for(const x of [b.x1,b.x2])if(within(x,a.x1,a.x2))cuts[i].push({x,z:a.z1,y:0});
-  }else if(!ah&&Math.abs(a.x1-b.x1)<.01){
-   for(const z of [a.z1,a.z2])if(within(z,b.z1,b.z2))cuts[j].push({x:a.x1,z,y:0});
-   for(const z of [b.z1,b.z2])if(within(z,a.z1,a.z2))cuts[i].push({x:a.x1,z,y:0});
+ const cross=(ax,az,bx,bz)=>ax*bz-az*bx;
+ const within=(t)=>t>=-1e-6&&t<=1+1e-6;
+ function intersections(a,b){
+  const rx=a.x2-a.x1,rz=a.z2-a.z1,sx=b.x2-b.x1,sz=b.z2-b.z1;
+  const qx=b.x1-a.x1,qz=b.z1-a.z1,den=cross(rx,rz,sx,sz);
+  if(Math.abs(den)>1e-7){
+   const t=cross(qx,qz,sx,sz)/den,u=cross(qx,qz,rx,rz)/den;
+   return within(t)&&within(u)?[{x:a.x1+t*rx,z:a.z1+t*rz,y:0}]:[];
   }
+  if(Math.abs(cross(qx,qz,rx,rz))>1e-4)return [];
+  const hits=[];
+  const onSegment=(x,z,r)=>{
+   const dx=r.x2-r.x1,dz=r.z2-r.z1,L=dx*dx+dz*dz;
+   const t=((x-r.x1)*dx+(z-r.z1)*dz)/L;
+   const px=r.x1+t*dx,pz=r.z1+t*dz;
+   return within(t)&&Math.hypot(x-px,z-pz)<.02;
+  };
+  for(const p of [{x:a.x1,z:a.z1},{x:a.x2,z:a.z2}])
+   if(onSegment(p.x,p.z,b))hits.push({...p,y:0});
+  for(const p of [{x:b.x1,z:b.z1},{x:b.x2,z:b.z2}])
+   if(onSegment(p.x,p.z,a))hits.push({...p,y:0});
+  return hits;
+ }
+ for(let i=0;i<lines.length;i++)for(let j=i+1;j<lines.length;j++){
+  const points=intersections(lines[i],lines[j]);
+  for(const p of points){cuts[i].push(p);cuts[j].push(p)}
  }
  const key=p=>[p.x,p.z,p.y||0].map(v=>(Math.round(v*100)/100).toFixed(2)).join(",");
  const graph=new Map();
@@ -78,8 +88,12 @@ function build(roads,requested=11,structures=[]){
   }
  }
  for(let i=0;i<lines.length;i++){
-  const h=horizontal(lines[i]),unique=new Map(cuts[i].map(p=>[key(p),p]));
-  const points=[...unique.values()].sort((a,b)=>h?a.x-b.x:a.z-b.z);
+  const line=lines[i],dx=line.x2-line.x1,dz=line.z2-line.z1,den=dx*dx+dz*dz;
+  const unique=new Map(cuts[i].map(p=>[key(p),p]));
+  const points=[...unique.values()].sort((a,b)=>(
+   ((a.x-line.x1)*dx+(a.z-line.z1)*dz)-
+   ((b.x-line.x1)*dx+(b.z-line.z1)*dz)
+  )/den);
   for(let j=1;j<points.length;j++)link(points[j-1],points[j]);
  }
  for(const {center,exits} of circleParts){
