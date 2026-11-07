@@ -194,7 +194,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <button id="sitStand" aria-label="الجلوس في مدرج الملعب">🪑 الجلوس بالمدرج</button><button id="standUp" aria-label="القيام من المقعد">↩ القيام</button><button id="enter">دخول</button><div id="status" aria-hidden="true"></div>
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="./it-deanship.js?v=bc9406b"></script>
+<script src="./it-deanship.js?v=a85f278"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -1636,12 +1636,12 @@ function enterBuilding(b){
  interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;
  dist=b.n==="عمادة تقنية المعلومات"?4.6:8;
  $("leave").style.display="block";$("interInfo").style.display="block";$("interInfo").textContent="داخل " + b.n + " — نموذج تخيلي تعليمي";
- $("roomBtns").style.display="flex";$("roomBtns").classList.remove("collapsed");$("closeRooms").style.display="block";$("showRooms").style.display="none";renderRooms();hint.style.opacity=0;$("mini").style.display="none";
+ $("roomBtns").style.display="flex";$("roomBtns").classList.remove("collapsed");$("closeRooms").style.display="block";$("showRooms").style.display="none";renderRooms();if(b.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.setActive(true);hint.style.opacity=0;$("mini").style.display="none";
 }
 function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();
  if(inside.n==="عمادة تقنية المعلومات"&&itCampus){itCampus.renderRooms(parent);return}
  inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
-function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
+function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;if(itCampus)itCampus.setActive(false);inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
@@ -2094,7 +2094,7 @@ organizeSettings();let last=0,lastMiniDraw=-Infinity;
 if(ipadGamepadEnabled&&!ipadPaused&&navigator.getGamepads){const pad=Array.from(navigator.getGamepads()).find(Boolean);if(pad){const dead=v=>Math.abs(v)>.18?v:0;joy.x=dead(pad.axes[0]||0);joy.y=dead(pad.axes[1]||0);if(pad.axes.length>=4){yaw+=dead(pad.axes[2]||0)*dt*2;pit=Math.max(-.15,Math.min(1.25,pit+dead(pad.axes[3]||0)*dt))}if(pad.buttons[0]&&pad.buttons[0].pressed&&!ipadPauseBtnHeld){ipadPauseBtnHeld=true;ipadHaptic()}if(!pad.buttons[0]||!pad.buttons[0].pressed)ipadPauseBtnHeld=false;}}
 if(ipadPaused){joy.x=joy.y=0;}
 if(t-lastCampusPositionSave>1500){lastCampusPositionSave=t;saveCampusPosition();}
-if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);stadiumScoreboard.style.display=seated&&!inside?"block":"none";if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
+if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);if(inside&&inside.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.tick(t);stadiumScoreboard.style.display=seated&&!inside?"block":"none";if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
