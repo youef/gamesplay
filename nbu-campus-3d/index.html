@@ -63,7 +63,22 @@ body.cleanUi #settingsToggle{display:block!important}
 /* Minimal default HUD: everything optional lives in the settings drawer. */
 #status,#hint,#bar,#tools,#strategyBar,#buildHud,#builderGuide,#showTools,#showLocations{display:none!important}
 #buildDock{display:none!important}
+body.strategyEditing.showBuildDock:not(.cleanUi) #buildDock:not(.collapsed),
 body.showBuildDock #buildDock:not(.collapsed){display:block!important}
+body.strategyEditing:not(.cleanUi) #buildDock:not(.collapsed){
+ display:block!important;
+ position:fixed;z-index:20;
+ top:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));
+ left:8px;right:auto;width:min(375px,calc(100vw - 16px));
+ max-height:52dvh;overflow-y:auto;overscroll-behavior:contain;
+ border-radius:16px;box-shadow:0 8px 32px #0018;
+}
+body.strategyEditing #buildDock.collapsed{display:none!important}
+@media(max-width:700px){
+ body.strategyEditing:not(.cleanUi) #buildDock:not(.collapsed){
+  width:min(96vw,420px);max-height:46dvh;
+ }
+}
 #settingsHelp{display:block!important;line-height:1.8;font-size:13px}
 #settingsHelp p{margin:7px 0}
 #settingsDisplay button{min-height:38px}
@@ -184,7 +199,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <div id="js"><div id="kn"></div></div>
 <button id="showTools" aria-label="فتح قائمة الأدوات" aria-expanded="true">☰ القوائم</button><button id="showLocations" aria-label="فتح قائمة المواقع" aria-expanded="true">📍 المواقع</button><div id="tools"><button id="closeTools" class="uiClose" aria-label="إغلاق قائمة الأدوات">✕ إغلاق</button><button id="tour">🛰️ منظور علوي</button><button id="run">🏃 جري</button><button id="drive">🚗 سيارة</button><button id="trafficToggle">🚦 حركة المرور</button><button id="missionsToggle">🎯 المهمات</button><button id="nightToggle">🌙 الليل</button><button id="home">⌂ البداية</button><button id="maps">📍 Google Maps</button><button id="builderToggle">🏗️ وضع البناء</button></div>
 
-<button id="settingsToggle" aria-expanded="false" aria-controls="gameSettings">⚙️ الإعدادات</button><div id="gameSettings" role="dialog" aria-label="إعدادات اللعبة" aria-hidden="true"><div class="settingsHeader"><strong>⚙️ الإعدادات والتحكم</strong><button id="settingsClose" aria-label="إغلاق الإعدادات">✕</button></div><div class="settingsScroll"><details open><summary>🎮 نمط اللعب</summary><div id="settingsModes"></div></details><details><summary>🗺️ الخريطة والبناء</summary><div id="settingsMap"></div></details><details><summary>👁️ العرض والواجهات</summary><div id="settingsDisplay"></div></details><details><summary>🛠️ أدوات ومهام</summary><div id="settingsActions"></div></details><details><summary>❔ التلميحات ومعلومات اللعبة</summary><div id="settingsHelp"><p>على الآيباد: حرّك عصا التحكم للمشي، واسحب على الشاشة لتدوير الكاميرا. في الاستراتيجية: اسحب الخريطة بإصبع، وقرّب أو صغّر بإصبعين. في البناء: اختر الأداة وحدد موقعها على الأرض.</p><p>هذه محاكاة لعب تقريبية وليست مخططًا مساحيًا معتمدًا. تشمل البناء والقيادة والنقل والإشارات والمهمات.</p></div></details></div></div><div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button><button id="selectStrategy">🎯 تحديد</button><button id="eraseStrategy">🗑️ حذف طريق / مبنى</button><button id="fitStrategy">🗺️ الخريطة كاملة</button></div><div id="buildHud" aria-live="polite"></div>
+<button id="settingsToggle" aria-expanded="false" aria-controls="gameSettings">⚙️ الإعدادات</button><div id="gameSettings" role="dialog" aria-label="إعدادات اللعبة" aria-hidden="true"><div class="settingsHeader"><strong>⚙️ الإعدادات والتحكم</strong><button id="settingsClose" aria-label="إغلاق الإعدادات">✕</button></div><div class="settingsScroll"><details open><summary>🎮 نمط اللعب</summary><div id="settingsModes"></div></details><details><summary>🗺️ الخريطة والبناء</summary><div id="settingsMap"></div></details><details><summary>👁️ العرض والواجهات</summary><div id="settingsDisplay"></div></details><details><summary>🛠️ أدوات ومهام</summary><div id="settingsActions"></div></details><details><summary>❔ التلميحات ومعلومات اللعبة</summary><div id="settingsHelp"><p>على الآيباد: حرّك عصا التحكم للمشي، واسحب على الشاشة لتدوير الكاميرا. في الاستراتيجية: اسحب الخريطة بإصبع، وقرّب أو صغّر بإصبعين. في البناء: اختر الأداة وحدد موقعها على الأرض.</p><p>هذه محاكاة لعب تقريبية وليست مخططًا مساحيًا معتمدًا. تشمل البناء والقيادة والنقل والإشارات والمهمات.</p></div></details></div></div><div id="strategyBar" aria-label="أنماط اللعبة"><button id="modeWalk">🚶 استكشاف</button><button id="modeDrive">🚗 قيادة</button><button id="modeStrategy">🗺️ استراتيجية</button><button id="viewStrategy">🔲 2D</button><button id="panStrategy">✋ تحريك الخريطة</button><button id="placeStrategy">🛣️ بناء</button><button id="selectStrategy">🎯 تحديد</button><button id="eraseStrategy">🗑️ حذف طريق / مبنى</button><button id="fitStrategy">🗺️ الخريطة كاملة</button><button id="toggleStrategyTools">🧰 أدوات البناء</button></div><div id="buildHud" aria-live="polite"></div>
 <div id="builderGuide">👆 اضغط على أرض الحرم لوضع العنصر. للطرق والجسور: اضغط نقطة البداية ثم النهاية؛ يتم وصل الأطراف القريبة تلقائيًا.</div>
 <section id="buildDock" aria-label="أدوات تخطيط وبناء الحرم الجامعي"><button id="closeBuildDock" class="uiClose" aria-label="إغلاق لوحة البناء">✕ إغلاق الأدوات</button>
   <div id="buildHint">اختر أداة ثم المس الأرض لإضافة عنصر.</div>
@@ -1697,7 +1712,7 @@ $("closeLocations").onclick=()=>toggleUiList("bar","showLocations",false);
 $("showLocations").onclick=()=>toggleUiList("bar","showLocations");
 $("closeRooms").onclick=()=>{$("roomBtns").classList.add("collapsed");$("showRooms").style.display="block";$("closeRooms").style.display="none"};
 $("showRooms").onclick=()=>{$("roomBtns").classList.remove("collapsed");$("showRooms").style.display="none";$("closeRooms").style.display="block"};
-$("closeBuildDock").onclick=()=>{document.body.classList.remove("showBuildDock");$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء"};
+$("closeBuildDock").onclick=()=>{document.body.classList.remove("showBuildDock");$("buildDock").classList.add("collapsed");$("builderToggle").textContent="🏗️ إظهار أدوات البناء";const t=$("toggleStrategyTools");if(t)t.textContent="🧰 فتح أدوات البناء"};
 let stadiumViewMode="orbit";
 const stadiumViewPanel=document.createElement("div");
 stadiumViewPanel.id="stadiumViewPanel";
@@ -2465,7 +2480,7 @@ function setupSettings(){
 function setSettings(show){if(!show){clearRoadPreview();$("campusEditor").style.display="none"}$("gameSettings").classList.toggle("on",show);$("gameSettings").setAttribute("aria-hidden",String(!show));$("settingsToggle").setAttribute("aria-expanded",String(show));if(show)syncSettings()}
 function closeSettings(){setSettings(false)}
 function syncSettings(){const buildButton=$("showBuilderSettings");if(buildButton)buildButton.textContent=$("buildDock").classList.contains("builderSettingsActive")?"✕ إغلاق أدوات البناء":"🏗️ فتح أدوات البناء";for(const copy of document.querySelectorAll("#gameSettings [data-target]")){const original=$(copy.dataset.target);copy.textContent=original.textContent;copy.classList.toggle("active",original.classList.contains("active"))}const hide=$("hideUi");if(hide)hide.textContent=document.body.classList.contains("cleanUi")?"👁️ إظهار كل الواجهات":"🙈 إخفاء كل الواجهات"}
-function updateModes(){for(const id of ["modeWalk","modeDrive","modeStrategy"])$(id).classList.remove("active");$(buildMode?"modeStrategy":carMode?"modeDrive":"modeWalk").classList.add("active");for(const id of ["viewStrategy","panStrategy","placeStrategy","fitStrategy","selectStrategy","eraseStrategy"])$(id).style.display=buildMode?"block":"none";$("viewStrategy").textContent=strategy2D?"🔲 2D علوي":"🏙️ 3D مائل";$("viewStrategy").classList.toggle("active",strategy2D);$("panStrategy").classList.toggle("active",strategyPan);$("placeStrategy").classList.toggle("active",!strategyPan);$("selectStrategy").classList.toggle("active",!strategyPan&&buildTool==="select");$("eraseStrategy").classList.toggle("active",!strategyPan&&buildTool==="erase");$("builderGuide").textContent=strategyPan?"✋ اسحب الخريطة بإصبعك دون تحريك اللاعب. اختر «بناء» لوضع الطرق والمباني.":"🛣️ المس الأرض للبناء؛ اضغط «تحريك الخريطة» للتنقل دون إضافة عناصر."}
+function updateModes(){for(const id of ["modeWalk","modeDrive","modeStrategy"])$(id).classList.remove("active");$(buildMode?"modeStrategy":carMode?"modeDrive":"modeWalk").classList.add("active");for(const id of ["viewStrategy","panStrategy","placeStrategy","fitStrategy","selectStrategy","eraseStrategy","toggleStrategyTools"])$(id).style.display=buildMode?"block":"none";$("viewStrategy").textContent=strategy2D?"🔲 2D علوي":"🏙️ 3D مائل";$("viewStrategy").classList.toggle("active",strategy2D);$("panStrategy").classList.toggle("active",strategyPan);$("placeStrategy").classList.toggle("active",!strategyPan);$("selectStrategy").classList.toggle("active",!strategyPan&&buildTool==="select");$("eraseStrategy").classList.toggle("active",!strategyPan&&buildTool==="erase");$("builderGuide").textContent=strategyPan?"✋ اسحب الخريطة بإصبعك دون تحريك اللاعب. اختر «بناء» لوضع الطرق والمباني.":"🛣️ المس الأرض للبناء؛ اضغط «تحريك الخريطة» للتنقل دون إضافة عناصر."}
 $("modeWalk").onclick=()=>{if(buildMode)toggleBuilder();if(carMode)$("drive").click();updateModes()};
 $("modeDrive").onclick=()=>{if(buildMode)toggleBuilder();if(!carMode)$("drive").click();updateModes()};
 $("modeStrategy").onclick=()=>{if(!buildMode)toggleBuilder();updateModes()};
@@ -2475,6 +2490,13 @@ $("placeStrategy").onclick=()=>{strategyPan=false;updateModes()};
  $("selectStrategy").onclick=()=>{selectBuild("select");strategyPan=false;updateModes();toastBuild("🎯 المس أي طريق أو مبنى أصلي أو جديد لتحديده")};
  $("eraseStrategy").onclick=()=>{selectBuild("erase");strategyPan=false;updateModes();toastBuild("🗑️ المس أي شارع أو مبنى لحذفه، ويمكنك التراجع")};
  $("fitStrategy").onclick=fitStrategyView;
+ $("toggleStrategyTools").onclick=()=>{
+  const dock=$("buildDock");
+  const visible=!dock.classList.contains("collapsed")&&document.body.classList.contains("showBuildDock");
+  dock.classList.toggle("collapsed",visible);
+  document.body.classList.toggle("showBuildDock",!visible);
+  $("toggleStrategyTools").textContent=visible?"🧰 فتح أدوات البناء":"✕ إغلاق أدوات البناء";
+ };
 function setupBlueprintSlots(){
  const host=document.createElement("div");host.dir="rtl";host.style.cssText="display:flex;flex-wrap:wrap;gap:5px;margin:7px 0";
  host.innerHTML='<select id="blueprintSlot" aria-label="مخطط الجامعة"><option value="1">مخطط ١</option><option value="2">مخطط ٢</option><option value="3">مخطط ٣</option></select><button id="saveBlueprint">💾 حفظ مخطط</button><button id="loadBlueprint">📂 استعادة مخطط</button>';
@@ -2495,7 +2517,7 @@ function setupBlueprintSlots(){
  }catch(e){toastBuild("تعذر استعادة المخطط")}};
 }
 setupBlueprintSlots();
-function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;document.body.classList.toggle("strategyEditing",buildMode);buildStart=null;clearRoadPreview();if(buildMode){document.body.classList.remove("cleanUi");if(playerMode==="split")setStudentMode("single","fawaz");exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=true;strategyHeight=450;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
+function toggleBuilder(){if(seated)leaveStand();if(buildMode)document.body.classList.remove("showBuildDock");buildMode=!buildMode;document.body.classList.toggle("strategyEditing",buildMode);buildStart=null;clearRoadPreview();if(buildMode){document.body.classList.remove("cleanUi");document.body.classList.add("showBuildDock");$("toggleStrategyTools").textContent="✕ إغلاق أدوات البناء";if(playerMode==="split")setStudentMode("single","fawaz");exitBuilding();cl();topView=true;carMode=false;carSpeed=0;car.visible=false;ch.visible=true;$("driveControls").style.display="none";$("drivingHud").style.display="none";$("drive").classList.remove("active");$("tour").classList.add("active");dist=25;strategyCenter={x:pl.position.x,z:pl.position.z};strategyPan=true;strategyHeight=450;$("buildHud").style.display="block";$("buildDock").style.display="block";$("buildDock").classList.remove("collapsed");$("builderGuide").style.display="block";$("js").style.display="none";$("enter").style.display="none";$("hint").style.display="none"}
  else{topView=false;$("tour").classList.remove("active");$("buildHud").style.display="none";$("buildDock").style.display="none";$("builderGuide").style.display="none";$("js").style.display="";$("hint").style.display=""}
  if(blueprintTool){blueprintTool.setVisible(buildMode);if(!buildMode)blueprintTool.reset()}updatePlannerMarker()
  $("builderToggle").classList.toggle("active",buildMode);$("builderToggle").textContent=buildMode?"✅ إنهاء البناء":"🏗️ وضع البناء";updateBuildHud();updateModes()}
