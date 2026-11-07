@@ -613,12 +613,15 @@ for(let k=0;k<12;k++){
 }
 const touchlineGrey=mat(0x26323a,{roughness:.88}),benchMetal=mat(0x9cabb4,{metalness:.65,roughness:.35});
 const benchRoof=mat(0x688da4,{transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false});
+// The dugouts are built before the stadium bowl, so shared seat materials must exist here.
+const stadiumSeatMaterials=[mat(0xe5b722,{roughness:.75}),mat(0x171b20,{roughness:.8}),mat(0x1d5391,{roughness:.8})];
+const benchSeatGeometry=new THREE.BoxGeometry(.9,.42,.65);
 for(const sign of [-1,1]){
  const z=ST.z+sign*18;
  const pad=new THREE.Mesh(new THREE.BoxGeometry(7,.12,16),touchlineGrey);
  pad.position.set(ST.x-43,.61,z);pitchDecor.add(pad);
  for(let j=0;j<7;j++){
-  const chair=new THREE.Mesh(new THREE.BoxGeometry(.9,.42,.65),sign===1?stadiumSeatMaterials[0]:stadiumSeatMaterials[2]);
+  const chair=new THREE.Mesh(benchSeatGeometry,sign===1?stadiumSeatMaterials[0]:stadiumSeatMaterials[2]);
   chair.position.set(ST.x-44,1.1,z-6+j*2);pitchDecor.add(chair);
  }
  const canopy=new THREE.Mesh(new THREE.BoxGeometry(4,.12,15),benchRoof);
@@ -838,9 +841,11 @@ for(const assistant of stadiumAssistants){
 function animateStadiumStaff(t){
  const pulse=Math.sin(t*.0025);
  stadiumReferee.g.position.set(ST.x+3+Math.sin(t*.00035)*9,0,ST.z+4+Math.cos(t*.0004)*14);
- refereeYellowCard.visible=stadiumMatch.event.includes("بطاقة صفراء")&&stadiumMatch.elapsed-stadiumMatch.eventTime<7;
+ const showingYellowCard=stadiumMatch.event.includes("بطاقة صفراء")&&stadiumMatch.elapsed-stadiumMatch.eventTime<7;
+ refereeYellowCard.visible=showingYellowCard;
  stadiumReferee.leftArm.rotation.x=.25+pulse*.25;
- stadiumReferee.rightArm.rotation.x=-.2-pulse*.35;
+ stadiumReferee.rightArm.rotation.x=showingYellowCard?-2.15:-.2-pulse*.35;
+ stadiumReferee.rightArm.rotation.z=showingYellowCard?-.3:0;
  stadiumCoaches.forEach((c,i)=>{
   c.g.rotation.y=i?Math.PI*.5:-Math.PI*.5;
   c.leftArm.rotation.x=Math.sin(t*.0018+i)*.65;
@@ -942,8 +947,8 @@ for(let j=0;j<48;j++){
  bowlArchitecture.add(rib);
 }
 // Lightweight architectural seating: instanced seat backs and VIP gallery.
+// Reuse the already-initialized club materials used by the dugout seats.
 const stadiumSeatGeometry=new THREE.BoxGeometry(.76,.55,.12);
-const stadiumSeatMaterials=[mat(0xe5b722,{roughness:.75}),mat(0x171b20,{roughness:.8}),mat(0x1d5391,{roughness:.8})];
 const stadiumSeatMeshes=stadiumSeatMaterials.map(m=>new THREE.InstancedMesh(stadiumSeatGeometry,m,4800));
 const stadiumSeatCounters=[0,0,0],seatInstance=new THREE.Object3D();
 for(let row=1;row<stadiumRows;row+=3){
@@ -1218,10 +1223,9 @@ function updateStadium(t,dt){
   const pressure=stadiumActors.some(a=>a.team!==owner.team&&Math.hypot(a.g.position.x-owner.g.position.x,a.g.position.z-owner.g.position.z)<4.5);
   if(pressure&&Math.random()<dt*.035){
     const defending=1-owner.team;m.fouls[defending]++;
-    if(Math.random()<.22){m.yellowCards[defending]++;m.event="بطاقة صفراء 🟨";stadiumReferee.rightArm.rotation.z=-1.3;}
+    if(Math.random()<.22){m.yellowCards[defending]++;m.event="بطاقة صفراء 🟨";}
     else m.event="خطأ وركلة حرة ⚖️";
     m.eventTime=m.elapsed;
-    stadiumReferee.rightArm.rotation.z=-1.1;
     m.possessor=stadiumActors.findIndex(a=>a.team===owner.team&&a.role!=="goalkeeper");
    }
   if(!m.flight&&Math.random()<dt*(pressure?1.3:.4)){
