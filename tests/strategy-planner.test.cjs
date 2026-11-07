@@ -75,7 +75,7 @@ test('a car driving under an overpass stays on the ground instead of teleporting
 
 test('original and player-built road endpoints can be edited precisely',()=>{
  assert.match(html,/function plannerSetRoadEndpoints\(sel,coords\)/);
- assert.match(html,/id="planner-road-endpoints"/);
+ assert.match(html,/endForm\.id="planner-road-endpoints"/);
  assert.match(html,/const issue=plannerSetRoadEndpoints\(selectedEdit,values\)/);
  assert.match(html,/refreshCustomTrafficRoutes\(\)/);
 });
