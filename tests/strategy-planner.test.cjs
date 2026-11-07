@@ -72,7 +72,7 @@ test('original roads and buildings can be moved, hidden and restored persistentl
 test('image blueprints only add candidates after approval and support manual drafting',()=>{
  assert.doesNotThrow(()=>new vm.Script(importer,{filename:'strategy-blueprint-image.js'}));
  assert.match(html,/strategy-blueprint-image\.js/);
- assert.match(importer,/input\.type="file"/);
+ assert.match(importer,/file\.type="file"/);
  assert.match(importer,/file\.accept="image\/png,image\/jpeg,image\/webp"/);
  assert.match(importer,/function autoTrace\(\)/);
  assert.match(importer,/function toWorld\(px,py\)/);
