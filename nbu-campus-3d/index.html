@@ -732,12 +732,21 @@ for(let i=0;i<enclosureSegments;i++){
  const p=enclosurePoint(a,0),q=enclosurePoint(b,0);
  COL.push([Math.min(p.x,q.x)-.3,Math.min(p.z,q.z)-.3,Math.max(p.x,q.x)+.3,Math.max(p.z,q.z)+.3]);
 }
-const stadiumSkin=mat(0xc68b62),stadiumShorts=mat(0x243244),stadiumJerseys=[mat(0x1467ac),mat(0xf4e8da)];
+const stadiumSkin=mat(0xc68b62),stadiumShorts=[mat(0x101010),mat(0xffffff)],stadiumJerseys=[mat(0xf6cc12),mat(0xffffff)];
 const stadiumBoots=mat(0x1b242e),stadiumHair=mat(0x252323);
 function stadiumPerson(x,z,team,scale=1){
  const g=new THREE.Group(),shirt=stadiumJerseys[team%2];
  const add=(w,h,d,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);g.add(o);return o};
- add(.95,1.15,.5,shirt,0,1.7,0);add(.9,.45,.52,stadiumShorts,0,.91,0);
+ add(.95,1.15,.5,shirt,0,1.7,0);
+ // Club-specific kit: Ittihad yellow/black stripes, Hilal white with royal-blue accents.
+ const stripeMaterial=team===0?mat(0x111111):mat(0x1464c8);
+ for(const px of [-.32,-.04,.24]){
+  const stripe=add(team===0?.16:.095,1.13,.025,stripeMaterial,px,1.7,.268);
+  stripe.castShadow=false;
+ }
+ add(.9,.45,.52,stadiumShorts[team%2],0,.91,0);
+ add(.27,.27,.54,stripeMaterial,-.48,1.98,0);
+ add(.27,.27,.54,stripeMaterial,.48,1.98,0);
  const leftLeg=add(.3,.8,.32,stadiumSkin,-.27,.42,0),rightLeg=add(.3,.8,.32,stadiumSkin,.27,.42,0);
  const leftArm=add(.26,.93,.3,stadiumSkin,-.67,1.64,0),rightArm=add(.26,.93,.3,stadiumSkin,.67,1.64,0);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.38,8,6),stadiumSkin);head.position.y=2.56;g.add(head);
