@@ -1889,7 +1889,15 @@ function wallSweepBlocked(x0,z0,x1,z1,radius=1.05){
  for(let i=1;i<=steps;i++){const t=i/steps;if(wallBlocked(x0+(x1-x0)*t,z0+(z1-z0)*t,radius))return true}
  return false;
 }
-const hit=(x,z)=>wallBlocked(x,z)||B.some(b=>!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+1&&Math.abs(z-b.z)<b.d/2+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
+// Solid stadium perimeter: block walking/driving through the grandstand shell.
+// Fourth-power outline matches the superellipse used for the 360-degree bowl.
+function stadiumPerimeterBlocked(x,z){
+ if(seated||inside)return false;
+ const dx=Math.abs(x-ST.x)/83,dz=Math.abs(z-ST.z)/86;
+ const boundary=Math.pow(Math.pow(dx,4)+Math.pow(dz,4),.25);
+ return boundary>.955&&boundary<1.085;
+}
+const hit=(x,z)=>stadiumPerimeterBlocked(x,z)||wallBlocked(x,z)||B.some(b=>!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+1&&Math.abs(z-b.z)<b.d/2+1)||built.some(o=>{if(buildDefs[o.type]?.path||!["college","lab","library","admin","gasstation"].includes(o.type))return false;const d=buildDefs[o.type],w=o.rot%2?d.d:d.w,h=o.rot%2?d.w:d.d;return Math.abs(x-o.x)<w/2+1&&Math.abs(z-o.z)<h/2+1});
 const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx=v=>(v-WORLD.minX)*k,mz=v=>(v-WORLD.minZ)*k;
 function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
 mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
