@@ -800,9 +800,9 @@ function animateStadiumStaff(t){
 const ball=new THREE.Mesh(new THREE.SphereGeometry(.75,12,8),mat(0xf8f8f0,{roughness:.64}));ball.position.set(ST.x,.85,ST.z);ball.castShadow=true;S.add(ball);
 // 60,000-seat continuous elliptical bowl. Instancing avoids 120,000 individual draw calls.
 const stadiumCapacity=60000,stadiumRows=60,stadiumSeatsPerRow=1000;
-const stadiumTierBase=mat(0x8fa4b3,{roughness:.87,side:THREE.DoubleSide});
+const stadiumTierBase=mat(0x343a40,{roughness:.91,side:THREE.DoubleSide});
 const stadiumAisleMat=mat(0xd4bd87,{roughness:.75});
-const stadiumSeatMat=mat(0x205b84,{roughness:.8});
+const stadiumSeatMat=mat(0x25292d,{roughness:.8});
 const stadiumTierVertices=[],stadiumTierIndices=[];
 const stadiumBowlInner={x:43,z:61.5},stadiumBowlOuter={x:82,z:85};
 function bowlLocation(row,angle){
@@ -828,6 +828,66 @@ const bowlGeo=new THREE.BufferGeometry();
 bowlGeo.setAttribute("position",new THREE.Float32BufferAttribute(stadiumTierVertices,3));
 bowlGeo.setIndex(stadiumTierIndices);bowlGeo.computeVertexNormals();
 const bowlMesh=new THREE.Mesh(bowlGeo,stadiumTierBase);bowlMesh.receiveShadow=true;S.add(bowlMesh);
+// Architectural upgrade: continuous tier risers, section aisles, guard rails,
+// LED fascia and structural canopy ribs. Lightweight shared geometries.
+const bowlArchitecture=new THREE.Group();S.add(bowlArchitecture);
+const tierRiserMaterial=mat(0x252b32,{roughness:.9,side:THREE.DoubleSide});
+const stairMaterial=mat(0xb5a76b,{roughness:.83});
+const railMaterial=mat(0xb8c7cf,{metalness:.65,roughness:.36});
+const accentGold=mat(0xe7b91b,{emissive:0x6d4700,emissiveIntensity:.26,roughness:.4});
+const accentBlue=mat(0x2267ad,{emissive:0x081a3c,emissiveIntensity:.3});
+const bowlRiserVerts=[],bowlRiserIds=[];
+for(let row=0;row<stadiumRows;row++){
+ const f=(row+1)/stadiumRows;
+ for(let j=0;j<128;j++){
+  const a=j*Math.PI*2/128,b=(j+1)*Math.PI*2/128;
+  const pa=superEllipse(a,43+39*f,61.5+23.5*f),pb=superEllipse(b,43+39*f,61.5+23.5*f);
+  const k=bowlRiserVerts.length/3,low=1+row/stadiumRows*19,high=1+f*19;
+  bowlRiserVerts.push(pa.x,low,pa.z,pa.x,high,pa.z,pb.x,low,pb.z,pb.x,high,pb.z);
+  bowlRiserIds.push(k,k+1,k+2,k+1,k+3,k+2);
+ }
+}
+const riserGeo=new THREE.BufferGeometry();
+riserGeo.setAttribute("position",new THREE.Float32BufferAttribute(bowlRiserVerts,3));
+riserGeo.setIndex(bowlRiserIds);riserGeo.computeVertexNormals();
+bowlArchitecture.add(new THREE.Mesh(riserGeo,tierRiserMaterial));
+const sharedStair=new THREE.BoxGeometry(1.05,.1,.88);
+const stairCount=24,stairStepCount=36;
+const stairs=new THREE.InstancedMesh(sharedStair,stairMaterial,stairCount*stairStepCount);
+const stairDummy=new THREE.Object3D();let stairIndex=0;
+for(let aisle=0;aisle<stairCount;aisle++){
+ const angle=(aisle+.5)*Math.PI*2/stairCount;
+ for(let row=0;row<stairStepCount;row++){
+  const f=(row+.5)/stairStepCount,p=superEllipse(angle,43+39*f,61.5+23.5*f);
+  stairDummy.position.set(p.x,1.12+19*f,p.z);
+  stairDummy.rotation.set(0,-angle,0);stairDummy.updateMatrix();
+  stairs.setMatrixAt(stairIndex++,stairDummy.matrix);
+ }
+}
+stairs.instanceMatrix.needsUpdate=true;stairs.castShadow=false;bowlArchitecture.add(stairs);
+function stadiumTrimRing(f,y,material,radius=.13){
+ const pts=[];for(let j=0;j<=160;j++){const a=j*Math.PI*2/160,p=superEllipse(a,43+39*f,61.5+23.5*f);pts.push(new THREE.Vector3(p.x,y,p.z))}
+ const mesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),160,radius,5,true),material);
+ bowlArchitecture.add(mesh);return mesh;
+}
+stadiumTrimRing(.012,2.0,railMaterial,.11);
+stadiumTrimRing(.5,11.3,accentGold,.18);
+stadiumTrimRing(.99,21.3,accentGold,.24);
+for(let j=0;j<48;j++){
+ const a=j*Math.PI*2/48,p=superEllipse(a,43+39*.012,61.5+23.5*.012);
+ const post=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,1.3,5),railMaterial);
+ post.position.set(p.x,1.45,p.z);bowlArchitecture.add(post);
+}
+const roofRibMaterial=mat(0xb2c1c7,{metalness:.72,roughness:.38});
+const roofRibGeo=new THREE.BoxGeometry(.19,.32,1);
+for(let j=0;j<48;j++){
+ const a=j*Math.PI*2/48,inner=superEllipse(a,65,74),outer=superEllipse(a,89,91);
+ const dx=outer.x-inner.x,dz=outer.z-inner.z,length=Math.hypot(dx,dz);
+ const rib=new THREE.Mesh(roofRibGeo,roofRibMaterial);
+ rib.position.set((inner.x+outer.x)/2,25,(inner.z+outer.z)/2);
+ rib.rotation.y=Math.atan2(dx,dz);rib.scale.z=length;
+ bowlArchitecture.add(rib);
+}
 const crowdTorsoGeo=new THREE.BoxGeometry(.42,.65,.35);
 const crowdHeadGeo=new THREE.SphereGeometry(.19,5,4);
 const crowdTorsoMat=new THREE.MeshLambertMaterial({color:0xffffff});
