@@ -58,6 +58,10 @@ test('screenshot map is presented as a preview requiring user approval',()=>{
  assert.match(page,/mapRoad:\{label:/);
  assert.match(page,/mapAvenue:\{label:/);
  assert.match(page,/mapRoad","mapAvenue"\]\.includes\(r\.type\)/);
- assert.match(page,/strategy-plan-json\.js\?v=b2e7ead9/);
+ assert.match(page,/strategy-plan-json\.js\?v=78295c3f/);
  assert.match(page,/strategy-road-network\.js\?v=6d11be6d/);
+ assert.match(page,/roadPlanTool\.isPlacing\(\)/);
+ assert.match(page,/roadPlanTool\.place\(p\)/);
+ assert.match(source,/اختيار موضع المخطط باللمس/);
+ assert.match(source,/isPlacing:\(\)=>placing/);
 });
