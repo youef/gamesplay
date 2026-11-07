@@ -195,6 +195,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="./it-deanship.js?v=30b92a"></script>
+<script src="./stadium-precinct.js?v=2a43fa3"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={minX:-700,maxX:700,minZ:-650,maxZ:500,buildMinX:-620,buildMaxX:620,buildMinZ:-520,buildMaxZ:420};
@@ -207,8 +208,8 @@ const B=[
 {n:"عمادة شؤون المكتبات",x:-145,z:50,w:40,d:28,h:14,c:0xe0d4c8,ds:"s",labs:[["قاعة الوسائط الرقمية","قواعد بيانات ومصادر إلكترونية."],["قاعات البحث الجماعي","غرف دراسة قابلة للحجز."]]},
 {n:"الكلية التطبيقية",x:-55,z:-45,w:48,d:30,h:16,c:0xd6dbe9,ds:"s",labs:[["معمل الحاسب","تدريب على التطبيقات المكتبية."],["معمل المحاسبة","أنظمة محاسبية للتدريب."],["ورشة مهارات مهنية","تدريب عملي للبرامج التطبيقية."]]},
 {n:"قسم الإدارة العامة",x:85,z:-40,w:52,d:30,h:16,c:0xe3dacb,ds:"s",labs:[["معمل الأنظمة الإدارية","برمجيات إدارة الأعمال."],["قاعة محاكاة الأعمال","ألعاب إدارية وحالات دراسية."]]},
-{n:"المبنى الترفيهي",x:0,z:168,w:56,d:26,h:12,c:0xcdb9a0,ds:"n",labs:[["النادي الرياضي","أجهزة لياقة وتمارين."],["صالة الألعاب","طاولات وألعاب جماعية."],["قاعة الأنشطة","فعاليات الطلاب والأندية."]]}];
-const ST={n:"الملعب",x:0,z:82,rx:70,rz:48,labs:[["المضمار","مضمار جري حول الملعب."],["الملعب الرئيسي","ملعب كرة قدم للمباريات والفعاليات."]]};
+{n:"المبنى الترفيهي",x:-140,z:135,w:56,d:26,h:12,c:0xcdb9a0,ds:"n",labs:[["النادي الرياضي","أجهزة لياقة وتمارين."],["صالة الألعاب","طاولات وألعاب جماعية."],["قاعة الأنشطة","فعاليات الطلاب والأندية."]]}];
+const ST={n:"الملعب",x:365,z:40,rx:90,rz:92,precinct:{halfW:135,north:177,south:123},labs:[["الساحة الرئيسية","ساحة المشجعين والتذاكر والمقاعد والممرات والمواقف الخاصة."],["أرضية المباراة","ملعب كرة قدم مستطيل 105 × 68 مترًا داخل المدرجات."],["المدرجات","دخول آمن للمشاهدة وزوايا كاميرا متعددة دون اختراق المدرجات."]]};
 const G=[{n:"بوابة 1 – الشمالية",x:0,z:-200,o:"h"},{n:"بوابة 2 – الشرقية",x:200,z:-88,o:"v"},{n:"بوابة 3 – الغربية",x:-200,z:-88,o:"v"},{n:"بوابة 4 – الجنوبية",x:-100,z:200,o:"h"}];
 const DIST={n:"ضاحية الملك فهد",x:-410,z:30,w:240,d:150};
 const CITY={n:"طريق عرعر",x:-615,z:32};
@@ -330,6 +331,8 @@ addH(245,-109,-91,7);
 // Eastern entrance: rotated gate means lanes at z=-97 and z=-79.
 for(const z of [-97,-79])addH(z,185,260,7);
 addV(245,-97,-79,7);
+// Dedicated connection from the campus east gate to the separate sports grounds.
+addV(245,ST.z-175,-97,9);addH(ST.z-175,245,ST.x+143,10);addV(ST.x+122,ST.z-175,ST.z-147,8);
 // Western entrance: corresponding paired lanes connected to the cross-campus collector.
 for(const z of [-97,-79])addH(z,-260,-185,7);
 addV(-245,-97,-79,7);
@@ -574,9 +577,13 @@ if(b.n==="عمادة تقنية المعلومات"){
  techSign.position.set(b.x,b.h-1.1,b.z+b.d/2+1.3);
 }
 const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();for(const mesh of meshes)wrapper.add(mesh);wrapper.userData.campusBuilding=b.n;S.add(wrapper);campusBuildingGroups.set(b.n,wrapper);COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);b.door={x:b.x,z:dz+sz*9}});
-// الملعب
-const ell=(rx,rz,c,y)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.3,56),mat(c));o.scale.set(rx,1,rz);o.position.set(ST.x,y,ST.z);o.receiveShadow=true;S.add(o)};
-ell(ST.rx+16,ST.rz+16,0xc9bfa8,.1);ell(ST.rx,ST.rz,0xb04a3a,.2);ell(ST.rx-9,ST.rz-9,0x2f56a3,.3);// Rectangular, fully green football playing surface (68m x 105m), not an oval.
+// Stadium: separate plaza and a rectangular safety runoff, without overlapping oval discs.
+const stadiumPrecinct=typeof window.buildCampusStadiumPrecinct==="function"
+ ?window.buildCampusStadiumPrecinct({THREE,scene:S,ST,mat,lab,COL}):null;
+const stadiumApron=new THREE.Mesh(new THREE.BoxGeometry(82,.18,119),mat(0x345d4b,{roughness:1}));
+stadiumApron.position.set(ST.x,.24,ST.z);stadiumApron.receiveShadow=true;S.add(stadiumApron);
+const stadiumRunoff=new THREE.Mesh(new THREE.BoxGeometry(76,.16,112),mat(0x4e6b59,{roughness:1}));
+stadiumRunoff.position.set(ST.x,.36,ST.z);stadiumRunoff.receiveShadow=true;S.add(stadiumRunoff);
 const grassField=new THREE.Mesh(new THREE.BoxGeometry(68,.24,105),new THREE.MeshStandardMaterial({color:0x236e35,roughness:1,metalness:0,emissive:0x071a09,emissiveIntensity:.12}));
 grassField.position.set(ST.x,.53,ST.z);grassField.receiveShadow=true;S.add(grassField);
 // Correctly scaled 105 x 68 metre football field, with all FIFA-style field markings.
@@ -596,12 +603,12 @@ for(const sign of [-1,1]){
  pitchRect(-20.16,Math.min(end,end-sign*16.5),20.16,Math.max(end,end-sign*16.5));
  pitchRect(-9.16,Math.min(end,end-sign*5.5),9.16,Math.max(end,end-sign*5.5));
  pitchSpot(0,end-sign*11);
- const a=Math.acos(5.5/9.15);
- if(sign===1)pitchArc(0,end-11,9.15,Math.PI/2+a,Math.PI*1.5-a,28);
- else pitchArc(0,end+11,9.15,-Math.PI/2+a,Math.PI/2-a,28);
+ const a=Math.asin(5.5/9.15);
+ if(sign===1)pitchArc(0,end-11,9.15,Math.PI+a,Math.PI*2-a,32);
+ else pitchArc(0,end+11,9.15,a,Math.PI-a,32);
  for(const x of [-34,34]){
-  const centerAngle=Math.atan2(-sign,-Math.sign(x));
-  pitchArc(x,end,1,centerAngle-.02,centerAngle+Math.PI/2-.02,12);
+  const start=x>0?(sign>0?Math.PI:Math.PI/2):(sign>0?Math.PI*1.5:0);
+  pitchArc(x,end,1,start,start+Math.PI/2,12);
  }
 }
 // Goal frames and translucent nets, 7.32m wide x 2.44m tall.
@@ -624,7 +631,7 @@ const pitchDecor=new THREE.Group();S.add(pitchDecor);
 const grassStripeA=mat(0x286d37,{roughness:1}),grassStripeB=mat(0x327b40,{roughness:1});
 for(let k=0;k<12;k++){
  const stripe=new THREE.Mesh(new THREE.PlaneGeometry(68,105/12),k%2?grassStripeA:grassStripeB);
- stripe.rotation.x=-Math.PI/2;stripe.position.set(ST.x,pitch.y-.022,ST.z-52.5+(k+.5)*105/12);
+ stripe.rotation.x=-Math.PI/2;stripe.position.set(ST.x,pitch.y-.004,ST.z-52.5+(k+.5)*105/12);
  stripe.receiveShadow=true;pitchDecor.add(stripe);
 }
 const touchlineGrey=mat(0x26323a,{roughness:.88}),benchMetal=mat(0x9cabb4,{metalness:.65,roughness:.35});
@@ -719,8 +726,7 @@ function updateStadiumFloodlights(night){
  stadiumLampLenses.forEach(lens=>{lens.material.emissiveIntensity=.03+strength*.55});
 }
 // Seat locations are computed from the new curved bowl, not the removed stands.
-const standSeats=[];
-[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{const x=ST.x+p[0]*(ST.rx+8),z=ST.z+p[1]*(ST.rz+8);box(.6,22,.6,mat(0x666a70),x,11,z);box(4,1.4,.8,mat(0xfff6c8,{emissive:0xffe9a0}),x,22.5,z,0)});
+// Obsolete free-standing posts removed: four actual floodlight towers illuminate the pitch.
 // Stadium experience: low-poly animated footballers, crowd, perimeter fence and safe entrances.
 const stadiumActors=[],stadiumCrowd=[];
 const stadiumCrowdSettings={density:"dense",visibleCount:0};
@@ -750,8 +756,8 @@ const wallConcrete=mat(0xb6c3ca,{roughness:.84,side:THREE.DoubleSide});
 const wallDark=mat(0x173b54,{metalness:.24,roughness:.55,side:THREE.DoubleSide});
 const wallGold=mat(0xd8c49a,{metalness:.55,roughness:.42});
 const wallLED=mat(0x8ce1d8,{emissive:0x247a80,emissiveIntensity:.8});
-const enclosureSegments=96,outerWallRX=91,outerWallRZ=88;
-function enclosurePoint(a,y){return new THREE.Vector3(ST.x+outerWallRX*Math.cos(a),y,ST.z+outerWallRZ*Math.sin(a))}
+const enclosureSegments=96,outerWallRX=90,outerWallRZ=92;
+function enclosurePoint(a,y){const p=superEllipse(a,outerWallRX,outerWallRZ);return new THREE.Vector3(p.x,y,p.z)}
 function enclosureBeam(p,q,r,material){
  const direction=new THREE.Vector3().subVectors(q,p),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,direction.length(),6),material);
  mesh.position.copy(p).add(q).multiplyScalar(.5);
@@ -1189,7 +1195,7 @@ function updateStadium(t,dt){
  m.elapsed+=dt*4; // Accelerated match clock, independent from animation frame count.
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
  if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.shots=[0,0];m.passes=[0,0];m.saves=[0,0];m.fouls=[0,0];m.offsides=[0,0];m.possession=[0,0];m.yellowCards=[0,0];m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
- stadiumStatsBar.style.display=nearStadium?"block":"none";
+ stadiumStatsBar.style.display=seated&&!inside?"block":"none";
  if(!nearStadium){tifoCards.visible=false;return;}
  if(m.possessor>=0){const owner=stadiumActors[m.possessor];if(owner)m.possession[owner.team]+=dt;}
  updateStadiumCheering(t);
@@ -1694,12 +1700,12 @@ $("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
 $("mini").onclick=()=>{$("tour").click()};
-function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>enterBuilding(b);pn.classList.add("on");en.style.display="none"}
+function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>{if(b===ST){cl();$("sitStand").click()}else enterBuilding(b)};pn.classList.add("on");en.style.display="none"}
 function cl(){open=false;pn.classList.remove("on")}
 $("x").onclick=cl;en.onclick=()=>near&&op(near);
 function tp(x,z,fx,fz){if(seated)leaveStand();exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0;car.position.set(x,0,z)}
 B.forEach(b=>{const k=document.createElement("button");k.textContent=b.n;k.onclick=()=>tp(b.door.x,b.door.z,0,b.ds==="n"?1:-1);$("bar").appendChild(k)});
-const sk=document.createElement("button");sk.textContent=ST.n;sk.onclick=()=>tp(ST.x+ST.rx+28,ST.z,-1,0);$("bar").appendChild(sk);
+const sk=document.createElement("button");sk.textContent="🏟️ ساحة الملعب";sk.onclick=()=>tp(ST.x,ST.z-132,0,1);$("bar").appendChild(sk);
 G.forEach((g,i)=>{const k=document.createElement("button");k.className="g";k.textContent=g.n;k.onclick=()=>{tp(g.x+g.ix*10,g.z+g.iz*10,g.ix,g.iz);gateSecurityPanel(gateSecurity[i])};$("bar").appendChild(k)});
 [["ضاحية الملك فهد",DIST.x,DIST.z,1,0],["الطريق إلى عرعر",CITY.x,CITY.z,1,0],["مطار عرعر",AIR.x-55,AIR.z+70,1,0]].forEach(r=>{const k=document.createElement("button");k.className="g";k.textContent=r[0];k.onclick=()=>tp(r[1],r[2],r[3],r[4]);$("bar").appendChild(k)});
 
@@ -1919,7 +1925,7 @@ function setupCampusEditor(){
  }
 }
 function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMaxX||z-d/2<WORLD.buildMinZ||z+d/2>WORLD.buildMaxZ)return true;
- if(Math.abs(x)<ST.rx+w/2&&Math.abs(z-ST.z)<ST.rz+d/2)return true;if(Math.abs(x-DIST.x)<DIST.w/2+w/2&&Math.abs(z-DIST.z)<DIST.d/2+d/2)return true;if(Math.abs(x-AIR.x)<AIR.w/2+w/2&&Math.abs(z-AIR.z)<AIR.d/2+d/2)return true;
+ if(Math.abs(x-ST.x)<ST.precinct.halfW+w/2&&z+d/2>ST.z-ST.precinct.north&&z-d/2<ST.z+ST.precinct.south)return true;if(Math.abs(x-DIST.x)<DIST.w/2+w/2&&Math.abs(z-DIST.z)<DIST.d/2+d/2)return true;if(Math.abs(x-AIR.x)<AIR.w/2+w/2&&Math.abs(z-AIR.z)<AIR.d/2+d/2)return true;
  for(const b of B)if(!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<(w+b.w)/2+2&&Math.abs(z-b.z)<(d+b.d)/2+2)return true;
  for(const o of built){const q=buildDefs[o.type];if(q.path)continue;const qw=o.rot%2?q.d:q.w,qd=o.rot%2?q.w:q.d;if(Math.abs(x-o.x)<(w+qw)/2+2&&Math.abs(z-o.z)<(d+qd)/2+2)return true}return false;
 }
@@ -1942,7 +1948,7 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
  }
   for(let i=0,steps=Math.max(1,Math.ceil(len/2));i<=steps;i++){const t=i/steps,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
    for(const b of B)if(!removedCampusBuildings.has(b.n)&&Math.abs(x-b.x)<b.w/2+d.width/2&&Math.abs(z-b.z)<b.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";
-   if(Math.abs(x)<ST.rx+d.width/2&&Math.abs(z-ST.z)<ST.rz+d.width/2)return "المسار يتداخل مع الملعب";
+   if(Math.abs(x-ST.x)<ST.precinct.halfW+d.width/2&&z+d.width/2>ST.z-ST.precinct.north&&z-d.width/2<ST.z+ST.precinct.south)return "المسار يتداخل مع المنطقة الرياضية";
    for(const b of built){const bd=buildDefs[b.type];if(bd.path)continue;const w=b.rot%2?bd.d:bd.w,q=b.rot%2?bd.w:bd.d;if(Math.abs(x-b.x)<w/2+d.width/2&&Math.abs(z-b.z)<q/2+d.width/2)return "المسار يتداخل مع مبنى أضفته"}
   }
  }else{const w=o.rot%2?d.d:d.w,q=o.rot%2?d.w:d.d;if(footprintBlocked(o.x,o.z,w,q))return "المكان مشغول أو خارج السور"}
@@ -2052,7 +2058,7 @@ mm.beginPath();mm.moveTo(mx(-200),mz(-88));mm.lineTo(mx(200),mz(-88));mm.moveTo(
 mm.strokeStyle="#5f6670";mm.lineWidth=5;mm.beginPath();mm.moveTo(mx(-560),mz(20));mm.lineTo(mx(430),mz(20));mm.lineTo(mx(430),mz(-300));mm.lineTo(mx(500),mz(-300));mm.stroke();
 mm.fillStyle="#c59b4c";mm.fillRect(mx(DIST.x-DIST.w/2),mz(DIST.z-DIST.d/2),DIST.w*k,DIST.d*k);
 mm.fillStyle="#8aa4b8";mm.fillRect(mx(AIR.x-AIR.w/2),mz(AIR.z-AIR.d/2),AIR.w*k,AIR.d*k);
-mm.fillStyle="#b04a3a";mm.beginPath();mm.ellipse(mx(ST.x),mz(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
+mm.fillStyle="#c0b699";mm.fillRect(mx(ST.x-72),mz(ST.z-167),144*k,70*k);mm.fillStyle="#314b67";mm.beginPath();mm.ellipse(mx(ST.x),mz(ST.z),ST.rx*k,ST.rz*k,0,0,7);mm.fill();
 B.forEach(b=>{mm.fillStyle=b===near?"#0f8f86":"#1d3a5f";mm.fillRect(mx(b.x-b.w/2),mz(b.z-b.d/2),b.w*k,b.d*k)});
 mm.fillStyle="#f2b705";G.forEach(g=>{mm.beginPath();mm.arc(mx(g.x),mz(g.z),3.5,0,7);mm.fill()});
 built.forEach(o=>{mm.strokeStyle=o.type==="bridge"?"#de923b":"#0f8f86";mm.fillStyle=o.type==="park"?"#469e69":"#3f698b";if(o.end){mm.lineWidth=o.type==="avenue"?4:2;mm.beginPath();mm.moveTo(mx(o.x),mz(o.z));mm.lineTo(mx(o.end.x),mz(o.end.z));mm.stroke()}else{mm.fillRect(mx(o.x-4),mz(o.z-4),8*k,8*k)}});
@@ -2167,9 +2173,9 @@ if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter
  }
 }else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,p.y+1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,p.y+1.5,p.z)}
 near=null;let best=14;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n)||!b.door)return;const d=Math.hypot(p.x-b.door.x,p.z-b.door.z);if(d<best){best=d;near=b}});
-if(!inside&&!near&&Math.pow((p.x-ST.x)/(ST.rx+6),2)+Math.pow((p.z-ST.z)/(ST.rz+6),2)<1)near=ST;
+if(!inside&&!near&&(Math.hypot(p.x-ST.x,p.z-(ST.z-132))<58||Math.hypot(p.x-(ST.x+110),p.z-ST.z)<30||Math.hypot(p.x-(ST.x-110),p.z-ST.z)<30))near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
-$("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-ST.rz-23))<65?"block":"none";if(near)en.textContent="دخول";
+$("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-109))<68?"block":"none";if(near)en.textContent="دخول";
 updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!document.hidden){
  if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
   const w=innerWidth,h=innerHeight,half=Math.floor(w/2);
