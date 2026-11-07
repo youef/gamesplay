@@ -197,7 +197,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
 <script src="./strategy-bridges.js?v=9bdb287"></script>
-<script src="./strategy-road-network.js?v=0ad6fe6"></script>
+<script src="./strategy-road-network.js?v=7d1da052"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
 <script src="./strategy-plan-json.js?v=5ed06fe"></script>
 <script>
@@ -1368,7 +1368,8 @@ for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes
 // Only exact snapped endpoints connect; disconnected or intersecting visual segments are not joined.
 function connectedRoadRoutes(){
  if(!window.CampusRoadNetwork)return [];
- const plan=window.CampusRoadNetwork.build(roadSegments(),11);
+ const bridgeObjects=built.filter(o=>["bridge","flyover","bridgeCircle"].includes(o.type));
+ const plan=window.CampusRoadNetwork.build(roadSegments(),11,bridgeObjects);
  return plan.routes;
 }
 function refreshCustomTrafficRoutes(){
@@ -1391,13 +1392,13 @@ function refreshCustomTrafficRoutes(){
   // Distribute traffic rather than spawning all vehicles in one overlapping pile.
   agent.progress=Math.max(0,Math.min(Math.max(0,leg-2),(i*17+8)%(Math.max(1,Math.floor(leg-1)))));
   const f=leg?agent.progress/leg:0;
-  agent.mesh.position.set(x1+(x2-x1)*f,0,z1+(z2-z1)*f);
+  agent.mesh.position.set(x1+(x2-x1)*f,(next[0][2]||0)+((next[1][2]||0)-(next[0][2]||0))*f,z1+(z2-z1)*f);
   agent.mesh.rotation.y=Math.atan2(x2-x1,z2-z1);
  }
 }
 // Bus stops are optional player-built waypoints. A bus pauses only while it follows a custom road.
 function busStopAhead(a,start,end,nextProgress,len){
- if(!a.bus||!a.customRouteActive||!len)return null;
+ if(!a.bus||!a.customRouteActive||!len||(start[2]||0)>.5||(end[2]||0)>.5)return null;
  const dx=end[0]-start[0],dz=end[1]-start[1],ux=dx/len,uz=dz/len;
  let nearest=null;
  for(const stop of built){
@@ -1419,10 +1420,11 @@ for(const j of trafficJunctions){if(Math.hypot(end[0]-j.x,end[1]-j.z)<1&&remain>
 let nextProgress=a.progress+Math.min(remain,target*dt);
 const approachingStop=busStopAhead(a,start,end,nextProgress,len);
 if(approachingStop)nextProgress=Math.min(nextProgress,approachingStop.along);
-const nextFraction=clamp(nextProgress/len,0,1),nextX=start[0]+dx*nextFraction,nextZ=start[1]+dz*nextFraction;
+const nextFraction=clamp(nextProgress/len,0,1),nextX=start[0]+dx*nextFraction,nextZ=start[1]+dz*nextFraction,
+ nextY=(start[2]||0)+((end[2]||0)-(start[2]||0))*nextFraction;
 const headingX=dx/len,headingZ=dz/len;
 const blocked=agents.some(other=>{
- if(other===a||other.mesh.visible===false)return false;
+ if(other===a||other.mesh.visible===false||Math.abs(other.mesh.position.y-nextY)>2.7)return false;
  const gapX=other.mesh.position.x-a.mesh.position.x,gapZ=other.mesh.position.z-a.mesh.position.z;
  const ahead=gapX*headingX+gapZ*headingZ;
  const lateral=Math.abs(gapX*headingZ-gapZ*headingX);
@@ -1433,7 +1435,11 @@ const blocked=agents.some(other=>{
 if(blocked)return;
 a.progress=nextProgress;
 if(approachingStop&&a.progress>=approachingStop.along-.05){a.lastBusStop=approachingStop.key;a.dwell=3.5}
-const f=nextFraction;a.mesh.position.set(nextX,0,nextZ);a.mesh.rotation.y=Math.atan2(dx,dz);
+const f=nextFraction;a.mesh.position.set(nextX,nextY,nextZ);
+ a.mesh.rotation.y=Math.atan2(dx,dz);
+ // The bus and civilian cars lean naturally with the incline, without pitching on flat streets.
+ const elevationDelta=(end[2]||0)-(start[2]||0);
+ a.mesh.rotation.x=-Math.atan2(elevationDelta,Math.max(.001,len));
 if(a.progress>=len-.02){a.seg+=a.direction;a.progress=0;if(a.bus&&a.seg!==0&&a.seg!==a.route.length-1)a.dwell=1.6;if(a.seg===0||a.seg===a.route.length-1){a.direction*=-1;a.lastBusStop=null;a.dwell=a.bus?3:1}}}
 function signalAllows(axis){const phase=trafficClock%16;return axis==="ew"?phase<6:phase>=8&&phase<14}
 function updateGateSecurity(dt){
