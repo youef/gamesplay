@@ -35,6 +35,13 @@ window.CampusBlueprintImport=function(options){
  const sizeField=numberField("العرض على الأرض (م)",180,40,600,10,v=>state.size=v);
  const rotateField=numberField("تدوير المخطط (درجات)",0,0,270,90,v=>state.rotation=Math.round(v/90)*90);
  const opacityField=numberField("الشفافية %",40,10,85,5,v=>state.opacity=v/100);
+ const scanLabel=document.createElement("label");scanLabel.textContent="طريقة اكتشاف الطرق في الصورة";
+ scanLabel.style.cssText="display:grid;gap:4px;font:600 11px Tahoma";
+ const scanMode=document.createElement("select");scanMode.style.cssText="padding:9px;border-radius:8px;background:#e8f2f6;color:#163449";
+ for(const [value,title] of [["dark","خطوط داكنة على خلفية فاتحة"],["light","طرق فاتحة على خلفية ملوّنة"]]){
+  const option=document.createElement("option");option.value=value;option.textContent=title;scanMode.append(option)
+ }
+ scanLabel.append(scanMode);
  const panelButtons=document.createElement("div");panelButtons.style.cssText="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px";
  const positionBtn=button("📍 تحديد موقع بالخريطة",()=>{state.placing=true;if(startPlacement)startPlacement();onNotice("المس موقعًا على الأرض لتثبيت مركز الصورة")});
  const autoBtn=button("🔎 استخراج خطوط مقترحة",()=>{if(!state.hasImage)return onNotice("ارفع صورة أولًا");
@@ -60,7 +67,7 @@ window.CampusBlueprintImport=function(options){
  const tiny=document.createElement("p");tiny.style.cssText="font:500 10px Tahoma;line-height:1.6;opacity:.75;margin:0";
  tiny.textContent="الاستخراج الآلي تجريبي ويستهدف الخطوط الأفقية والعمودية الواضحة، وليس تحليلًا ذكيًا مضمونًا لصور Google Maps. راجع المقترحات قبل اعتمادها. الصور تبقى محليًا على جهازك.";
  summary=document.createElement("span");summary.style.cssText="display:block;font:600 11px Tahoma;color:#bce3f0";
- section.append(headline,description,file,grid,panelButtons,canvas,summary,tiny);host.append(section);
+ section.append(headline,description,file,grid,scanLabel,panelButtons,canvas,summary,tiny);host.append(section);
  preview=canvas;controls={xField,zField,sizeField,rotateField,opacityField};
  function save(){
   if(!cacheURL||!state.hasImage)return;
@@ -137,11 +144,10 @@ window.CampusBlueprintImport=function(options){
   const ctx=sample.getContext("2d");ctx.drawImage(picture,0,0,160,160);
   const {data}=ctx.getImageData(0,0,160,160);
   const mask=new Uint8Array(160*160);
-  const mode=document.createElement("canvas"); // no external model: local pixel-line detection
   for(let i=0;i<mask.length;i++){
    const r=data[i*4],g=data[i*4+1],b=data[i*4+2];
    const lum=.2126*r+.7152*g+.0722*b,neutral=Math.max(r,g,b)-Math.min(r,g,b)<70;
-   mask[i]=neutral&&lum<125?1:0;
+   mask[i]=neutral&&(scanMode.value==="light"?lum>220:lum<125)?1:0;
   }
   const raw=[];
   for(const horizontal of [true,false]){
