@@ -1630,7 +1630,7 @@ const stadiumViewPanel=document.createElement("div");
 stadiumViewPanel.id="stadiumViewPanel";
 stadiumViewPanel.style.cssText="position:fixed;z-index:20;bottom:calc(95px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:none;width:min(92vw,480px);padding:6px;background:#102c40e8;border:1px solid #ffffff55;border-radius:15px;color:white;box-shadow:0 8px 25px #0006;direction:rtl";
 const stadiumViewButtons=document.createElement("div");stadiumViewButtons.style.cssText="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;scrollbar-width:none";
-const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"],["tifo","🐯 التيفو كامل"],["tifoClose","🟡 قرب التيفو"],["standHigh","🏟️ أعلى المدرج"],["corner","🚩 ركنية"],["goal","🥅 خلف المرمى"],["director","🎬 مخرج ذكي"]];
+const stadiumViewOptions=[["orbit","🎮 حرّة"],["first","👁️ من المقعد"],["ball","⚽ متابعة الكرة"],["broadcast","📺 نقل تلفزيوني"],["aerial","🚁 علوية"],["tifo","🐯 التيفو كامل"],["tifoClose","🟡 قرب التيفو"],["standHigh","🏟️ أعلى المدرج"],["corner","🚩 ركنية"],["goal","🥅 خلف المرمى"],["director","🎬 مخرج ذكي"],["vip","👑 منصة VIP"],["dugout","🪑 دكة البدلاء"],["tunnel","🚪 نفق اللاعبين"]];
 function selectStadiumView(mode){
  stadiumViewMode=mode;
  if(mode==="orbit"){yaw=Math.PI;pit=.2;dist=8}
@@ -1638,7 +1638,7 @@ function selectStadiumView(mode){
  if(mode==="ball"){dist=2}
  if(mode==="aerial"){dist=60;pit=.7}
  if(mode==="director"){dist=22;pit=.2}
- if(mode==="tifo"||mode==="tifoClose"||mode==="standHigh"||mode==="corner"||mode==="goal"){pit=.15;dist=20}
+ if(["tifo","tifoClose","standHigh","corner","goal","vip","dugout","tunnel"].includes(mode)){pit=.15;dist=20}
  stadiumViewButtons.querySelectorAll("button").forEach(b=>{b.style.background=b.dataset.mode===mode?"#168e8a":"#244c67"});
 }
 for(const [mode,label] of stadiumViewOptions){
@@ -2107,6 +2107,9 @@ if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter
   else if(age<8&&m.event.includes("هدف")){cam.position.set(ST.x,15,ST.z+23);cam.lookAt(ST.x,12,ST.z-75)}
   else{const bx=ST.x+m.ballX,bz=ST.z+m.ballZ;cam.position.lerp(new THREE.Vector3(ST.x+66,24,ST.z+Math.max(-28,Math.min(28,m.ballZ*.35))),.07);cam.lookAt(bx,1.8,bz)}
  }
+ else if(stadiumViewMode==="vip"){cam.position.set(ST.x+78,24,ST.z);cam.lookAt(ST.x,2,ST.z)}
+ else if(stadiumViewMode==="dugout"){cam.position.set(ST.x-46,3.4,ST.z-19);cam.lookAt(ST.x,2,ST.z-3)}
+ else if(stadiumViewMode==="tunnel"){cam.position.set(ST.x-47,2.8,ST.z);cam.lookAt(ST.x,2,ST.z)}
  else if(stadiumViewMode==="tifo"){cam.position.set(ST.x,15,ST.z+23);cam.lookAt(ST.x,12,ST.z-75)}
  else if(stadiumViewMode==="tifoClose"){cam.position.set(ST.x-21,11,ST.z-7);cam.lookAt(ST.x,12,ST.z-73)}
  else if(stadiumViewMode==="standHigh"){cam.position.set(ST.x+72,25,ST.z+8);cam.lookAt(ST.x,3,ST.z)}
