@@ -955,35 +955,6 @@ function stadiumKick(from,to,speed=18){
  stadiumMatch.flight={x:from.g.position.x-ST.x,z:from.g.position.z-ST.z,
   tx:to.x,tz:to.z,progress:0,duration:Math.max(.35,Math.hypot(to.x-(from.g.position.x-ST.x),to.z-(from.g.position.z-ST.z))/speed),receiver:to.receiver??-1};
 }
-let controlledStadiumPlayer=9,stadiumSprintUntil=0;
-const matchControls=document.createElement("div");
-matchControls.id="matchControls";
-matchControls.style.cssText="position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:24;display:none;gap:7px;align-items:center;justify-content:center;direction:rtl;pointer-events:auto";
-matchControls.innerHTML='<button data-act="switch">🔁 تبديل</button><button data-act="pass">⚽ تمرير</button><button data-act="shoot">🥅 تسديد</button><button data-act="sprint">⚡ انطلاق</button>';
-for(const b of matchControls.querySelectorAll("button"))b.style.cssText="border:1px solid #f7c52988;background:#0c192de8;color:#fff;border-radius:13px;padding:11px 9px;font:700 12px Tahoma,sans-serif;box-shadow:0 3px 12px #0007;touch-action:manipulation";
-document.body.append(matchControls);
-function stadiumPlayerAction(action){
- const m=stadiumMatch,owner=stadiumActors[m.possessor];
- if(action==="switch"){
-  const candidates=stadiumActors.map((a,i)=>({a,i})).filter(v=>v.a.team===0&&v.a.role!=="goalkeeper");
-  const next=candidates.find(v=>v.i>controlledStadiumPlayer)||candidates[0];
-  controlledStadiumPlayer=next.i;m.event="تبديل اللاعب";m.eventTime=m.elapsed;return;
- }
- if(action==="sprint"){stadiumSprintUntil=performance.now()+3200;m.event="انطلاق سريع";m.eventTime=m.elapsed;return;}
- if(!owner||owner.team!==0||m.flight)return;
- if(action==="shoot"){
-  stadiumKick(owner,{x:(Math.random()-.5)*5.4,z:53},28);
-  m.event="تسديدة الاتحاد";m.eventTime=m.elapsed;
- }else if(action==="pass"){
-  const mates=stadiumActors.map((a,i)=>({a,i})).filter(v=>v.a.team===0&&v.i!==m.possessor&&v.a.role!=="goalkeeper");
-  mates.sort((u,v)=>Math.hypot(u.a.g.position.x-owner.g.position.x,u.a.g.position.z-owner.g.position.z)-Math.hypot(v.a.g.position.x-owner.g.position.x,v.a.g.position.z-owner.g.position.z));
-  const target=mates[0];if(!target)return;
-  stadiumKick(owner,{x:target.a.g.position.x-ST.x,z:target.a.g.position.z-ST.z,receiver:target.i},22);
-  m.event="تمريرة الاتحاد";m.eventTime=m.elapsed;
- }
-}
-matchControls.addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(b)stadiumPlayerAction(b.dataset.act)});
-document.addEventListener("keydown",e=>{if(e.repeat||/INPUT|TEXTAREA/.test(document.activeElement?.tagName||""))return;const actions={KeyQ:"switch",KeyJ:"pass",KeyK:"shoot",KeyL:"sprint"};if(actions[e.code]&&matchControls.style.display!=="none"){e.preventDefault();stadiumPlayerAction(actions[e.code])}});
 function stadiumReset(team){
  stadiumMatch.ballX=0;stadiumMatch.ballZ=0;stadiumMatch.flight=null;
  stadiumMatch.possessor=team===0?9:20;
@@ -996,7 +967,6 @@ function updateStadium(t,dt){
  m.elapsed+=dt*4; // Accelerated match clock, independent from animation frame count.
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
  if(m.elapsed>=5400){m.elapsed=0;m.half=1;stadiumScore.blue=stadiumScore.white=0;m.event="مباراة جديدة";m.eventTime=0;stadiumReset(0)}
- matchControls.style.display=nearStadium?"flex":"none";
  if(!nearStadium){tifoCards.visible=false;return;}
  updateStadiumCheering(t);
  updateTifoFlash(t);
@@ -1055,7 +1025,7 @@ function updateStadium(t,dt){
    if(a.team!==(stadiumActors[m.possessor]||a).team&&chase<19){tx=ST.x+m.ballX;tz=ST.z+m.ballZ}
   }else{tx=ST.x+Math.max(-3,Math.min(3,m.ballX*.18));tz=a.baseZ}
   tx=Math.max(ST.x-32,Math.min(ST.x+32,tx));tz=Math.max(ST.z-49,Math.min(ST.z+49,tz));
-  const dx=tx-a.g.position.x,dz=tz-a.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(a.role==="goalkeeper"?3:(i===controlledStadiumPlayer&&performance.now()<stadiumSprintUntil?9.5:5.8)));
+  const dx=tx-a.g.position.x,dz=tz-a.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(a.role==="goalkeeper"?3:5.8));
   if(d>.01){a.g.position.x+=dx/d*step;a.g.position.z+=dz/d*step;a.g.rotation.y=Math.atan2(dx,dz)}
   const stride=Math.sin(t*.009+a.seed)*(step>0.01?.43:.04);
   a.leftLeg.rotation.x=stride;a.rightLeg.rotation.x=-stride;
