@@ -371,7 +371,11 @@ window.ITCampusFactory=function(options){
  function setActive(enabled){
   active=Boolean(enabled);
   if(active){ensureNavigator();mapOpen=false;refreshFloorNavigator()}
-  else mapOpen=false;
+  else{
+   mapOpen=false;
+   // Free the large 3D interior immediately on leaving to keep iPhones responsive.
+   if(groups.length){wipe();groups=[];colliders=[[],[],[],[]];ledScreens.length=0}
+  }
   if(mapDock){mapDock.style.display=active?"block":"none";updateMapVisibility()}
  }
  function tick(time){
