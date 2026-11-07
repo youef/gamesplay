@@ -197,7 +197,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./it-deanship.js?v=30b92a"></script>
 <script src="./stadium-precinct.js?v=2a43fa3"></script>
 <script src="./strategy-bridges.js?v=d614bc66"></script>
-<script src="./strategy-road-network.js?v=7d1da052"></script>
+<script src="./strategy-road-network.js?v=172f090c"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
 <script src="./strategy-plan-json.js?v=5ed06fe"></script>
 <script>
@@ -1579,7 +1579,7 @@ cvs.addEventListener("pointermove",e=>{
  if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0){dist=clamp(dist*pinchDistance/gap,seated?1.5:3,seated?80:65)}pinchDistance=gap;dr=null;return}
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
-cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(endPoint,start):orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{recordPlannerHistory();built.push(item);redoStack=[];buildGroups.push(buildObject(item));updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
+cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(endPoint,start):["mapRoad","mapAvenue"].includes(buildTool)?endPoint:orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{recordPlannerHistory();built.push(item);redoStack=[];buildGroups.push(buildObject(item));updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
 const cancelPointer=e=>{clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
 cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
 cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else{e.preventDefault();dist=clamp(dist+e.deltaY*.018,3,65)}},{passive:false});
@@ -1798,7 +1798,7 @@ function planningRedo(){if(!plannerRedo.length)return toastBuild("لا توجد 
  plannerUndo.push(snapshotPlanner());applyPlannerSnapshot(plannerRedo.pop());toastBuild("↷ تمت إعادة التعديل")}
 
 const buildDefs={
- road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},bridge:{label:"🌉 جسر بطلوع ونزول",cost:1200,path:true,width:11},flyover:{label:"↪️ جسر وصلة منحنية",cost:1500,path:true,width:10},bridgeCircle:{label:"🔄 جسر دائري وتحويلات",cost:280000,w:140,d:140},
+ road:{label:"🛣️ شارع",cost:170,path:true,width:9},avenue:{label:"🚘 طريق عام",cost:320,path:true,width:17},mapRoad:{label:"↗️ شارع مائل من المخطط",cost:170,path:true,width:8},mapAvenue:{label:"🛣️ طريق رئيسي مائل",cost:320,path:true,width:16},bridge:{label:"🌉 جسر بطلوع ونزول",cost:1200,path:true,width:11},flyover:{label:"↪️ جسر وصلة منحنية",cost:1500,path:true,width:10},bridgeCircle:{label:"🔄 جسر دائري وتحويلات",cost:280000,w:140,d:140},
  college:{label:"🏫 كلية",cost:165000,w:28,d:23,h:18,color:0xb8ccdf},lab:{label:"🔬 معامل",cost:110000,w:22,d:19,h:13,color:0xb9d7ce},library:{label:"📚 مكتبة",cost:120000,w:27,d:21,h:13,color:0xe2ceb0},admin:{label:"🏢 إدارة",cost:130000,w:25,d:20,h:17,color:0xd3cadf},
  park:{label:"🌳 حديقة",cost:18000,w:30,d:24},plaza:{label:"🏙️ ساحة",cost:12500,w:25,d:25},trees:{label:"🌴 نخيل",cost:1400,w:8,d:8},lamp:{label:"💡 إنارة",cost:2500,w:8,d:8},parking:{label:"🅿️ مواقف",cost:23000,w:32,d:24},fountain:{label:"⛲ نافورة",cost:28000,w:16,d:16},busstop:{label:"🚌 محطة باص",cost:9000,w:15,d:12},gasstation:{label:"⛽ محطة خدمات 3D",cost:65000,w:25,d:22},signal:{label:"🚦 إشارة",cost:3800,w:8,d:8},crosswalk:{label:"🚶 معبر مشاة",cost:5500,w:13,d:9},roundabout:{label:"🔄 دوّار",cost:19000,w:22,d:22},
  select:{label:"🎯 تحديد / نقل"},erase:{label:"🧽 إزالة عنصر"}
@@ -1836,7 +1836,7 @@ function updatePlannerMarker(){
 const roadPreview=new THREE.Mesh(new THREE.BoxGeometry(1,.09,1),new THREE.MeshBasicMaterial({color:0x28dcb0,transparent:true,opacity:.5,depthWrite:false}));roadPreview.visible=false;roadPreview.renderOrder=12;S.add(roadPreview);
 function previewRoad(a,b){
  if(!a||!b||!buildDefs[buildTool]?.path){roadPreview.visible=false;return}
- const end=["bridge","flyover"].includes(buildTool)?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
+ const end=["bridge","flyover","mapRoad","mapAvenue"].includes(buildTool)?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
  if(length<2){roadPreview.visible=false;return}
  const candidate={type:buildTool,x:a.x,z:a.z,end};
  roadPreview.visible=true;roadPreview.position.set((a.x+end.x)/2,["bridge","flyover"].includes(buildTool)?5.7:.38,(a.z+end.z)/2);
@@ -1850,7 +1850,7 @@ const snap=v=>Math.round(v/5)*5;
 // Snap to the actual permanent road centerlines as well as player-built paths.
 function roadSegments(){
  const list=campusRoads.filter(r=>!deletedFixedRoads.has(r.id)).map(r=>({x1:r.x1,z1:r.z1,x2:r.x2,z2:r.z2,width:r.width,fixed:true,id:r.id}));
- for(const r of built)if((r.type==="road"||r.type==="avenue")&&r.end)list.push({x1:r.x,z1:r.z,x2:r.end.x,z2:r.end.z,width:buildDefs[r.type].width,fixed:false});
+ for(const r of built)if(["road","avenue","mapRoad","mapAvenue"].includes(r.type)&&r.end)list.push({x1:r.x,z1:r.z,x2:r.end.x,z2:r.end.z,width:buildDefs[r.type].width,fixed:false});
  return list;
 }
 function closestRoadPoint(point,limit=17){
@@ -1966,7 +1966,7 @@ function buildObject(o){
   const elevated=o.type==="bridge"||o.type==="flyover",h=elevated?5.7:.16;
   if(elevated&&bridgeKit)bridgeKit.buildFlyover(grp,len,width,o.type==="flyover");
   else{
-   part(grp,width,.17,len,o.type==="avenue"?0x3d434a:0x4b5058,0,h,0);
+   part(grp,width,.17,len,["avenue","mapAvenue"].includes(o.type)?0x3d434a:0x4b5058,0,h,0);
    for(const side of [-1,1])part(grp,.4,.06,len,0xc6b88e,side*(width/2+.45),.2,0);
    const count=Math.min(60,Math.floor(len/9));
    for(let i=0;i<count;i++){const t=-len/2+4+i*9;part(grp,.26,.06,3,0xe9e3c7,0,h+.12,t)}
@@ -2006,7 +2006,7 @@ function buildObject(o){
 }
 function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[];buildLights=[]}
 function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));updateRoadJunctions();refreshCustomTrafficRoutes();updateBuildHud()}
-function updateBuildHud(){const roads=built.filter(o=>["road","avenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
+function updateBuildHud(){const roads=built.filter(o=>["road","avenue","mapRoad","mapAvenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
  const objectives=[roads>=2,greens>=3,buildings>=2,bridges>=1],done=objectives.filter(Boolean).length;
  $("buildHud").textContent=(creativeMode?"🎨 إنشاء حر":"💰 المتبقي: "+coins(balance()))+" | 🧱 "+built.length+" عنصر | ⭐ إنجازات "+done+"/4";
  $("creativeBtn").textContent=creativeMode?"🎨 وضع حر — غير محدود":"🎯 وضع ميزانية";
@@ -2057,13 +2057,27 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
  const d=buildDefs[o.type];if(!d)return "أداة غير معروفة";
  if(d.path){
  if(!o.end||!Number.isFinite(o.end.x)||!Number.isFinite(o.end.z))return "اختر نقطة نهاية صحيحة";
- const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(!["bridge","flyover"].includes(o.type)&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
+ const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(!["bridge","flyover","mapRoad","mapAvenue"].includes(o.type)&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
  if(["bridge","flyover"].includes(o.type)){
   const startRoad=closestRoadPoint({x:o.x,z:o.z},4);
   const endRoad=closestRoadPoint(o.end,4);
   if(!startRoad||!endRoad)return "وصّل بداية الجسر ونهايته بشارعين موجودين، حتى تصعد السيارات وتنزل فعليًا";
  }
  if(!["bridge","flyover"].includes(o.type))for(const r of roadSegments()){
+  if(["mapRoad","mapAvenue"].includes(o.type)){
+   const dx=o.end.x-o.x,dz=o.end.z-o.z,ox=r.x2-r.x1,oz=r.z2-r.z1,
+     length=Math.hypot(dx,dz),otherLength=Math.hypot(ox,oz);
+   if(length>.1&&otherLength>.1){
+    const cross=Math.abs(dx*oz-dz*ox)/(length*otherLength);
+    const offset=Math.abs((r.x1-o.x)*dz-(r.z1-o.z)*dx)/length;
+    const t1=((r.x1-o.x)*dx+(r.z1-o.z)*dz)/(length*length);
+    const t2=((r.x2-o.x)*dx+(r.z2-o.z)*dz)/(length*length);
+    const overlap=Math.min(1,Math.max(t1,t2))-Math.max(0,Math.min(t1,t2));
+    if(cross<.017&&offset<.8&&overlap*length>2)
+      return "الطريق المائل موجود على المسار نفسه؛ حدد القديم وعدّله بدل تكراره";
+   }
+   continue;
+  }
   const horizontal=Math.abs(o.z-o.end.z)<.1&&Math.abs(r.z1-r.z2)<.1;
   const vertical=Math.abs(o.x-o.end.x)<.1&&Math.abs(r.x1-r.x2)<.1;
   if(horizontal&&Math.abs(o.z-r.z1)<.6){
@@ -2402,7 +2416,7 @@ function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(bui
  }if(!p){toastBuild("اختر نقطة داخل الحرم");return}
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){const nearest=closestRoadPoint(p,26);buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
- const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(p,buildStart):orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
+ const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(p,buildStart):["mapRoad","mapAvenue"].includes(buildTool)?p:orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
  if(issue){toastBuild(issue);return}recordPlannerHistory();built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 // Centralized settings: reuse existing game controls without duplicating handlers.
 function setupSettings(){
@@ -2488,7 +2502,7 @@ function addPlanItemsBatch(items){
  if(!Array.isArray(items)||!items.length)return {added:0,skipped:0};
  let added=0,skipped=0;
  for(const input of items.slice(0,80)){
-  if(!input||!["road","avenue","bridge","flyover","bridgeCircle"].includes(input.type)){skipped++;continue}
+  if(!input||!["road","avenue","mapRoad","mapAvenue","bridge","flyover","bridgeCircle"].includes(input.type)){skipped++;continue}
   const o=input.type==="bridgeCircle"?
    {type:input.type,x:snap(input.x),z:snap(input.z),rot:0}:
    {type:input.type,x:snap(input.x),z:snap(input.z),
