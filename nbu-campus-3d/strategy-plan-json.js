@@ -139,6 +139,31 @@ function createUI({host,onApprove,onNotice}){
   a.href=url;a.download="campus-roads-ai-template.json";document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
+ btn("📋 نسخ برومبت تصميم الطرق",async()=>{
+  const brief=[
+   "أنت مهندس تصميم طرق ومخططات ثلاثية الأبعاد. حلّل صورة مخطط الطرق المرفقة، ثم أعطني ملف JSON صالحًا للاستيراد في لعبة الاستراتيجية الجامعية.",
+   "المطلوب: شبكة طرق متصلة منطقيًا مع تقاطعات واضحة، وتجنّب عبور المباني أو تداخل الشوارع دون مبرر. أضف جسور صعود ونزول عند الحاجة، وجسور وصلات منحنية، وجسرًا دائريًا مع تحويلات عند الحاجة فقط.",
+   "أخرج JSON فقط دون شرح أو Markdown، بالشكل:",
+   JSON.stringify(example,null,2),
+   "استخدم المفتاح roads كمصفوفة بحد أقصى 80 عنصرًا؛ الأنواع المسموحة: road, avenue, bridge, flyover, bridgeCircle.",
+   "الشوارع road و avenue يجب أن تكون مستقيمة أفقية أو عمودية في محورَي X و Z؛ الجسور bridge و flyover تقبل الاتجاه المائل.",
+   "أطوال الطرق المستقيمة بين 10 و230 وحدة، والجسر الدائري يستخدم x و z كنقطة مركز.",
+   "إذا كانت المسافة الفعلية مجهولة فلا تدّع دقة هندسية؛ اعمل بمقياس افتراضي واضح. لا تخترع طرقًا أو مداخل غير ظاهرة في الصورة.",
+   "اجعل الإحداثيات نسبية حول المركز (0,0) حتى أستطيع وضع المخطط بمكانه وتدويره وتكبيره في اللعبة.",
+   "ضع في الاعتبار أن المطابقة للصورة تقديرية وتتطلب مراجعة المستخدم قبل اعتماد الطرق."
+  ].join("\n\n");
+  try{
+   if(!navigator.clipboard||!navigator.clipboard.writeText)throw Error("clipboard unavailable");
+   await navigator.clipboard.writeText(brief);
+   onNotice("📋 نُسخ الطلب، أرفق صورة المخطط في أداة الذكاء ثم اطلب ملف JSON");
+  }catch(e){
+   const field=document.createElement("textarea");field.value=brief;field.rows=5;
+   field.setAttribute("aria-label","انسخ برومبت تصميم الطرق");
+   field.style.cssText="width:100%;border-radius:8px;color:#102e46;background:white;padding:7px";
+   section.append(field);field.select();
+   onNotice("📋 حدد النص الظاهر وانسخه لاستخدامه مع صورة المخطط");
+  }
+ });
  btn("✅ اعتماد المخطط",()=>{
   if(!items.length)return onNotice("أضف مخططًا صالحًا أولًا");
   if(!confirm("إضافة "+items.length+" طريقًا أو جسرًا إلى المخطط الحالي؟ ستبقى الطرق القديمة دون تغيير."))return;
