@@ -1589,7 +1589,7 @@ cvs.addEventListener("pointermove",e=>{
  if(activePointers.size>=2){const gap=pointerGap();if(pinchDistance>0&&gap>0){dist=clamp(dist*pinchDistance/gap,seated?1.5:3,seated?80:65)}pinchDistance=gap;dr=null;return}
  if(!dr)return;yaw-=(e.clientX-dr.x)*.006;pit=clamp(pit+(e.clientY-dr.y)*.004,.1,1.2);dr={x:e.clientX,y:e.clientY}
 });
-cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(endPoint,start):orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{recordPlannerHistory();built.push(item);redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
+cvs.addEventListener("pointerup",e=>{if(buildMode&&mapDrag&&!strategyPan&&!pinchMoved&&activePointers.size===1){if(roadDragOrigin&&roadDragMoved&&roadDragPointer===e.pointerId){const start=roadDragOrigin,endPoint=selectGround(e);if(endPoint){const item={type:buildTool,x:start.x,z:start.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(endPoint,start):orientRoadEnd(start,endPoint)},issue=canBuild(item);if(issue)toastBuild(issue);else{recordPlannerHistory();built.push(item);redoStack=[];buildGroups.push(buildObject(item));updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم إنشاء الطريق بالسحب")}}}else if(!mapDrag.moved)placeFromPointer(e)}clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null});
 const cancelPointer=e=>{clearRoadPreview();activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=0;mapDrag=null;dr=null};
 cvs.addEventListener("pointercancel",cancelPointer);cvs.addEventListener("lostpointercapture",cancelPointer);
 cvs.addEventListener("wheel",e=>{if(buildMode){e.preventDefault();dist=clamp(dist+e.deltaY*.02,8,65)}else{e.preventDefault();dist=clamp(dist+e.deltaY*.018,3,65)}},{passive:false});
@@ -1723,6 +1723,26 @@ G.forEach((g,i)=>{const k=document.createElement("button");k.className="g";k.tex
 // ========== منشئ الحرم الجامعي: نسخة 1 — منفصل عن بيانات الحرم المرجعية ==========
 const BUILD_KEY="nbu-campus-builder-v1";const BUILD_SLOTS_KEY="nbu-campus-builder-slots-v1";
 const deletedFixedRoads=new Set(),campusBuildingPositions={},plannerUndo=[],plannerRedo=[];
+const roadJunctionLayer=new THREE.Group();roadJunctionLayer.name="Strategy Road Junctions";S.add(roadJunctionLayer);
+const roadJunctionMat=mat(0x48545d,{roughness:1});
+function updateRoadJunctions(){
+ while(roadJunctionLayer.children.length){
+  const mesh=roadJunctionLayer.children[0];roadJunctionLayer.remove(mesh);if(mesh.geometry)mesh.geometry.dispose();
+ }
+ const segments=roadSegments(),horizontal=segments.filter(r=>Math.abs(r.z1-r.z2)<.01),
+  vertical=segments.filter(r=>Math.abs(r.x1-r.x2)<.01);
+ const visited=new Set();
+ for(const h of horizontal)for(const v of vertical){
+  const x=v.x1,z=h.z1;
+  if(x<Math.min(h.x1,h.x2)-.1||x>Math.max(h.x1,h.x2)+.1
+   ||z<Math.min(v.z1,v.z2)-.1||z>Math.max(v.z1,v.z2)+.1)continue;
+  const key=Math.round(x*2)+":"+Math.round(z*2);if(visited.has(key))continue;
+  visited.add(key);
+  const width=Math.max(5,Math.min(18,Math.min(h.width,v.width)));
+  const tile=new THREE.Mesh(new THREE.BoxGeometry(width,.055,width),roadJunctionMat);
+  tile.position.set(x,.102,z);tile.receiveShadow=false;roadJunctionLayer.add(tile);
+ }
+}
 const PLAN_HISTORY_LIMIT=45;
 function footprintOfBuilding(b,x=b.x,z=b.z,rotation=b.rot||0){
  const w=rotation%2?b.d:b.w,d=rotation%2?b.w:b.d;
@@ -1749,7 +1769,7 @@ function redrawFixedRoads(){
   r.mesh.position.set((r.x1+r.x2)/2,.06,(r.z1+r.z2)/2);
   const tex=r.mesh.material.map;if(tex)tex.repeat.set(horizontal?len/8:1,horizontal?1:len/8);
  }
- refreshCustomTrafficRoutes();
+ updateRoadJunctions();refreshCustomTrafficRoutes();
 }
 function restoreFixedRoads(saved){
  deletedFixedRoads.clear();
@@ -1970,7 +1990,7 @@ function buildObject(o){
  S.add(grp);return grp;
 }
 function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[];buildLights=[]}
-function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));refreshCustomTrafficRoutes();updateBuildHud()}
+function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));updateRoadJunctions();refreshCustomTrafficRoutes();updateBuildHud()}
 function updateBuildHud(){const roads=built.filter(o=>["road","avenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
  const objectives=[roads>=2,greens>=3,buildings>=2,bridges>=1],done=objectives.filter(Boolean).length;
  $("buildHud").textContent=(creativeMode?"🎨 إنشاء حر":"💰 المتبقي: "+coins(balance()))+" | 🧱 "+built.length+" عنصر | ⭐ إنجازات "+done+"/4";
@@ -2295,7 +2315,7 @@ function placeFromPointer(e){e.preventDefault();roadPreview.visible=false;if(bui
  const d=buildDefs[buildTool];if(p.x<WORLD.buildMinX||p.x>WORLD.buildMaxX||p.z<WORLD.buildMinZ||p.z>WORLD.buildMaxZ){toastBuild("نقطة خارج مجال التخطيط");return}
  if(d.path&&!buildStart){const nearest=closestRoadPoint(p,26);buildStart=nearest?{x:nearest.x,z:nearest.z}:{x:p.x,z:p.z};updateBuildHud();toastBuild("تم تثبيت البداية على الطريق؛ اختر النهاية، وسيتم ضبط الاتجاه تلقائيًا");return}
  const item=d.path?{type:buildTool,x:buildStart.x,z:buildStart.z,end:["bridge","flyover"].includes(buildTool)?snapRoadEndpoint(p,buildStart):orientRoadEnd(buildStart,p)}:{type:buildTool,x:p.x,z:p.z,rot:buildRotation};const issue=canBuild(item);
- if(issue){toastBuild(issue);return}recordPlannerHistory();built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
+ if(issue){toastBuild(issue);return}recordPlannerHistory();built.push(item);buildStart=null;redoStack=[];buildGroups.push(buildObject(item));updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();toastBuild("✅ تم البناء: "+d.label+" ("+coins(buildMoney(item))+")")}
 // Centralized settings: reuse existing game controls without duplicating handlers.
 function setupSettings(){
  const sections={settingsModes:["modeWalk","modeDrive","modeStrategy"],settingsMap:["viewStrategy","panStrategy","placeStrategy","zoomBuildIn","zoomBuildOut","panNorth","panSouth","panWest","panEast"],settingsDisplay:["tour","run","trafficToggle","nightToggle","missionsToggle","home"],settingsActions:["builderToggle","creativeBtn","exportBuild","importBuild","resetBuild","maps"]};
@@ -2373,7 +2393,7 @@ function addRoadFromBlueprint(a,b){
  const item={type:"road",x:p.x,z:p.z,end:q};
  if(canBuild(item))return false;
  recordPlannerHistory();built.push(item);buildGroups.push(buildObject(item));
- refreshCustomTrafficRoutes();storeBuild();updateBuildHud();return true;
+ updateRoadJunctions();refreshCustomTrafficRoutes();storeBuild();updateBuildHud();return true;
 }
 function setupBlueprintImport(){
  if(typeof window.CampusBlueprintImport!=="function")return;
@@ -2555,7 +2575,7 @@ if(buildMode){cam.up.set(0,0,-1);const h=Math.max(120,dist*15),cz=strategyCenter
   else if(stadiumViewMode==="first"){cam.position.copy(eye);cam.lookAt(eye.clone().add(direction))}
   else{cam.position.copy(eye).addScaledVector(direction,-dist);cam.lookAt(eye.clone().addScaledVector(direction,15))}
  }
-}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,p.y+1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,p.y+1.5,p.z)}
+}else if(topView&&!inside){cam.up.set(0,0,-1);cam.position.set(p.x,Math.max(210,dist*15),p.z+.001);cam.lookAt(p.x,0,p.z)}else if(carMode&&!inside){cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*18,car.position.y+4.1+Math.sin(pit)*10,p.z+Math.cos(yaw)*Math.cos(pit)*18);cam.lookAt(p.x,car.position.y+1.8,p.z)}else{cam.up.set(0,1,0);cam.position.set(p.x+Math.sin(yaw)*Math.cos(pit)*dist,p.y+1.6+Math.sin(pit)*dist,p.z+Math.cos(yaw)*Math.cos(pit)*dist);cam.lookAt(p.x,p.y+1.5,p.z)}
 near=null;let best=14;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n)||!b.door)return;const d=Math.hypot(p.x-b.door.x,p.z-b.door.z);if(d<best){best=d;near=b}});
 if(!inside&&!near&&(Math.hypot(p.x-ST.x,p.z-(ST.z-132))<58||Math.hypot(p.x-(ST.x+110),p.z-ST.z)<30||Math.hypot(p.x-(ST.x-110),p.z-ST.z)<30))near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
