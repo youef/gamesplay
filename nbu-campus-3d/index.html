@@ -2245,6 +2245,27 @@ function plannerRotateSelected(){
  }
  storeBuild();refreshPlannerEditor();toastBuild("↻ تم تدوير العنصر");
 }
+
+function plannerSetRoadEndpoints(sel,coords){
+ if(!sel||!coords||!coords.every(Number.isFinite))return "اختر طريقًا وأدخل إحداثيات صحيحة";
+ const [x1,z1,x2,z2]=coords.map(snap);
+ if(sel.kind==="road"){
+  const r=campusRoads[sel.id];if(!r)return "الطريق غير موجود";
+  const proposed={x1,z1,x2,z2,width:r.width};
+  const issue=plannerRoadValid(proposed,r.id);if(issue)return issue;
+  recordPlannerHistory();Object.assign(r,proposed);redrawFixedRoads();
+ }else if(sel.kind==="built"){
+  const r=built[sel.index];if(!r||!buildDefs[r.type]?.path)return "حدد طريقًا أو جسرًا تم بناؤه";
+  const proposed={...r,x:x1,z:z1,end:{x:x2,z:z2}};
+  built.splice(sel.index,1);
+  const issue=canBuild(proposed);
+  built.splice(sel.index,0,r);
+  if(issue)return issue;
+  recordPlannerHistory();built[sel.index]=proposed;redrawBuild();
+ }else return "تغيير نقاط الطرق متاح للشوارع والجسور فقط";
+ storeBuild();refreshPlannerEditor();return null;
+}
+
 function refreshPlannerEditor(){
  if(!editInfo)return;
  updatePlannerMarker();
@@ -2258,6 +2279,18 @@ function refreshPlannerEditor(){
  for(const b of B)editList.append(option("building:"+b.n,"🏢 "+b.n+(removedCampusBuildings.has(b.n)?" (محذوف)":"")));
  built.forEach((o,i)=>editList.append(option("built:"+i,(buildDefs[o.type]?.label||o.type)+" #"+(i+1))));
  editList.value=current?(current.kind==="road"?"road:"+current.id:current.kind==="building"?"building:"+current.name:"built:"+current.index):"";
+ const road=current?.kind==="road"?campusRoads[current.id]:
+   current?.kind==="built"?built[current.index]:null;
+ const props=document.getElementById("planner-road-endpoints");
+ if(props){props.hidden=!(road&&(current.kind==="road"||road.end));
+  if(road){const points=road.end?[road.x,road.z,road.end.x,road.end.z]:[road.x1,road.z1,road.x2,road.z2];
+   for(const [i,value] of points.entries()){
+    const input=document.getElementById("planner-coordinate-"+i);if(input)input.value=String(value);
+   }
+  }}
+ const roadWidth=document.getElementById("planner-road-width");
+ if(roadWidth)roadWidth.value=current?.kind==="road"?String(road.width):"";
+
 }
 function setupPlannerEditor(){
  const host=document.createElement("section");host.dir="rtl";
@@ -2302,7 +2335,7 @@ function setupPlannerEditor(){
  control("↶ تراجع",planningUndo);
  control("↷ إعادة",planningRedo);
  const roadW=document.createElement("label");roadW.textContent="عرض الطريق المحدد (4-28 متر): ";
- const input=document.createElement("input");input.type="number";input.min="4";input.max="28";input.step="1";
+ const input=document.createElement("input");input.id="planner-road-width";input.type="number";input.min="4";input.max="28";input.step="1";
  input.placeholder="مثلاً 10";input.style.cssText="width:65px;padding:7px;border-radius:7px;color:#153043";
  roadW.append(input);host.append(controls,roadW);
  const restoreAll=document.createElement("button");
@@ -2323,6 +2356,32 @@ function setupPlannerEditor(){
   recordPlannerHistory();road.width=width;redrawFixedRoads();storeBuild();
   toastBuild("✅ تم تحديث عرض الطريق");
  });
+
+ const endForm=document.createElement("section");endForm.id="planner-road-endpoints";
+ endForm.style.cssText="display:grid;gap:7px;background:#1b4a5d;padding:9px;border-radius:9px;border:1px solid #6da8ba";
+ const endTitle=document.createElement("strong");endTitle.textContent="✏️ تعديل بداية ونهاية الطريق";endForm.append(endTitle);
+ const endGrid=document.createElement("div");endGrid.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:6px";
+ const coordinates=[];
+ for(const [i,label] of ["بداية X","بداية Z","نهاية X","نهاية Z"].entries()){
+  const item=document.createElement("label");item.textContent=label;
+  item.style.cssText="display:grid;gap:4px;font:600 11px Tajawal,Tahoma";
+  const field=document.createElement("input");field.type="number";field.step="5";
+  field.id="planner-coordinate-"+i;field.placeholder="0";
+  field.style.cssText="width:100%;min-width:0;padding:7px;border-radius:7px;border:0;background:#e8f4f6;color:#123145";
+  item.append(field);endGrid.append(item);coordinates.push(field);
+ }
+ endForm.append(endGrid);
+ const applyEnds=document.createElement("button");applyEnds.type="button";
+ applyEnds.textContent="✅ تطبيق إحداثيات الطريق";
+ applyEnds.style.cssText="padding:10px;border-radius:8px;border:1px solid #c1e0e4;background:#117b71;color:#fff;font:700 12px Tajawal,Tahoma";
+ applyEnds.onclick=()=>{
+  if(coordinates.some(input=>input.value.trim()===""))return toastBuild("أدخل إحداثيات البداية والنهاية الأربعة");
+  const values=coordinates.map(input=>Number(input.value));
+  const issue=plannerSetRoadEndpoints(selectedEdit,values);
+  toastBuild(issue||"✅ تم تعديل مسار الطريق وحفظ التخطيط");
+ };
+ endForm.append(applyEnds);
+ host.append(endForm);
  const caution=document.createElement("p");caution.style.cssText="margin:0;opacity:.75;font:500 11px Tajawal,Tahoma;line-height:1.5";
  caution.textContent="تعديلات التخطيط محلية على هذا الجهاز، ويمكن حفظ مخططات متعددة أو تصدير نسخة JSON.";
  host.append(caution);$("buildDock").append(host);
