@@ -66,7 +66,7 @@ test('collinear overlapping segments join at existing endpoints',()=>{
 });
 test('strategy view and NPC routing are wired into the campus game',()=>{
  assert.match(index,/script src="\.\/strategy-road-network\.js\?v=/);
- assert.match(index,/CampusRoadNetwork\.build\(roadSegments\(\),11\)/);
+ assert.match(index,/CampusRoadNetwork\.build\(roadSegments\(\),11,bridgeObjects\)/);
  assert.match(index,/agent\.mesh\.visible=false/);
  assert.match(index,/for\(const a of agents\)if\(a\.mesh\.visible!==false\)moveAgent\(a,dt\)/);
  assert.match(index,/for\(const r of roadSegments\(\)\)\{/);
