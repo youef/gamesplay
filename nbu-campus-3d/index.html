@@ -1070,8 +1070,22 @@ function updateStadium(t,dt){
   let tx=a.baseX+Math.sin(p*.45)*2,tz=a.baseZ+Math.cos(p*.36)*2;
   if(i===m.possessor){tz+=sign*Math.min(20,m.elapsed%18);tx+=Math.sin(p)*2}
   else if(a.role!=="goalkeeper"){
+   const holder=stadiumActors[m.possessor],attackTeam=holder?holder.team:(m.ballZ>=0?0:1);
    const chase=Math.hypot(a.g.position.x-ST.x-m.ballX,a.g.position.z-ST.z-m.ballZ);
-   if(a.team!==(stadiumActors[m.possessor]||a).team&&chase<19){tx=ST.x+m.ballX;tz=ST.z+m.ballZ}
+   if(a.team!==attackTeam){
+    const nearest=stadiumActors.map((v,k)=>({v,k,d:Math.hypot(v.g.position.x-ST.x-m.ballX,v.g.position.z-ST.z-m.ballZ)}))
+      .filter(v=>v.v.team===a.team&&v.v.role!=="goalkeeper").sort((u,v)=>u.d-v.d);
+    if(nearest.slice(0,2).some(v=>v.k===i)&&chase<28){
+     tx=ST.x+m.ballX+(i%2?1.8:-1.8);tz=ST.z+m.ballZ+(a.team===0?-1.8:1.8);
+    }else{
+     tx=a.baseX+Math.max(-6,Math.min(6,m.ballX*.12));
+     tz=a.baseZ+Math.max(-12,Math.min(12,m.ballZ*.18));
+    }
+   }else{
+    // Attacking teammates spread into passing lanes instead of all chasing the ball.
+    tx=a.baseX+Math.max(-8,Math.min(8,m.ballX*.16))+(i%2?2:-2);
+    tz=a.baseZ+Math.max(-15,Math.min(15,m.ballZ*.24));
+   }
   }else{tx=ST.x+Math.max(-3.1,Math.min(3.1,m.ballX*.5));tz=a.baseZ+(Math.abs(m.ballZ)>30?(a.team===0?2:-2):0)}
   tx=Math.max(ST.x-32,Math.min(ST.x+32,tx));tz=Math.max(ST.z-49,Math.min(ST.z+49,tz));
   const dx=tx-a.g.position.x,dz=tz-a.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(a.role==="goalkeeper"?3:5.8));
