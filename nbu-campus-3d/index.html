@@ -1839,7 +1839,7 @@ function previewRoad(a,b){
  const end=["bridge","flyover"].includes(buildTool)?b:orientRoadEnd(a,b),length=Math.hypot(end.x-a.x,end.z-a.z);
  if(length<2){roadPreview.visible=false;return}
  const candidate={type:buildTool,x:a.x,z:a.z,end};
- roadPreview.visible=true;roadPreview.position.set((a.x+end.x)/2,buildTool==="bridge"?5.7:.38,(a.z+end.z)/2);
+ roadPreview.visible=true;roadPreview.position.set((a.x+end.x)/2,["bridge","flyover"].includes(buildTool)?5.7:.38,(a.z+end.z)/2);
  roadPreview.rotation.y=Math.atan2(end.x-a.x,end.z-a.z);
  roadPreview.scale.set(buildDefs[buildTool].width,1,length);
  roadPreview.material.color.setHex(length>=10&&!canBuild(candidate)?0x23e0a5:0xff6c5e);
@@ -2058,7 +2058,12 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
  if(d.path){
  if(!o.end||!Number.isFinite(o.end.x)||!Number.isFinite(o.end.z))return "اختر نقطة نهاية صحيحة";
  const len=Math.hypot(o.end.x-o.x,o.end.z-o.z);if(len<10)return "طول الطريق/الجسر قصير";if(len>230)return "الطول الأقصى للمسار 230 مترًا افتراضيًا";if(!["bridge","flyover"].includes(o.type)&&Math.abs(o.x-o.end.x)>.1&&Math.abs(o.z-o.end.z)>.1)return "الطريق يجب أن يتبع محورًا واضحًا دون انعكاس";
- if(o.type!=="bridge")for(const r of roadSegments()){
+ if(["bridge","flyover"].includes(o.type)){
+  const startRoad=closestRoadPoint({x:o.x,z:o.z},4);
+  const endRoad=closestRoadPoint(o.end,4);
+  if(!startRoad||!endRoad)return "وصّل بداية الجسر ونهايته بشارعين موجودين، حتى تصعد السيارات وتنزل فعليًا";
+ }
+ if(!["bridge","flyover"].includes(o.type))for(const r of roadSegments()){
   const horizontal=Math.abs(o.z-o.end.z)<.1&&Math.abs(r.z1-r.z2)<.1;
   const vertical=Math.abs(o.x-o.end.x)<.1&&Math.abs(r.x1-r.x2)<.1;
   if(horizontal&&Math.abs(o.z-r.z1)<.6){
@@ -2075,7 +2080,15 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
    if(Math.abs(x-ST.x)<ST.precinct.halfW+d.width/2&&z+d.width/2>ST.z-ST.precinct.north&&z-d.width/2<ST.z+ST.precinct.south)return "المسار يتداخل مع المنطقة الرياضية";
    for(const b of built){const bd=buildDefs[b.type];if(bd.path)continue;const w=b.rot%2?bd.d:bd.w,q=b.rot%2?bd.w:bd.d;if(Math.abs(x-b.x)<w/2+d.width/2&&Math.abs(z-b.z)<q/2+d.width/2)return "المسار يتداخل مع مبنى أضفته"}
   }
- }else{const w=o.rot%2?d.d:d.w,q=o.rot%2?d.w:d.d;if(footprintBlocked(o.x,o.z,w,q))return "المكان مشغول أو خارج السور"}
+ }else{
+  if(o.type==="bridgeCircle"){
+   const activeDirections=[[71,0],[-71,0],[0,71],[0,-71]];
+   const connections=activeDirections.filter(([dx,dz])=>closestRoadPoint({x:o.x+dx,z:o.z+dz},4)).length;
+   if(connections<2)return "الجسر الدائري يحتاج طريقين موجودين على الأقل عند نهايات التحويلات الأربع";
+  }
+  const w=o.rot%2?d.d:d.w,q=o.rot%2?d.w:d.d;
+  if(footprintBlocked(o.x,o.z,w,q))return "المكان مشغول أو خارج السور"
+ }
  if(!creativeMode&&buildMoney(o)>balance())return "الميزانية غير كافية — فعّل وضع الإنشاء الحر من أدوات البناء";
  return null;
 }
