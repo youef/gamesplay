@@ -17,7 +17,7 @@ test('iPhone portrait full-map button fits all original campus terrain',()=>{
  const visibleWidth=2*result.height*tangent*viewport.w/viewport.h;
  const visibleDepth=2*result.height*tangent;
  assert.ok(result.height>1700,'must zoom out well beyond the old 975 unit camera limit');
- assert.ok(result.height<8000,'fit height must be within the expanded camera far clip');
+ assert.ok(result.height<24000,'fit height must be within the expanded camera far clip');
  assert.ok(visibleWidth>world.maxX-world.minX+140,'full horizontal world should fit');
  assert.ok(visibleDepth>world.maxZ-world.minZ+140,'full vertical world should fit');
  assert.equal(result.x,0);assert.equal(result.z,-75);
@@ -61,8 +61,8 @@ test('in-game strategy uses the accessible map and can erase original roads and 
  assert.match(html,/strategyPanPixels\(dx,dy\)/);
  assert.match(html,/strategyZoomRatio\(pinchDistance\/gap\)/);
  assert.match(html,/strategyCamera\?\.gestureMidpoint/);
- assert.match(html,/const cam=new THREE\.PerspectiveCamera\(60,1,\.5,8000\)/);
- assert.match(html,/S\.fog\.far=buildMode\?Math\.max\(1350,strategyHeight\*5\):620/);
+ assert.match(html,/const cam=new THREE\.PerspectiveCamera\(60,1,\.5,24000\)/);
+ assert.match(html,/S\.fog\.far=buildMode\?Math\.max\(1350,strategyHeight\*5\):atmosphere\.weather/);
  assert.match(html,/function plannerDelete\(sel\)/);
  assert.match(html,/deletedFixedRoads\.add\(r\.id\)/);
  assert.match(html,/removedCampusBuildings\.add\(b\.n\)/);

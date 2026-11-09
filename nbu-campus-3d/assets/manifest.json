@@ -1,0 +1,35 @@
+{
+  "title": "آفاق الشمال",
+  "world_metres": [
+    6000,
+    6000
+  ],
+  "area_km2": 36,
+  "destinations": 11,
+  "characters": [
+    "fawaz",
+    "zyad",
+    "noura"
+  ],
+  "original_character_formats": [
+    "PNG",
+    "SVG",
+    "glTF 2.0 + BIN (Walk animation)"
+  ],
+  "PBR_materials": [
+    "limestone",
+    "pavers",
+    "stucco",
+    "brick",
+    "wood",
+    "asphalt",
+    "pool",
+    "roof"
+  ],
+  "PBR_maps": [
+    "color",
+    "normal",
+    "roughness"
+  ],
+  "original_source": "https://github.com/youef/gamesplay/tree/main/nbu-campus-3d"
+}

@@ -1,7 +1,7 @@
 /* Pure sizing / gesture math for a touch-friendly strategic campus camera. */
 (function(){
 "use strict";
-const MIN_HEIGHT=75,MAX_HEIGHT=6200;
+const MIN_HEIGHT=75,MAX_HEIGHT=16000;
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 function fit(world,width,height,fovDegrees=60,padding=90){
  if(!world||![world.minX,world.maxX,world.minZ,world.maxZ].every(Number.isFinite))
