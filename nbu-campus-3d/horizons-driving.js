@@ -5,6 +5,7 @@
   datsun:{name:'ددسن غمارة',badge:'CLASSIC 720',detail:'حوض مفتوح · انزلاق أسهل',paint:'#e6d6b9',speed:38,acceleration:28,grip:5.7,turn:1.13,slide:.81,track:1.56,wheelbase:1.97},
   hilux:{name:'تويوتا هايلكس',badge:'DOUBLE CAB',detail:'غمارتان · تماسك أقوى',paint:'#dddce2',speed:43,acceleration:33,grip:8.2,turn:.97,slide:.63,track:1.66,wheelbase:2.08},
   horizon:{name:'أفق 4×4',badge:'EXPEDITION',detail:'دفع رباعي · تسارع قوي',paint:'#bf4f3e',speed:39,acceleration:31,grip:7.2,turn:1,slide:.72,track:1.74,wheelbase:2.03},
+  lexus:{name:'لكزس LX',badge:'LX · LUXURY',detail:'دفع رباعي · قيادة ثابتة',paint:'#abb9c6',speed:49,acceleration:36,grip:9.1,turn:.95,slide:.53,track:1.73,wheelbase:2.15},
  };
  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
  const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
@@ -29,12 +30,20 @@
   return {speed,heading,course,slip,drifting,dx:Math.sin(course)*distance,dz:Math.cos(course)*distance};
  }
 
- function model(T,id,environment){
-  const spec=fleet[id],truck=id!=='horizon',classic=id==='datsun';
+ const bevels=new WeakMap();
+ function bevelGeometry(T){
+  if(bevels.has(T))return bevels.get(T);
+  const shape=new T.Shape();shape.moveTo(-.49,-.39);shape.lineTo(-.36,-.49);shape.lineTo(.36,-.49);
+  shape.lineTo(.49,-.39);shape.lineTo(.49,.34);shape.lineTo(.36,.49);shape.lineTo(-.36,.49);shape.lineTo(-.49,.34);shape.closePath();
+  const geometry=new T.ExtrudeGeometry(shape,{depth:.87,bevelEnabled:true,bevelThickness:.065,bevelSize:.028,bevelSegments:2,steps:1});
+  geometry.translate(0,0,-.435);geometry.computeVertexNormals();bevels.set(T,geometry);return geometry;
+ }
+ function model(T,id,environment,{traffic=false}={}){
+  const spec=fleet[id],classic=id==='datsun',lexus=id==='lexus',truck=classic||id==='hilux';
   const root=new T.Group(),body=new T.Group(),wheels=[],kit=[];
   root.name=id;root.add(body);
   const metal=(color,metalness=.3,roughness=.45)=>new T.MeshStandardMaterial({color,metalness,roughness});
-  const paint=metal(spec.paint,.45,.31),trim=metal(0x233039),dark=metal(0x181c21,.16,.82);
+  const paint=metal(spec.paint,.5,lexus?.23:.31),trim=metal(0x233039),dark=metal(0x181c21,.16,.82);
   const chrome=metal(classic?0xc4c3b6:0xa1adad,.83,.24),tire=metal(0x171b1d,0,.96);
   const glass=metal(0x365361,.48,.18);
   if(environment){glass.envMap=environment;paint.envMap=environment;paint.envMapIntensity=.65;}
@@ -45,19 +54,23 @@
   const cube=new T.BoxGeometry(1,1,1);
   function box(w,h,d,m,x,y,z,parent=body){
    const mesh=new T.Mesh(cube,m);mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
-   mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;
+   mesh.castShadow=!traffic;mesh.receiveShadow=true;parent.add(mesh);return mesh;
   }
-  const width=classic?2.95:id==='hilux'?3.2:3.3,length=classic?6.05:6.38;
+  function shell(w,h,d,m,x,y,z){
+   const mesh=new T.Mesh(bevelGeometry(T),m);mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
+   mesh.castShadow=!traffic;mesh.receiveShadow=true;body.add(mesh);return mesh;
+  }
+  const width=classic?2.95:lexus?3.41:id==='hilux'?3.2:3.3,length=classic?6.05:lexus?6.65:6.38;
   box(width-.32,.48,length-.3,trim,0,.76,0);
-  box(width,.65,length,paint,0,1.14,0);
-  box(width-.06,.34,1.62,paint,0,1.62,2.13);
-  box(width-.3,.06,1.22,paint,0,1.82,2.12);
-  const cabZ=truck?(classic?.59:.46):-.56,cabDepth=classic?1.95:truck?2.83:3.29;
+  shell(width,.65,length,paint,0,1.14,0);
+  shell(width-.12,.34,1.62,paint,0,1.62,2.13);
+  shell(width-.39,.067,1.22,paint,0,1.82,2.12);
+  const cabZ=truck?(classic?.59:.46):-.56,cabDepth=classic?1.95:truck?2.83:lexus?3.66:3.29;
   box(width-.16,.39,cabDepth,paint,0,1.65,cabZ);
   const halfCab=cabDepth/2;
   const front=box(width-.27,.8,.12,glass,0,2.23,cabZ+halfCab-.06);front.rotation.x=-.25;
   const back=box(width-.35,.65,.12,glass,0,2.23,cabZ-halfCab+.09);back.rotation.x=.13;
-  box(width-.07,.15,cabDepth-.09,paint,0,2.69,cabZ-.08);
+  shell(width-.16,.17,cabDepth-.09,paint,0,2.69,cabZ-.08);
   const bedBack=-length/2,bedFront=cabZ-halfCab;
   for(const side of [-1,1]){
    const edge=side*width/2;
@@ -70,7 +83,7 @@
    }
    box(.3,.11,.15,trim,edge+side*.11,2.08,cabZ+halfCab-.3);
    box(.17,.23,.37,chrome,edge+side*.25,2.12,cabZ+halfCab-.29);
-   box(.035,.09,length-.3,amber,edge+side*.014,1.36,0);
+   box(.035,.09,length-.3,lexus?chrome:amber,edge+side*.039,1.36,0);
    if(classic)box(.03,.048,length-.35,amber,edge+side*.016,1.23,0);
    for(const z of [-spec.wheelbase,spec.wheelbase]){
     box(.16,.13,1.65,trim,edge,1.43,z);
@@ -81,7 +94,12 @@
     box(.19,.48,bedLength,paint,edge-side*.08,1.67,(bedFront+bedBack)/2);
     box(.23,.068,bedLength,dark,edge-side*.08,1.93,(bedFront+bedBack)/2);
    }
-   box(classic?.59:.68,classic?.32:.36,.13,lamp,side*(width/2-.43),1.58,length/2+.013);
+   if(lexus){
+    box(.83,.19,.14,trim,side*1.23,1.68,length/2+.027);
+    for(let i=0;i<3;i++)box(.138,.107,.135,lamp,side*(.92+i*.22),1.68,length/2+.101);
+    const drl=box(.7,.045,.13,lamp,side*1.26,1.56,length/2+.118);drl.rotation.z=-side*.13;
+    box(.043,.19,.13,lamp,side*1.59,1.64,length/2+.122);
+   }else box(classic?.59:.68,classic?.32:.36,.13,lamp,side*(width/2-.43),1.58,length/2+.013);
    box(.25,.13,.12,marker,side*(width/2-.31),1.31,length/2+.025);
    box(classic?.36:.3,classic?.36:.49,.1,rear,side*(width/2-.25),1.52,-length/2-.06);
    box(.2,.082,.11,lamp,side*(width/2-.25),1.38,-length/2-.11);
@@ -92,10 +110,22 @@
    box(width-.12,.48,.16,paint,0,1.66,bedBack+.06);
    box(width-.34,.11,.03,amber,0,1.65,bedBack-.04);
    box(.46,.083,.06,chrome,0,1.78,bedBack-.07);
-  }else box(width-.2,1.02,1.35,paint,0,1.78,-2.36);
-  box(width-.99,.38,.14,trim,0,1.59,length/2+.018);
-  for(let i=0;i<(classic?4:3);i++)box(width-1.12,.028,.064,chrome,0,1.44+i*.095,length/2+.11);
-  box(.23,.16,.06,chrome,0,1.61,length/2+.15);
+  }else{
+   shell(width-.29,1.02,1.37,paint,0,1.78,-2.37);
+   const hatch=box(width-.45,.59,.12,glass,0,2.2,-3.015);hatch.rotation.x=.25;
+   if(lexus){box(width-.18,.07,.14,rear,0,1.66,-length/2-.13);box(.88,.03,.05,chrome,0,1.78,-length/2-.11);}
+  }
+  if(lexus){
+   const shape=new T.Shape();shape.moveTo(-.9,1.78);shape.lineTo(.9,1.78);shape.lineTo(.77,1.49);
+   shape.lineTo(1.04,.97);shape.lineTo(-1.04,.97);shape.lineTo(-.77,1.49);shape.closePath();
+   const grille=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.08,bevelEnabled:true,bevelThickness:.018,bevelSize:.026,bevelSegments:1}),trim);
+   grille.name='LX spindle grille';grille.position.z=length/2+.079;body.add(grille);
+   for(let i=0;i<7;i++)box(i<4?1.89-i*.1:1.55+(i-4)*.075,.043,.1,chrome,0,1.034+i*.11,length/2+.185);
+  }else{
+   box(width-.99,.38,.14,trim,0,1.59,length/2+.018);
+   for(let i=0;i<(classic?4:3);i++)box(width-1.12,.028,.064,chrome,0,1.44+i*.095,length/2+.11);
+  }
+  box(.23,.16,.06,chrome,0,1.61,length/2+(lexus?.25:.15));
   box(width+.09,.22,.29,classic?chrome:trim,0,1.005,length/2+.11);
   box(width+.03,.19,.28,chrome,0,.99,-length/2-.13);
   const plate=metal(0xe7dfc8,.16,.55);
@@ -106,11 +136,11 @@
   for(const side of [-1,1])for(const axle of [-1,1]){
    const pivot=new T.Group(),spin=new T.Group();pivot.position.set(side*spec.track,radius,axle*spec.wheelbase);root.add(pivot);pivot.add(spin);
    for(const [r,w,m] of [[radius,tireDepth,tire],[radius*.61,tireDepth+.026,chrome],[radius*.31,tireDepth+.056,trim]]){
-    const wheel=new T.Mesh(new T.CylinderGeometry(r,r,w,20),m);wheel.rotation.z=Math.PI/2;wheel.castShadow=true;spin.add(wheel);
+    const wheel=new T.Mesh(new T.CylinderGeometry(r,r,w,traffic?12:24),m);wheel.rotation.z=Math.PI/2;wheel.castShadow=!traffic;spin.add(wheel);
    }
-   for(let i=0;i<8;i++){
-    const a=i*Math.PI/4;
-    box(.035,.1,.1,chrome,side*(tireDepth/2+.027),Math.cos(a)*radius*.42,Math.sin(a)*radius*.42,spin);
+   for(let i=0;i<(traffic?0:10);i++){
+    const a=i*Math.PI/5;
+    const spoke=box(.043,.27,.073,chrome,side*(tireDepth/2+.027),Math.cos(a)*radius*.43,Math.sin(a)*radius*.43,spin);spoke.rotation.x=a;
    }
    const ring=new T.Mesh(new T.TorusGeometry(radius*.68,.03,6,18),blue);
    ring.rotation.y=Math.PI/2;ring.position.x=side*(tireDepth/2+.04);spin.add(ring);kit.push({mesh:ring,rank:1});
@@ -130,7 +160,9 @@
   flame.rotation.x=-Math.PI/2;flame.position.set(.94,.71,-length/2-.58);flame.visible=false;root.add(flame);
   const shadow=new T.Mesh(new T.PlaneGeometry(width+1.1,length+.7),new T.MeshBasicMaterial({color:0x122221,transparent:true,opacity:.16,depthWrite:false}));
   shadow.rotation.x=-Math.PI/2;shadow.position.y=.031;root.add(shadow);
-  return {root,body,wheels,paint,rear,flame,setKit(rank){for(const part of kit)part.mesh.visible=rank>=part.rank;}};
+  const setKit=rank=>{for(const part of kit)part.mesh.visible=rank>=part.rank;};
+  setKit(0);
+  return {root,body,wheels,paint,rear,flame,setKit};
  }
 
  function trails(T,scene){

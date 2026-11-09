@@ -14,7 +14,10 @@
   {id:'social',name:'ساحة النخيل',tag:'مقاهٍ ومحلات ونافورة وممرات',x:1407,z:350,color:'#8dbeb2',icon:'♧'},
   {id:'hotel',name:'فندق الأفق',tag:'بهو ومسبح على السطح وألعاب نارية',x:-1400,z:-2040,color:'#c7aa82',icon:'▥'},
   {id:'circuit',yaw:0,name:'حلبة الأفق والمرآب',tag:'سباق وتفحيط واختيار المركبة',x:1050,z:2170,color:'#72bed6',icon:'ϟ'},
-  {id:'training',name:'ميدان التدريب',tag:'جرّب حركة الشخصية والتصويب',x:1840,z:520,color:'#d79871',icon:'◎'}
+  {id:'training',name:'ميدان التدريب',tag:'جرّب حركة الشخصية والتصويب',x:1840,z:520,color:'#d79871',icon:'◎'},
+  {id:'stadium',yaw:Math.PI,name:'ملعب الجامعة',tag:'ساحة الجماهير والممرات والمدرجات',x:365,z:-133,color:'#d3ac57',icon:'⚽'},
+  {id:'meet',yaw:0,name:'ملتقى التفحيط',tag:'جمهور ومعرض سيارات وعروض انزلاق',x:970,z:2045,color:'#d99a72',icon:'≋'},
+  {id:'spring',yaw:0,name:'ربيع الشمال',tag:'بحيرة ومرج ومخيمات على الماء',x:-1810,z:1904,color:'#80a670',icon:'❀'}
  ];
  function random(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
  function createWorld({THREE:T,scene,renderer}){
@@ -59,6 +62,13 @@
     }
    }
    counts.roads=roads.length;
+   for(const [l,n,r,s] of Roads.sidewalkTiles(roads)){
+    const horizontal=r-l>s-n,length=horizontal?r-l:s-n;
+    for(let start=0;start<length;start+=130){
+     const span=Math.min(130,length-start),mid=start+span/2;
+     box('walk',horizontal?l+mid:(l+r)/2,.101,horizontal?(n+s)/2:n+mid,horizontal?span:r-l,.14,horizontal?s-n:span);
+    }
+   }
   }
   function addAccess(x,z,roadX,roadZ,width=5){
    if(x===roadX&&z===roadZ)return;
@@ -124,7 +134,7 @@
   for(let r=0;r<5;r++)for(let c=0;c<8;c++){const x=-480+c*135,z=1740+r*100;if(Math.abs(x)<85)continue;building(x,z,30,28,7+rng()*8,c%3===0?1:0);addAccess(x,z+14,x,z+50);tree(x+30,z+10,1);for(const side of [-1,1])box('grass',x+side*15,.012,z+30,23,.05,20);}
   pavilion(100,2230);addAccess(100,2247,100,2290,8);sign('ضاحية الروابي',0,2310);
   // Scrubland, dunes and a tree-lined travel network. Seeds keep reloads stable.
-  for(let i=0;i<1900;i++){const x=(rng()-.5)*5700,z=(rng()-.5)*5700;if(Math.abs(x)<760&&z>-720&&z<650)continue;if((x>1000&&x<1980&&z>20&&z<650)||(x>-1850&&x<-950&&z>-2420&&z<-1700)||(x>900&&x<2100&&z>1800&&z<2400))continue;if(isRoad(x,z,10)||blocked(x,z,6))continue;tree(x,z,.6+rng()*.9,i%4===0);}
+  for(let i=0;i<1900;i++){const x=(rng()-.5)*5700,z=(rng()-.5)*5700;if(Math.abs(x)<760&&z>-720&&z<650)continue;if((x>1000&&x<1980&&z>20&&z<650)||(x>-1850&&x<-950&&z>-2420&&z<-1700)||(x>870&&x<2100&&z>1800&&z<2400)||(x>-2075&&x<-1700&&z>1620&&z<1955))continue;if(isRoad(x,z,10)||blocked(x,z,6))continue;tree(x,z,.6+rng()*.9,i%4===0);}
   for(let i=0;i<90;i++){
    const a=rng()*Math.PI*2,r=2650+rng()*160,x=Math.sin(a)*r,z=Math.cos(a)*r,h=20+rng()*55;
    const sx=70+rng()*60,sz=60+rng()*50,angle=rng()*6,margin=Math.max(sx,sz)*2+12;

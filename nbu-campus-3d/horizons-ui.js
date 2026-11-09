@@ -32,7 +32,7 @@
    </section>
    <section id="hz-intro" class="hz-overlay" role="dialog" aria-modal="true" aria-label="مرحبًا بك في آفاق الشمال">
     <div class="hz-welcome"><div class="hz-eyebrow">A WORLD BEYOND THE CAMPUS</div><h1>آفاق<br> <em>الشمال.</em></h1>
-     <p>خارج حدود الحرم، تبدأ الحكاية.<br>تجوّل في ساحة النخيل، قد مركبتك في الحلبة، وشاهد الأفق من سطح الفندق.</p>
+     <p>خارج حدود الحرم، تبدأ الحكاية.<br>ادخل ملعب الجامعة، قابل السائقين في ملتقى التفحيط، وخذ استراحة عند بحيرة ربيع الشمال.</p>
      <div class="hz-stats"><div><strong>36</strong><small>كيلومترًا مربعًا</small></div><div><strong>${world.destinations.length}</strong><small>وجهات للاستكشاف</small></div><div><strong>03</strong><small>شخصيات قابلة للعب</small></div></div>
      <button id="hz-start" class="hz-start">ابدأ رحلتك <span aria-hidden="true">←</span></button>
      <p class="hz-footnote">عالم تخيّلي مستوحى من الشمال · يدعم اللمس ولوحة المفاتيح</p>
@@ -69,6 +69,8 @@
    for(let p=-3000;p<=3000;p+=grid){line(p,-3000,p,3000,'#b4a78950',1);line(-3000,p,3000,p,'#b4a78950',1);}
    g.fillStyle='#b4c4a1';g.beginPath();g.ellipse(px(-1250),pz(1200),285*scale,235*scale,0,0,Math.PI*2);g.fill();
    g.fillStyle='#78a8ad';g.beginPath();g.ellipse(px(-1250),pz(1200),150*scale,100*scale,0,0,Math.PI*2);g.fill();
+   g.fillStyle='#9cb587';g.beginPath();g.ellipse(px(-1890),pz(1789),156*scale,111*scale,0,0,Math.PI*2);g.fill();
+   g.fillStyle='#78a8ad';g.beginPath();g.ellipse(px(-1910),pz(1758),76*scale,53*scale,0,0,Math.PI*2);g.fill();
    g.fillStyle='#c1af95';g.fillRect(px(-200),pz(-200),400*scale,400*scale);
    g.fillStyle='#96ab85';g.fillRect(px(287),pz(-26),156*scale,132*scale);
    if(campus)for(const b of api.campusBuildings?.()||[]){
@@ -88,7 +90,8 @@
    g.textAlign='center';g.font='bold 14px Tahoma';
    for(const d of marks){
     g.fillStyle='#244e43';g.beginPath();g.arc(px(d.x),pz(d.z),5.5,0,Math.PI*2);g.fill();g.strokeStyle='#faf0da';g.lineWidth=2;g.stroke();
-    g.lineWidth=3;g.strokeText(d.name,px(d.x),pz(d.z)-12);g.fillText(d.name,px(d.x),pz(d.z)-12);
+    const shift=campus?0:({meet:-54,circuit:68,stadium:49,campus:-39}[d.id]||0);
+    g.lineWidth=3;g.strokeText(d.name,px(d.x)+shift,pz(d.z)-12);g.fillText(d.name,px(d.x)+shift,pz(d.z)-12);
    }
    const p=api.state().position;g.fillStyle='#bd6043';g.beginPath();g.arc(px(p.x),pz(p.z),8,0,Math.PI*2);g.fill();g.strokeStyle='#fff8e5';g.lineWidth=3;g.stroke();
    g.fillStyle='#496851';g.font='bold 13px Arial';g.fillText('N ↑',W-29,32);g.textAlign='left';

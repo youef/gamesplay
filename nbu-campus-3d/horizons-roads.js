@@ -14,6 +14,8 @@
   h(-164,508,820,18,'collector');
   v(-9,-880,-260,18,'collector');
   v(-109,260,800,18,'collector');
+  // Public streets around the sports precinct and its east parking gate.
+  v(245,-79,194,14);v(584,-164,194,16);h(194,245,584,16);h(-88,527,584,12);
 
   // Arar road, King Fahd neighbourhood, and the airport's landside frontage.
   h(20,-820,-260,12);v(-260,-88,20,12);
@@ -44,6 +46,7 @@
   for(const z of [-2280,-1930])h(z,-1650,-1150,18);
   h(-2040,-1480,-1310,16);
   h(2100,820,1120,24);v(1050,2100,2176);v(970,2035,2100,18);
+  h(1940,-2450,-1810,16);v(-1810,1902,1940,14);
   return roads;
  }
  function bounds(road,pad=0){
@@ -81,7 +84,21 @@
    return {road,tiles};
   });
  }
- const api={plan,bounds,contains,overlaps,intersectsFootprint,roadTiles};
+ function sidewalkTiles(roads,width=2.4,include=()=>true){
+  const axes=roads.filter(r=>r.x1===r.x2||r.z1===r.z2),used=axes.map(r=>bounds(r));
+  const tiles=[];
+  for(const road of axes){
+   if(!include(road)||road.kind==='arterial'||Math.hypot(road.x2-road.x1,road.z2-road.z1)>850)continue;
+   const [l,n,r,s]=bounds(road);
+   const sides=road.z1===road.z2?[[l,n-width,r,n],[l,s,r,s+width]]:[[l-width,n,l,s],[r,n,r+width,s]];
+   for(const side of sides){
+    tiles.push(...used.reduce((parts,other)=>parts.flatMap(p=>subtract(p,other)),[side]));
+    used.push(side);
+   }
+  }
+  return tiles;
+ }
+ const api={plan,bounds,contains,overlaps,intersectsFootprint,roadTiles,sidewalkTiles};
  root.HorizonsRoads=api;
  if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

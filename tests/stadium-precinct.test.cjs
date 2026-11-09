@@ -70,6 +70,7 @@ test('viewers can reach the plaza via settings and cannot clip through stands',(
  assert.match(html,/tp\(ST\.x,ST\.z-132,0,1\)/);
  assert.match(html,/stadiumPerimeterBlocked\(x,z/);
  assert.match(html,/wallSweepBlocked\(pl\.position\.x/);
- assert.match(html,/if\(b===ST\)\{cl\(\);\$\("sitStand"\)\.click\(\)\}/);
+ assert.match(html,/if\(b===ST\)\{cl\(\);tp\(ST\.x\+106,ST\.z,-1,0\)/);
+ assert.match(html,/if\(!carMode&&stadiumPrecinct\?\.visitorZone\(x,z,radius\)\)return false/);
  assert.match(html,/stadiumStatsBar\.style\.display=seated&&!inside/);
 });

@@ -71,7 +71,7 @@
     scene.add(p.root);
    }
   }
-  for(const [id,x] of [['datsun',1025],['hilux',1050],['horizon',1075]]){
+  for(const [id,x] of [['datsun',1019],['hilux',1040],['lexus',1060],['horizon',1081]]){
    const z=2206;previews.push({id,x,z,root:null});world.addCollider(x,z,4.1,7.2);
   }
   syncVehicle();
@@ -171,7 +171,7 @@
    progress.drift+=points;progress.bestDrift=Math.max(progress.bestDrift,points);
    reward(Math.min(120,Math.floor(points/8)),Math.min(250,Math.floor(points/4)));
   }
-  function update(t,dt,moving=false,phase=0){const state=api.state(),action=actionAllowed(state);mount();if(!action&&aiming)setAiming(false);if(!onRoof&&action)pl.position.y=districts.heightAt(pl.position.x,pl.position.z);if(race&&state.paused&&lastUpdateTime)race.start+=t-lastUpdateTime;lastUpdateTime=t;
+  function update(t,dt,moving=false,phase=0){const state=api.state(),action=actionAllowed(state);mount();if(!action&&aiming)setAiming(false);if(!onRoof&&action)pl.position.y=(api.groundHeight||districts.heightAt)(pl.position.x,pl.position.z);if(race&&state.paused&&lastUpdateTime)race.start+=t-lastUpdateTime;lastUpdateTime=t;
    if(state.paused){fireHeld=false;boostHeld=false;handbrakeHeld=false;}const dist=pl.position.distanceTo(lastPosition);if(state.driving&&dist<20&&dt>0){progress.distance+=dist;progress.xp+=dist*.025;progress.credits+=dist*.012;}lastPosition.copy(pl.position);
    if(jump>0&&dt){jumpVelocity-=20*dt;jump+=jumpVelocity*dt;if(jump<=0){jump=0;jumpVelocity=0;}}
    api.avatarRoot.position.y+=jump;

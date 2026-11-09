@@ -126,6 +126,7 @@
   for(let i=0;i<7;i++){const x=1795+i*15,z=430+(i%2)*8,g=new T.Group();g.position.set(x,0,z);range.g.add(g);const post=new T.Mesh(new T.BoxGeometry(.2,3,.2),mats.wood);post.position.y=1.5;g.add(post);for(let j=0;j<4;j++){const disk=new T.Mesh(new T.CircleGeometry(1.6-j*.35,24),j%2?mats.white:mats.orange);disk.position.set(0,2.8,.02+j*.015);g.add(disk);}targets.push({root:g,mesh:g.children[1],x,z,down:0});}
   world.addAccess(1840,535,1840,560,8);
   sign(range.g,'ميدان التدريب',1840,4.5,540,20);range.finish();
+  const life=window.HorizonsLife?.build({T,scene,world,Builder,mats,sign,collider,bench,lamp,Driving:window.HorizonsDriving,environment});
   // Distant mountain silhouettes add depth without filling the playable centre.
   const mountains=new Builder('Northern mountain silhouettes',0,0),mountainMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:1});
   for(let i=0;i<18;i++){const a=i*Math.PI*2/18,r=4200,x=Math.cos(a)*r,z=Math.sin(a)*r,h=170+(i*47)%190,geo=new T.PlaneGeometry(850,850,22,22);geo.rotateX(-Math.PI/2);const p=geo.attributes.position,colors=[];
@@ -143,6 +144,7 @@
    const day=Math.max(0,Math.min(1,(Math.sin((hour-6)/12*Math.PI)+.12)*1.1)),night=1-day;
    sky.position.copy(p);skyMaterial.uniforms.time.value=t*.001;skyMaterial.uniforms.day.value=day;
    for(const r of regions)r.g.visible=r.always||overview||Math.hypot(r.cx-p.x,r.cz-p.z)<1100||second&&Math.hypot(r.cx-second.x,r.cz-second.z)<1100;
+   life?.update(t,dt,p,second);
    const nearLights=lamps.filter(l=>l.parent.visible&&l.position.distanceTo(p)<90).sort((a,b)=>a.position.distanceToSquared(p)-b.position.distanceToSquared(p)).slice(0,6);
    for(const l of lamps)l.intensity=nearLights.includes(l)?night*1.8:0;mats.window.emissiveIntensity=.03+night*1.6;mats.lamp.emissiveIntensity=.3+night*2.5;
    for(let i=0;i<fountainJets.length;i++)fountainJets[i].scale.y=.8+Math.sin(t*.002+i)*.15;
@@ -151,7 +153,7 @@
    if(t<fireUntil&&Math.floor(t/1800)!==fireBurst){fireBurst=Math.floor(t/1800);const bx=-1400+(Math.random()-.5)*70,by=75+Math.random()*25,bz=-2100+(Math.random()-.5)*30,color=new T.Color().setHSL(Math.random(),.7,.7);for(let i=0;i<fireCount;i++){const a=Math.random()*Math.PI*2,b=Math.acos(Math.random()*2-1),v=4+Math.random()*15;firePos.set([bx,by,bz],i*3);fireVel.set([Math.cos(a)*Math.sin(b)*v,Math.cos(b)*v,Math.sin(a)*Math.sin(b)*v],i*3);fireLife[i]=1.5+Math.random()*2;fireColors.set([color.r,color.g,color.b],i*3);}fireGeo.attributes.color.needsUpdate=true;}
    sparks.visible=t<fireUntil+4000&&fireUntil>0;if(sparks.visible){for(let i=0;i<fireCount;i++){const j=i*3;if(fireLife[i]<=0){firePos[j+1]=-10000;continue;}fireLife[i]-=dt;fireVel[j+1]-=dt*4;for(let k=0;k<3;k++)firePos[j+k]+=fireVel[j+k]*dt;}fireGeo.attributes.position.needsUpdate=true;}
   }
-  return {update,targets,fireworks,checkpoints,driftPad:{x:970,z:2004,yaw:0},
-   isPaved(x,z){return Math.abs(x-970)<=65&&Math.abs(z-1985)<=50||Math.abs(Math.hypot((x-1500)/380,(z-2100)/210)-1)<.043;},garage:{x:1050,z:2170},elevator:{x:-1365,z:-2110},hotelEntrance:{x:-1400,z:-2040},roof:{x:-1400,z:-2074,y:roofY,minX:-1446,maxX:-1354,minZ:-2131,maxZ:-2069},heightAt(x,z){if(x>1308&&x<1492&&z>213&&z<387)return .34;if(x>1010&&x<1090&&z>2175&&z<2225)return .32;if(x>-1448&&x<-1352&&z>-2133&&z<-2067)return .26;if(x>1780&&x<1900&&z>405&&z<535)return .19;return 0;},roofBlocked(x,z,r=1){return x-r<-1447||x+r>-1353||z-r<-2132||z+r>-2068||(x+r>-1431&&x-r<-1395&&z+r>-2117&&z-r<-2093);},materials:mats,environment};
+  return {update,targets,fireworks,checkpoints,life,driftPad:{x:970,z:2004,yaw:0},
+   isPaved(x,z){return Math.abs(x-970)<=65&&Math.abs(z-1985)<=50||Math.abs(Math.hypot((x-1500)/380,(z-2100)/210)-1)<.043;},garage:{x:1050,z:2170},elevator:{x:-1365,z:-2110},hotelEntrance:{x:-1400,z:-2040},roof:{x:-1400,z:-2074,y:roofY,minX:-1446,maxX:-1354,minZ:-2131,maxZ:-2069},heightAt(x,z){if(x>1308&&x<1492&&z>213&&z<387)return .34;if(x>1010&&x<1090&&z>2175&&z<2225)return .32;if(x>-1448&&x<-1352&&z>-2133&&z<-2067)return .26;if(x>1780&&x<1900&&z>405&&z<535)return .19;return life?.heightAt(x,z)||0;},roofBlocked(x,z,r=1){return x-r<-1447||x+r>-1353||z-r<-2132||z+r>-2068||(x+r>-1431&&x-r<-1395&&z+r>-2117&&z-r<-2093);},materials:mats,environment};
  };
 })();

@@ -181,8 +181,8 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 #gameSettings #atmospherePanel select{max-width:100%}
 @media(max-width:900px){#gameSettings{width:min(450px,calc(100vw - 20px))!important}#settingsToggle{font-size:12px!important;padding:8px!important}}
 </style>
-<link rel="stylesheet" href="./horizons.css?v=13"><link rel="stylesheet" href="./horizons-pro.css?v=13">
-<meta name="description" content="عالم مفتوح بمساحة ٣٦ كم²، ١١ وجهة، وثلاث شخصيات أصلية مع سباق وتطوير مركبات وميدان تدريب وساحة وفندق.">
+<link rel="stylesheet" href="./horizons.css?v=14"><link rel="stylesheet" href="./horizons-pro.css?v=14">
+<meta name="description" content="عالم مفتوح بمساحة ٣٦ كم²، ١٤ وجهة، وثلاث شخصيات أصلية مع سباق وتطوير مركبات وميدان تدريب وساحة وفندق.">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -222,16 +222,16 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <div id="panel" role="dialog"><button id="x" aria-label="إغلاق">✕</button><div id="pb"></div></div>
 <script src="./vendor/three.min.js"></script>
 <script src="./it-deanship.js?v=30b92a"></script>
-<script src="./stadium-precinct.js?v=2a43fa3"></script>
+<script src="./stadium-precinct.js?v=14"></script>
 <script src="./strategy-bridges.js?v=d614bc66"></script>
 <script src="./strategy-road-network.js?v=6d11be6d"></script>
 <script src="./strategy-camera.js?v=3e6d7168"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
 <script src="./strategy-plan-json.js?v=78295c3f"></script>
-<script src="./horizons-districts.js?v=13"></script><script src="./horizons-driving.js?v=13"></script><script src="./horizons-pro.js?v=13"></script>
-<script src="./horizons-roads.js?v=13"></script>
-<script src="./horizons-world.js?v=13"></script>
-<script src="./horizons-ui.js?v=13"></script>
+<script src="./horizons-districts.js?v=14"></script><script src="./horizons-driving.js?v=14"></script><script src="./horizons-campus.js?v=14"></script><script src="./horizons-life.js?v=14"></script><script src="./horizons-pro.js?v=14"></script>
+<script src="./horizons-roads.js?v=14"></script>
+<script src="./horizons-world.js?v=14"></script>
+<script src="./horizons-ui.js?v=14"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={...Horizons.bounds};
@@ -255,8 +255,21 @@ const AIR={n:"مطار عرعر",x:500,z:-330,w:210,d:115};
 const COL=[];const removedCampusBuildings=new Set(),campusBuildingGroups=new Map();
 // V3.6: recover when the primary Three.js CDN is blocked or unavailable.
 function startCampus(){
- const fontReady=document.fonts&&document.fonts.load?document.fonts.load("800 40px Tajawal").catch(()=>{}):Promise.resolve();
- Promise.resolve(fontReady).then(()=>{try{init()}catch(err){console.error("Campus initialization failed",err);$("ld").textContent="تعذر بدء اللعبة: "+(err&&err.message?err.message:"خطأ غير معروف")+". أعد تحميل الصفحة."}});
+ const fontReady=document.fonts?.load?.("800 40px Tajawal").catch(()=>{});
+ let started=false;
+ const start=()=>{
+  if(started)return;
+  started=true;
+  try{init()}
+  catch(err){
+   console.error("Campus initialization failed",err);
+   const loading=$("ld");loading.style.display="flex";
+   loading.textContent="تعذر بدء اللعبة: "+(err?.message||"خطأ غير معروف")+". أعد تحميل الصفحة.";
+  }
+ };
+ // Use the system font if the remote font is slow or blocked.
+ if(fontReady){const deadline=setTimeout(start,650);fontReady.then(()=>{clearTimeout(deadline);start()});}
+ else start();
 }
 function loadThreeFallback(){
  if(typeof THREE!=="undefined"){startCampus();return}
@@ -291,10 +304,11 @@ function ipadHaptic(){if(ipadVibration&&navigator.vibrate)navigator.vibrate(12)}
 hudBar.addEventListener("click",ipadHaptic);
 
 const R=new THREE.WebGLRenderer({antialias:true,canvas:$("c"),powerPreference:"high-performance"});
+let gpuLost=false;
 // V3.16: recover from GPU context loss on iPad without a blank canvas.
-$("c").addEventListener("webglcontextlost",event=>{event.preventDefault();$("ld").style.display="flex";$("ld").textContent="توقف محرك الرسوم مؤقتًا. جارٍ انتظار استعادة WebGL…";});
+$("c").addEventListener("webglcontextlost",event=>{event.preventDefault();gpuLost=true;$("ld").style.display="flex";$("ld").textContent="توقف محرك الرسوم مؤقتًا. جارٍ انتظار استعادة WebGL…";});
 $("c").addEventListener("webglcontextrestored",()=>{window.location.reload();});
-R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.25:1.8));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.18;
+R.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer: coarse)").matches?1.25:1.3));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.18;
 const S=new THREE.Scene();S.background=new THREE.Color(0x9fcff0);S.fog=new THREE.Fog(0xb9dcf2,140,620);
 const cam=new THREE.PerspectiveCamera(60,1,.5,24000);
 const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",rs);rs();
@@ -583,7 +597,7 @@ function makeGate(g){
 G.forEach(g=>{g.ix=g.o==="h"?0:(g.x<0?1:-1);g.iz=g.o==="h"?(g.z<0?1:-1):0;makeGate(g)});
 // المباني
 const wtex=cvt(64,64,g=>{g.fillStyle="#fff";g.fillRect(0,0,64,64);g.fillStyle="#2b4766";g.fillRect(10,12,44,34);g.fillStyle="#7fa6cc";g.fillRect(10,12,44,12);g.fillStyle="#cfcfcf";g.fillRect(0,56,64,8)});
-B.forEach(b=>{const groupStart=S.children.length;const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshStandardMaterial({map:t,color:b.c,roughness:.68,metalness:.04})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
+B.forEach((b,index)=>{const groupStart=S.children.length;const nf=Math.max(2,Math.round(b.h/4.2)),mk=n=>{const t=wtex.clone();t.needsUpdate=true;t.repeat.set(Math.round(n/6),nf);return new THREE.MeshStandardMaterial({map:t,color:b.c,roughness:.68,metalness:.04})},mx=mk(b.d),mz=mk(b.w),mt=mat(0x8a8f95);
 const m=new THREE.Mesh(new THREE.BoxGeometry(b.w,b.h,b.d),[mx,mx,mt,mt,mz,mz]);m.position.set(b.x,b.h/2,b.z);m.castShadow=m.receiveShadow=true;S.add(m);
 box(b.w+1,.8,b.d+1,mat(0x9a8f7d),b.x,b.h+.4,b.z);box(6,2,6,mat(0xaaaaaa),b.x-b.w/4,b.h+1.8,b.z);box(4,1.5,4,mat(0xaaaaaa),b.x+b.w/4,b.h+1.6,b.z+2);
 const sz=b.ds==="n"?-1:1,dz=b.z+sz*b.d/2,cm=mat(0xf0e8d8);
@@ -619,6 +633,7 @@ if(b.n==="عمادة تقنية المعلومات"){
 const meshes=S.children.slice(groupStart);const wrapper=new THREE.Group();
  for(const mesh of meshes){mesh.position.x-=b.x;mesh.position.z-=b.z;wrapper.add(mesh)}
  wrapper.position.set(b.x,0,b.z);wrapper.userData.campusBuilding=b.n;
+ HorizonsCampus.facade(THREE,wrapper,b,index,mat);
  S.add(wrapper);campusBuildingGroups.set(b.n,wrapper);
  b.home={x:b.x,z:b.z};b.rot=0;b.colliderIndex=COL.length;
  COL.push([b.x-b.w/2,b.z-b.d/2,b.x+b.w/2,b.z+b.d/2]);
@@ -784,7 +799,7 @@ function stadiumCrowdEnabled(index){
 }
 function syncStadiumCrowdQuality(){
  const quality=atmosphere.quality;
- const count=stadiumCapacity; // Keep every section populated; low quality uses reduced render resolution instead.
+ const count=quality==="low"?7500:quality==="balanced"?18000:stadiumCapacity;
  if(typeof stadiumCrowdTorso!=="undefined"){
   stadiumCrowdTorso.count=count;stadiumCrowdHead.count=count;
  }
@@ -1086,6 +1101,7 @@ function tifoColor(row,seat){
  return angle<Math.PI*.65?((row+Math.floor(seat/9))%4===0?0xe8edf6:0x1268bb):((row+Math.floor(seat/11))%3===0?0x111111:0xf2c51b);
 }
 const crowdDummy=new THREE.Object3D(),crowdPalette=[0xe7e9e5,0x1674b2,0x253e63,0xd0ad75,0x2e846d,0xd4dbe0];
+const crowdSlot=index=>index*7919%stadiumCapacity;
 for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat++){
  const idx=row*stadiumSeatsPerRow+seat;
  const angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow;
@@ -1094,9 +1110,10 @@ for(let row=0;row<stadiumRows;row++)for(let seat=0;seat<stadiumSeatsPerRow;seat+
  crowdDummy.position.set(p.x,p.y+.45,p.z);
  crowdDummy.rotation.set(0,-angle+Math.PI/2,0);
  crowdDummy.scale.set(aisle?.001:1,aisle?.001:1,aisle?.001:1);
- crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
- crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
- stadiumCrowdTorso.setColorAt(idx,new THREE.Color(tifoColor(row,seat)));
+ const slot=crowdSlot(idx);
+ crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(slot,crowdDummy.matrix);
+ crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(slot,crowdDummy.matrix);
+ stadiumCrowdTorso.setColorAt(slot,new THREE.Color(tifoColor(row,seat)));
 }
 stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
 if(stadiumCrowdTorso.instanceColor)stadiumCrowdTorso.instanceColor.needsUpdate=true;
@@ -1164,12 +1181,13 @@ const cheeringIndices=Array.from({length:600},(_,i)=>Math.floor(i*stadiumCapacit
 function updateStadiumCheering(t){
  if(t-lastCheerUpdate<180)return;lastCheerUpdate=t;
  for(const idx of cheeringIndices){
-  if(idx>=stadiumCrowdTorso.count||tifoCardIndexSet.has(idx))continue;
+  const slot=crowdSlot(idx);
+  if(slot>=stadiumCrowdTorso.count||tifoCardIndexSet.has(idx))continue;
   const row=Math.floor(idx/stadiumSeatsPerRow),seat=idx%stadiumSeatsPerRow,angle=(seat+.5*(row%2))*Math.PI*2/stadiumSeatsPerRow,p=bowlLocation(row,angle);
   const cheerBoost=stadiumMatch.goalFlash>0?2.2:stadiumMatch.flight?1.4:1;
   const jump=Math.max(0,Math.sin(t*.002+angle*5+row*.25))*.28*cheerBoost;
-  crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(idx,crowdDummy.matrix);
-  crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(idx,crowdDummy.matrix);
+  crowdDummy.position.set(p.x,p.y+.45+jump,p.z);crowdDummy.rotation.set(0,-angle+Math.PI/2,0);crowdDummy.scale.set(1,1,1);crowdDummy.updateMatrix();stadiumCrowdTorso.setMatrixAt(slot,crowdDummy.matrix);
+  crowdDummy.position.y+=.55;crowdDummy.updateMatrix();stadiumCrowdHead.setMatrixAt(slot,crowdDummy.matrix);
  }
  stadiumCrowdTorso.instanceMatrix.needsUpdate=true;stadiumCrowdHead.instanceMatrix.needsUpdate=true;
 }
@@ -1236,8 +1254,10 @@ function stadiumReset(team){
  for(const a of stadiumActors){a.g.position.x=a.baseX;a.g.position.z=a.baseZ;a.g.rotation.z=0;a.leftArm.rotation.z=0;a.rightArm.rotation.z=0}
 }
 function updateStadium(t,dt){
+ const nearStadium=seated||Math.hypot(pl.position.x-ST.x,pl.position.z-ST.z)<290||playerMode==="split"&&Math.hypot(zyad.position.x-ST.x,zyad.position.z-ST.z)<290;
+ stadiumCrowdTorso.visible=stadiumCrowdHead.visible=nearStadium;
+ if(!nearStadium)tifoCards.visible=false;
  if(!dt)return;
- const nearStadium=seated||Math.hypot(pl.position.x-ST.x,pl.position.z-ST.z)<260;
  const m=stadiumMatch;
  m.elapsed+=dt*4; // Accelerated match clock, independent from animation frame count.
  if(m.elapsed>=2700&&m.half===1){m.half=2;m.event="بداية الشوط الثاني";m.eventTime=m.elapsed;stadiumReset(1)}
@@ -1370,8 +1390,15 @@ box(58,13,26,mat(0xcfdbe5),AIR.x-38,6.5,AIR.z+42);box(59,.5,27,mat(0xa39684),AIR
 const roadsideStops=[{n:"محطة الضاحية",x:-540,z:37},{n:"محطة الجامعة",x:-130,z:43},{n:"محطة الخدمات",x:540,z:-147},{n:"محطة المطار",x:569,z:-250}];
 roadsideStops.forEach((p)=>{box(12,.22,5,mat(0xaaa89d),p.x,.12,p.z);box(10,.4,6,mat(0x278a94),p.x,4.6,p.z);[-4,4].forEach(d=>box(.4,4.2,.4,mat(0x52616d),p.x+d,2.3,p.z));box(9,1.4,.22,mat(0xd9e8ed),p.x,2.9,p.z+2.5);let tag=lab(p.n,"#205477",1.9);tag.position.set(p.x,7.2,p.z) });
 // معبر مشاة وحارات توقف بمداخل الطريق العام
-function drawCrossing(x,z,alongZ=false){for(let i=-4;i<=4;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(alongZ?5:2.5,alongZ?2.5:5),mat(0xf0e9da));m.rotation.x=-Math.PI/2;m.position.set(x+(alongZ?i*3.1:0),.11,z+(alongZ?0:i*3.1));S.add(m)}}
-drawCrossing(-100,46,true);drawCrossing(365,-164,true);drawCrossing(-550,20,false);
+function drawCrossing(x,z,width,horizontal){
+ const stripe=mat(0xf0e9da,{roughness:.94}),geometry=new THREE.PlaneGeometry(horizontal?5:.7,horizontal?.7:5);
+ for(let offset=1-width/2;offset<width/2-.5;offset+=1.53){
+  const m=new THREE.Mesh(geometry,stripe);m.rotation.x=-Math.PI/2;
+  m.position.set(x+(horizontal?0:offset),.137,z+(horizontal?offset:0));S.add(m);
+ }
+}
+drawCrossing(-100,46,10,false);drawCrossing(365,-164,14,true);drawCrossing(-550,20,12,true);
+drawCrossing(245,40,14,false);drawCrossing(584,40,16,false);drawCrossing(-28,-185,12,true);
 // محطة وقود حديثة من تصميم أصلي، نموذج تخيلي غير مطابق لمحطة فعلية
 const defaultFuel=new THREE.Group();defaultFuel.position.set(560,0,-119);defaultFuel.rotation.y=Math.PI;S.add(defaultFuel);makeFuelStation(defaultFuel);
 let fuelLab=lab("محطة الخدمات","#176c90",2.2);fuelLab.position.set(560,12,-131);
@@ -1388,21 +1415,28 @@ const transitRoutes=[
  [[185,170],[185,20],[185,-88],[185,-185]],
  [[-185,170],[-185,20],[-185,-88],[-185,-185]]
 ];
-const agents=[];let trafficClock=0,trafficEnabled=true,trafficSeconds=0;
-function makeRoadVehicle(bus,color){const root=new THREE.Group();S.add(root);let w=bus?4.6:3.1,d=bus?11:6.2,h=bus?3.3:1.25;
+const agents=[],npcModels=new Map();let trafficClock=0,trafficEnabled=true,trafficSeconds=0;
+function makeRoadVehicle(bus,color,index){
+ if(!bus){
+  const id=['datsun','hilux','lexus','horizon'][index%4],model=HorizonsDriving.model(THREE,id,null,{traffic:true});
+  model.paint.color.setHex(color);npcModels.set(model.root,model);S.add(model.root);return model.root;
+ }
+ const root=new THREE.Group();S.add(root);let w=bus?4.6:3.1,d=bus?11:6.2,h=bus?3.3:1.25;
 const meshBox=(bw,bh,bd,co,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat(co));m.position.set(x,y,z);root.add(m);return m};
 meshBox(w,h,d,color,0,.86+h/2,0);meshBox(w-.15,bus?.95:.82,d*(bus?.85:.55),0x8fc0d1,0,1.85+(bus?.5:0),0);
 for(const side of [-1,1])for(const dir of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(bus?.92:.72,bus?.92:.72,.48,10),mat(0x1f2227));wheel.rotation.z=Math.PI/2;wheel.position.set(side*(w/2+.15),.78,dir*d*.31);root.add(wheel)}
 if(bus){meshBox(w-.8,.1,.5,0xf6e6ba,0,3.3,0);meshBox(w-.5,.45,.15,0xf3d960,0,2.2,d/2+.08)}
 return root}
-for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4]);agents.push({mesh:veh,route,originalRoute:route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
+for(let i=0;i<11;i++){const bus=i===0||i===5,route=transitRoutes[i%transitRoutes.length],veh=makeRoadVehicle(bus,bus?0xe7b23f:[0x5c85a5,0xe8e3d4,0x667c91,0xb25c48][i%4],i);agents.push({mesh:veh,route,originalRoute:route,seg:i%(route.length-1),progress:7+i*9,direction:i%2?1:-1,speed:bus?10:15+(i%3)*3,bus,dwell:0})}
 // V3.8: Build connected multi-segment surface-road routes from snapped endpoints.
 // Only exact snapped endpoints connect; disconnected or intersecting visual segments are not joined.
 function connectedRoadRoutes(){
  if(!window.CampusRoadNetwork)return [];
  const bridgeObjects=built.filter(o=>["bridge","flyover","bridgeCircle"].includes(o.type));
  const plan=window.CampusRoadNetwork.build(roadSegments(),11,bridgeObjects);
- return plan.routes;
+ const local=roadSegments().filter(r=>[r.x1,r.z1,r.x2,r.z2].every(v=>Math.abs(v)<=880));
+ const campus=window.CampusRoadNetwork.build(local,7,bridgeObjects).routes;
+ return [...campus,...plan.routes].slice(0,11);
 }
 function refreshCustomTrafficRoutes(){
  const routes=connectedRoadRoutes();
@@ -1419,12 +1453,21 @@ function refreshCustomTrafficRoutes(){
   agent.route=next;
   agent.seg=0;agent.direction=1;agent.dwell=0;agent.lastBusStop=null;
   agent.customRouteActive=true;
-  const x1=next[0][0],z1=next[0][1],x2=next[1][0],z2=next[1][1];
+  // Seed a portion of traffic near the campus and stadium, along its actual current route.
+  const [focusX,focusZ]=[[0,-185],[365,-164],[-240,-88],[-110,170],[550,194]][i%5];
+  let startDistance=Infinity;
+  for(let j=0;j<next.length-1;j++){
+   const a=next[j],b=next[j+1],length=Math.hypot(a[0]-b[0],a[1]-b[1]);
+   if(length<24)continue;
+   const distance=Math.hypot((a[0]+b[0])/2-focusX,(a[1]+b[1])/2-focusZ);
+   if(distance<startDistance){agent.seg=j;startDistance=distance;}
+  }
+  const a=next[agent.seg],b=next[agent.seg+1],x1=a[0],z1=a[1],x2=b[0],z2=b[1];
   const leg=Math.hypot(x2-x1,z2-z1);
   // Distribute traffic rather than spawning all vehicles in one overlapping pile.
   agent.progress=Math.max(0,Math.min(Math.max(0,leg-2),(i*17+8)%(Math.max(1,Math.floor(leg-1)))));
   const f=leg?agent.progress/leg:0;
-  agent.mesh.position.set(x1+(x2-x1)*f,(next[0][2]||0)+((next[1][2]||0)-(next[0][2]||0))*f,z1+(z2-z1)*f);
+  agent.mesh.position.set(x1+(x2-x1)*f,(a[2]||0)+((b[2]||0)-(a[2]||0))*f,z1+(z2-z1)*f);
   agent.mesh.rotation.y=Math.atan2(x2-x1,z2-z1);
  }
 }
@@ -1452,9 +1495,10 @@ for(const j of trafficJunctions){if(Math.hypot(end[0]-j.x,end[1]-j.z)<1&&remain>
 let nextProgress=a.progress+Math.min(remain,target*dt);
 const approachingStop=busStopAhead(a,start,end,nextProgress,len);
 if(approachingStop)nextProgress=Math.min(nextProgress,approachingStop.along);
-const nextFraction=clamp(nextProgress/len,0,1),nextX=start[0]+dx*nextFraction,nextZ=start[1]+dz*nextFraction,
+const nextFraction=clamp(nextProgress/len,0,1),headingX=dx/len,headingZ=dz/len;
+const lane=(a.bus?1.09:1.38)*Math.min(1,nextProgress/5,(len-nextProgress)/5);
+const nextX=start[0]+dx*nextFraction-headingZ*lane,nextZ=start[1]+dz*nextFraction+headingX*lane,
  nextY=(start[2]||0)+((end[2]||0)-(start[2]||0))*nextFraction;
-const headingX=dx/len,headingZ=dz/len;
 const blocked=agents.some(other=>{
  if(other===a||other.mesh.visible===false||Math.abs(other.mesh.position.y-nextY)>2.7)return false;
  const gapX=other.mesh.position.x-a.mesh.position.x,gapZ=other.mesh.position.z-a.mesh.position.z;
@@ -1464,7 +1508,9 @@ const blocked=agents.some(other=>{
  return ahead>0&&ahead<safeGap+target*dt&&lateral<3.8&&
  Math.hypot(other.mesh.position.x-nextX,other.mesh.position.z-nextZ)<safeGap;
 });
-if(blocked)return;
+if(blocked||!inside&&Math.abs(pl.position.y-nextY)<2.5&&Math.hypot(pl.position.x-nextX,pl.position.z-nextZ)<(a.bus?5.9:4.7))return;
+const traveled=nextProgress-a.progress,model=npcModels.get(a.mesh);
+if(model)for(const w of model.wheels)w.spin.rotation.x+=traveled/w.radius;
 a.progress=nextProgress;
 if(approachingStop&&a.progress>=approachingStop.along-.05){a.lastBusStop=approachingStop.key;a.dwell=3.5}
 const f=nextFraction;a.mesh.position.set(nextX,nextY,nextZ);
@@ -1718,7 +1764,7 @@ function buildInterior(b){
  for(let i=0;i<4;i++){const light=new THREE.PointLight(0xffedc9,.6,45);light.position.set(X-24+i*16,6,0);interior.add(light)}
  const l=lab(b.n,"#1d3a5f",3.4);l.position.set(X,5,-22);interior.add(l);
 }
-let outsidePos=null,seated=false,seatOrigin=null,securityInteriorGate=null;
+let outsidePos=null,seated=false,seatOrigin=null,securityInteriorGate=null,campusInterior=null;
 function enterSecurityRoom(gate){
  if(!gate||carMode){toastBuild("اخرج من السيارة أولًا لدخول غرفة الحراسة");return}
  if(inside)exitBuilding();
@@ -1743,8 +1789,11 @@ function enterBuilding(b){
  if(carMode){toastBuild("🚗 اخرج من السيارة أولًا للدخول");return}
  if(b===ST){op(b);return}
  outsidePos={x:pl.position.x,z:pl.position.z,yaw,pit,dist};inside=b;open=false;pn.classList.remove("on");
+ campusInterior=null;
  if(b.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.build();
- else buildInterior(b);
+ else if(B.includes(b)){
+  interior.clear();campusInterior=HorizonsCampus.interior(THREE,interior,b,B.indexOf(b),mat);
+ }else buildInterior(b);
  interior.visible=true;pl.position.set(750,0,16);yaw=0;pit=.3;
  dist=b.n==="عمادة تقنية المعلومات"?4.6:8;
  $("leave").style.display="block";$("interInfo").style.display="block";$("interInfo").textContent="داخل " + b.n + " — نموذج تخيلي تعليمي";
@@ -1752,12 +1801,12 @@ function enterBuilding(b){
 }
 function renderRooms(){const parent=$("roomBtns");parent.replaceChildren();
  if(inside.n==="عمادة تقنية المعلومات"&&itCampus){itCampus.renderRooms(parent);return}
- inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{pl.position.set(750-24+Math.min(i,4)*12,0,-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
-function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;if(itCampus)itCampus.setActive(false);inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
+ inside.labs.forEach((l,i)=>{const btn=document.createElement("button");btn.textContent="🚪 "+l[0];btn.onclick=()=>{const room=campusInterior?.rooms[i];pl.position.set(room?.x??(750-24+Math.min(i,4)*12),0,room?.entryZ??-1);$("interInfo").textContent=l[0]+" — "+l[1]};parent.append(btn)})}
+function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=null;}securityInteriorGate=null;campusInterior=null;if(itCampus)itCampus.setActive(false);inside=null;interior.visible=false;pl.position.set(outsidePos.x,0,outsidePos.z);yaw=outsidePos.yaw;pit=outsidePos.pit;dist=outsidePos.dist;$("leave").style.display="none";$("interInfo").style.display="none";$("roomBtns").style.display="none";$("closeRooms").style.display="none";$("showRooms").style.display="none";$("mini").style.display="block"}
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
-$("drive").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");if(inside)exitBuilding();carMode=!carMode;carSpeed=0;driveCourse=null;driveSlip=0;driveSliding=false;driveStartDistance=drivenMeters;car.visible=carMode;ch.visible=!carMode;$("drive").classList.toggle("active",carMode);$("driveControls").style.display=carMode?"flex":"none";$("drivingHud").style.display=carMode?"block":"none";
+$("drive").onclick=()=>{if(!carMode&&stadiumPrecinct?.visitorZone(pl.position.x,pl.position.z))return toastBuild("اخرج من ممر الملعب قبل القيادة");if(buildMode)return toastBuild("أنه وضع البناء أولًا");if(inside)exitBuilding();carMode=!carMode;carSpeed=0;driveCourse=null;driveSlip=0;driveSliding=false;driveStartDistance=drivenMeters;car.visible=carMode;ch.visible=!carMode;$("drive").classList.toggle("active",carMode);$("driveControls").style.display=carMode?"flex":"none";$("drivingHud").style.display=carMode?"block":"none";
 if(carMode){topView=false;$("tour").classList.remove("active");dist=Math.max(dist,16);toastBuild("🚗 يمين = انعطاف يمين، يسار = انعطاف يسار") }else{dist=8.5;storeBuild();toastBuild("تم الرجوع إلى المشي")}updateModes()};
 for(const [btn,key] of [["gasBtn","gas"],["brakeBtn","brake"]]){const el=$(btn);el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);if(key==="gas")touchGas=true;else touchBrake=true;el.classList.add("pressed")});const stop=()=>{if(key==="gas")touchGas=false;else touchBrake=false;el.classList.remove("pressed")};el.addEventListener("pointerup",stop);el.addEventListener("pointercancel",stop);el.addEventListener("lostpointercapture",stop)}
 $("trafficToggle").onclick=()=>{trafficEnabled=!trafficEnabled;agents.forEach(a=>a.mesh.visible=trafficEnabled);$("trafficToggle").classList.toggle("active",trafficEnabled);$("trafficToggle").textContent=trafficEnabled?"🚦 حركة المرور":"🚙 حركة متوقفة";toastBuild(trafficEnabled?"تم تشغيل حركة السيارات والحافلات":"تم إيقاف حركة السيارات والحافلات")};
@@ -1806,7 +1855,7 @@ $("standUp").onclick=leaveStand;
 $("home").onclick=()=>{if(buildMode)toggleBuilder();exitBuilding();topView=false;$("tour").classList.remove("active");tp(0,-188,0,1)};
 $("maps").onclick=()=>window.open("https://www.google.com/maps/@30.9166315,41.0775066,19z/data=!5m1!1e1","_blank","noopener,noreferrer");
 $("mini").onclick=()=>{$("tour").click()};
-function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>{if(b===ST){cl();$("sitStand").click()}else enterBuilding(b)};pn.classList.add("on");en.style.display="none"}
+function op(b){open=true;pb.innerHTML=`<h2>${b.n}</h2><p class="s">المعامل والمرافق (${b.labs.length})</p>`+b.labs.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join("");pb.insertAdjacentHTML("beforeend",'<button id="walkIn" style="width:100%;margin-top:12px;background:#0f8f86;color:#fff;border:0;border-radius:12px;padding:14px;font:800 16px Tajawal,Tahoma;cursor:pointer">🚪 ادخل واستكشف المبنى ثلاثي الأبعاد</button><p style="font-size:12px;opacity:.7">التوزيع الداخلي تخيلي وغير مطابق لمخططات الجامعة الرسمية.</p>');$("walkIn").onclick=()=>{if(b===ST){cl();tp(ST.x+106,ST.z,-1,0);toastBuild("اتبع الممر المضاء إلى منطقة المشاهدة")}else enterBuilding(b)};pn.classList.add("on");en.style.display="none"}
 function cl(){open=false;pn.classList.remove("on")}
 $("x").onclick=cl;en.onclick=()=>near&&op(near);
 function tp(x,z,fx,fz){if(seated)leaveStand();exitBuilding();cl();pl.position.set(x,0,z);yaw=Math.atan2(-fx,-fz);fa=Math.atan2(fx,fz);hint.style.opacity=0;car.position.set(x,0,z)}
@@ -1847,12 +1896,25 @@ const oldRoads=new Map([
  [23,[-185,170,-100,170,10]],[24,[130,170,185,170,10]],[25,[-100,-185,130,-185,10]]
 ]);
 const campusAccess=new THREE.Group(),accessMat=mat(0xccbaa0,{roughness:1});
+const campusSidewalks=new THREE.Group(),sidewalkTexture=cvt(128,128,(ctx,w,h)=>{
+ ctx.fillStyle='#d7cdb8';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#9a9483';ctx.lineWidth=2;
+ for(let i=0;i<4;i++)for(let j=0;j<4;j++)ctx.strokeRect(i*32,j*32,32,32);
+});
+const sidewalkMat=new THREE.MeshStandardMaterial({map:sidewalkTexture,roughness:.93});
+campusSidewalks.name='Campus street sidewalks';S.add(campusSidewalks);
 campusAccess.name='Campus entrance sidewalks';S.add(campusAccess);
 const campusWalks=[];
 function redrawCampusAccess(){
  while(campusAccess.children.length){const m=campusAccess.children[0];campusAccess.remove(m);m.geometry.dispose()}
  campusWalks.length=0;
  const roads=roadSegments();
+ while(campusSidewalks.children.length){const m=campusSidewalks.children[0];campusSidewalks.remove(m);m.geometry.dispose()}
+ for(const [l,n,r,s] of HorizonsRoads.sidewalkTiles(roads,2.4,road=>road.fixed)){
+  const geometry=new THREE.BoxGeometry(r-l,.13,s-n),uv=geometry.attributes.uv;
+  for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*Math.max(.5,(r-l)/3),uv.getY(i)*Math.max(.5,(s-n)/3));
+  const mesh=new THREE.Mesh(geometry,sidewalkMat);mesh.position.set((l+r)/2,.102,(n+s)/2);
+  mesh.receiveShadow=true;campusSidewalks.add(mesh);
+ }
  for(const b of B){
   if(removedCampusBuildings.has(b.n))continue;
   const angle=(b.rot||0)*Math.PI/2,sign=b.ds==='n'?-1:1;
@@ -2708,7 +2770,7 @@ function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=fal
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
-setTimeout(()=>hint.style.opacity=0,13000);$("ld").remove();
+setTimeout(()=>hint.style.opacity=0,13000);
 // Solid perimeter: only the actual modeled wall segments block movement.
 // Gate openings remain traversable. Swept sampling prevents fast vehicles
 // and sprinting players from tunneling through thin walls between frames.
@@ -2723,7 +2785,8 @@ function wallSweepBlocked(x0,z0,x1,z1,radius=1.05){
 // Fourth-power outline matches the superellipse used for the 360-degree bowl.
 function stadiumPerimeterBlocked(x,z,radius=1.05){
  if(seated||inside)return false;
- // The entire stadium footprint is restricted for free roaming, not only
+ if(!carMode&&stadiumPrecinct?.visitorZone(x,z,radius))return false;
+ // The stadium footprint is restricted for free roaming, not only
  // a thin ring. This prevents spawning/clipping inside stands or on the pitch.
  // Fourth-power curve matches the stadium superellipse, including corners.
  const dx=(Math.abs(x-ST.x)+radius)/88;
@@ -2787,7 +2850,7 @@ const players=section("👥 اللاعبون والشاشة المقسمة");
  const sportsControls=document.createElement("div");
  sportsControls.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0";
  const sportsHelp=document.createElement("p");
- sportsHelp.textContent="ساحة مستقلة بجوار البوابة الشرقية، تضم المدخل الرئيسي والتذاكر والمواقف وممر المشجعين.";
+ sportsHelp.textContent="ساحة المشجعين متصلة بمواقف الملعب. ادخل من الممر الشرقي أو الغربي للمشي حتى منطقة المشاهدة قرب أرضية المباراة.";
  sportsHelp.style.cssText="grid-column:1 / -1;margin:0;font:500 12px Tajawal,Tahoma;line-height:1.7";
  sportsControls.append(sportsHelp);
  function goToSportsPlaza(){
@@ -2802,6 +2865,8 @@ const players=section("👥 اللاعبون والشاشة المقسمة");
  sportsVisit.type="button";sportsVisit.textContent="📍 اذهب للساحة";
  sportsVisit.onclick=()=>{goToSportsPlaza();toastBuild("🏟️ وصلت إلى الساحة الخارجية للملعب")};
  sportsControls.append(sportsVisit);
+ const sportsWalk=document.createElement('button');sportsWalk.type='button';sportsWalk.textContent='🚪 الممر الشرقي';
+ sportsWalk.onclick=()=>{goToSportsPlaza();tp(ST.x+106,ST.z,-1,0)};sportsControls.append(sportsWalk);
  const sportsWatch=document.createElement("button");
  sportsWatch.type="button";sportsWatch.textContent="⚽ شاهد المباراة";
  sportsWatch.onclick=()=>{goToSportsPlaza();$("sitStand").click()};
@@ -2825,10 +2890,25 @@ horizonsWorld=Horizons.createWorld({THREE,scene:S,renderer:R});
 const horizonsDistricts=createHorizonsDistricts(THREE,S,R,horizonsWorld);
 const walk=(x,z,rx,rz,w)=>horizonsWorld.addAccess(x,z,rx,rz,w);
 walk(365,-145,365,-164,12); // stadium plaza and crosswalk
+walk(275,40,245,40,8);walk(459,40,584,40,8);walk(365,155,365,194,7);
 walk(462,-275,462,-265,8);walk(542,-275,542,-265,6); // airport terminal and tower
 for(const x of [-788,-748,-708,-668])walk(x,-34+([-788,-748,-708,-668].indexOf(x)%2)*7+12.5,x,20,5);
 for(const x of [-486,-420,-354]){walk(x,13,x,20,5);walk(x,77,x,82,5)}
 walk(-404,-39,-404,-22,6);
+const campusBoards=new THREE.Group();S.add(campusBoards);
+for(const sign of [
+ {x:213,y:6,z:-142,width:16,text:'جامعة الحدود الشمالية',subtitle:'البوابة الشرقية  •  الملعب ←',angle:Math.PI},
+ {x:512,y:7,z:-186,width:23,text:'يوم المباراة',subtitle:'المواقف والممر الشرقي  ↙',angle:0,color:'#325d5d'},
+ {x:-122,y:6,z:-224,width:17,text:'أهلًا بك في الحرم',subtitle:'الكليات والمختبرات  •  البوابة الشمالية',angle:Math.PI},
+ {x:-232,y:6,z:-65,width:15,text:'معرض مشاريع الطلاب',subtitle:'الكلية التطبيقية  •  المدخل الرئيسي',angle:Math.PI/2},
+ {x:-78,y:6,z:231,width:14,text:'المكتبة الجامعية',subtitle:'القراءة والبحث  •  الحرم شمالًا',angle:0},
+ {x:560,y:6,z:148,width:18,text:'ملتقى التفحيط',subtitle:'عروض الحلبة  •  اتبع طريق الأفق',angle:Math.PI/2,color:'#704a33'},
+]){
+ const panel=HorizonsCampus.board(THREE,campusBoards,sign);
+ const support=new THREE.Mesh(new THREE.BoxGeometry(.37,sign.y,.37),mat(0x394a4e,{metalness:.52,roughness:.47}));
+ support.position.set(sign.x,sign.y*.5,sign.z);campusBoards.add(support);panel.renderOrder=1;
+ COL.push([sign.x-.2,sign.z-.2,sign.x+.2,sign.z+.2]);
+}
 refreshCustomTrafficRoutes();
 R.outputEncoding=THREE.sRGBEncoding;
 let horizonsUi,horizonsPro=null;
@@ -2836,6 +2916,7 @@ function travelHorizons(d){if(buildMode)toggleBuilder();if(seated)leaveStand();i
 horizonsPro=createHorizonsPro({THREE,scene:S,car,player:pl,avatarRoot:ch,canvas:$('c'),world:horizonsWorld,districts:horizonsDistricts,camera:cam,
  state:()=>({driving:carMode,running:autoRun||K.ShiftLeft||K.ShiftRight,paused:ipadPaused,inside,seated,building:buildMode,speed:carSpeed,course:driveCourse??fa,slip:driveSlip,sliding:driveSliding,keys:K,steer:clamp((K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0)+joy.x,-1,1),braking:K.Space||horizonsPro?.handbrake||K.KeyS||K.ArrowDown||touchBrake}),
  pause:v=>{ipadPaused=v;releaseControls()},soundEnabled:()=>ipadSound,
+ groundHeight:(x,z)=>stadiumPrecinct?.heightAt(x,z)??horizonsDistricts.heightAt(x,z),
  isPaved:(x,z)=>horizonsWorld.isRoad(x,z)||roadSegments().some(r=>!r.kind&&HorizonsRoads.intersectsFootprint(r,x,z,.05,.05)),
  toast:t=>horizonsUi?.toast(t),travel:travelHorizons,
  drive:()=>{if(horizonsPro.onRoof)return horizonsUi.toast('انزل إلى البهو أولًا');if(buildMode)toggleBuilder();if(seated)leaveStand();$('drive').click()},
@@ -2875,14 +2956,20 @@ horizonsUi=createHorizonsUI({world:horizonsWorld,roads:roadSegments,walkways:()=
 });
 const requestedSpawn=new URLSearchParams(location.search).get('spawn');
 if(requestedSpawn){const d=requestedSpawn==='drift'?horizonsDistricts.driftPad:horizonsWorld.destinations.find(d=>d.id===requestedSpawn);if(d)travelHorizons(d);}
+$("ld").style.display="none";
 let last=0,lastMiniDraw=-Infinity;
-(function loop(t){requestAnimationFrame(loop);if(t-last<1000/(ipadPaused?12:atmosphere.quality==="low"?24:30))return;const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
+(function loop(t){
+ requestAnimationFrame(loop);
+ if(gpuLost||document.hidden){last=t;return;}
+ if(t-last<1000/(ipadPaused?4:atmosphere.quality==="low"?24:30))return;
+ const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
 legacyLandscape.visible=!!inside||seated||buildMode||topView||Math.hypot(pl.position.x,pl.position.z)<1550||(playerMode==="split"&&Math.hypot(zyad.position.x,zyad.position.z)<1550);
+campusBoards.visible=legacyLandscape.visible;
 horizonsWorld.update(t,dt,pl.position,atmosphere.quality,buildMode||topView,playerMode==="split"?zyad.position:null);horizonsUi.update(t);if(horizonsSecond&&playerMode==="split")horizonsSecond.animate(student2Steps*1.5,Math.hypot(joy2.x,joy2.y)>.12?1:0);
 if(ipadGamepadEnabled&&!ipadPaused&&navigator.getGamepads){const pad=Array.from(navigator.getGamepads()).find(Boolean);if(pad){const dead=v=>Math.abs(v)>.18?v:0;joy.x=dead(pad.axes[0]||0);joy.y=dead(pad.axes[1]||0);if(pad.axes.length>=4){yaw+=dead(pad.axes[2]||0)*dt*2;pit=Math.max(-.15,Math.min(1.25,pit+dead(pad.axes[3]||0)*dt))}if(pad.buttons[0]&&pad.buttons[0].pressed&&!ipadPauseBtnHeld){ipadPauseBtnHeld=true;ipadHaptic()}if(!pad.buttons[0]||!pad.buttons[0].pressed)ipadPauseBtnHeld=false;}}
 if(ipadPaused){joy.x=joy.y=0;}
 if(t-lastCampusPositionSave>1500){lastCampusPositionSave=t;saveCampusPosition();}
-if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);if(inside&&inside.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.tick(t);stadiumScoreboard.style.display=seated&&!inside?"block":"none";if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
+if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);if(inside&&inside.n==="عمادة تقنية المعلومات"&&itCampus)itCampus.tick(t);stadiumScoreboard.style.display=!inside&&(seated||stadiumPrecinct?.visitorZone(pl.position.x,pl.position.z))?"block":"none";if(Math.floor(t/80)!==atmosphereFrame){atmosphereFrame=Math.floor(t/80);const view=playerMode==="split"?zyad.position:pl.position;for(let i=0;i<windPalms.length;i++){const palm=windPalms[i],d1=Math.hypot(palm.position.x-pl.position.x,palm.position.z-pl.position.z),d2=playerMode==="split"?Math.hypot(palm.position.x-view.x,palm.position.z-view.z):1e6,distNear=Math.min(d1,d2);palm.visible=distNear<(atmosphere.quality==="low"?170:atmosphere.quality==="high"?480:300);if(palm.visible){palm.rotation.z=Math.sin(t*.0017+i*.7)*(atmosphere.weather==="dust"?.055:.016);for(let k=1;k<palm.children.length;k++)palm.children[k].visible=distNear<(atmosphere.quality==="low"?65:atmosphere.quality==="high"?240:130)}}}
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
@@ -2918,7 +3005,11 @@ if(carMode&&!open&&!inside&&!buildMode&&!seated){
   const newX=clamp(nx,716,784),newZ=clamp(nz,-21,21);
   if(!itCampus.blocked(pl.position.x,pl.position.z,newX,pl.position.z))pl.position.x=newX;
   if(!itCampus.blocked(pl.position.x,pl.position.z,pl.position.x,newZ))pl.position.z=newZ;
- }else{pl.position.x=clamp(nx,716,784);pl.position.z=clamp(nz,-21,21)}
+ }else{
+  const x=clamp(nx,716,784),z=clamp(nz,-21,21);
+  if(!campusInterior?.blocked(x,pl.position.z))pl.position.x=x;
+  if(!campusInterior?.blocked(pl.position.x,z))pl.position.z=z;
+ }
 }else{if(!wallSweepBlocked(pl.position.x,pl.position.z,nx,pl.position.z,1.05)&&!hit(nx,pl.position.z))pl.position.x=clamp(nx,WORLD.minX+6,WORLD.maxX-6);if(!wallSweepBlocked(pl.position.x,pl.position.z,pl.position.x,nz,1.05)&&!hit(pl.position.x,nz))pl.position.z=clamp(nz,WORLD.minZ+6,WORLD.maxZ-6)}
  const ta=Math.atan2(dx,dz);let df=ta-fa;df=Math.atan2(Math.sin(df),Math.cos(df));fa+=df*Math.min(1,dt*12);mv=true;ph+=dt*sp*1.5;hint.style.opacity=0}
 ch.rotation.y=fa;
@@ -2972,7 +3063,7 @@ if(horizonsPro.aiming&&!carMode&&!buildMode&&!inside&&!seated)horizonsPro.aimCam
 near=null;let best=14;if(!inside)B.forEach(b=>{if(removedCampusBuildings.has(b.n)||!b.door)return;const d=Math.hypot(p.x-b.door.x,p.z-b.door.z);if(d<best){best=d;near=b}});
 if(!inside&&!near&&(Math.hypot(p.x-ST.x,p.z-(ST.z-132))<58||Math.hypot(p.x-(ST.x+110),p.z-ST.z)<30||Math.hypot(p.x-(ST.x-110),p.z-ST.z)<30))near=ST;
 en.style.display=near&&!open&&!inside&&!buildMode&&!carMode&&!seated?"block":"none";
-$("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&Math.hypot(p.x-ST.x,p.z-(ST.z-109))<68?"block":"none";if(near)en.textContent="دخول";
+$("sitStand").style.display=!seated&&!inside&&!buildMode&&!carMode&&(Math.hypot(p.x-ST.x,p.z-(ST.z-109))<68||stadiumPrecinct?.visitorZone(p.x,p.z))?"block":"none";if(near)en.textContent=near===ST?"دخول الملعب":"دخول";
 updateTraffic(dt);if(!inside&&t-lastMiniDraw>=100){mini();lastMiniDraw=t}if(!document.hidden){
  if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
   const w=innerWidth,h=innerHeight,half=Math.floor(w/2);
