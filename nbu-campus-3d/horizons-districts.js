@@ -62,9 +62,12 @@
   plaza.cylinder('gold',1400,4.3,300,.25,6);for(let i=0;i<9;i++){const a=i*Math.PI*2/9;plaza.add('cone','gold',1400+Math.sin(a)*2.5,7.1,300+Math.cos(a)*2.5,.22,.2,4,a);}
   for(let i=0;i<12;i++){const a=i*Math.PI/6;const jet=new T.Mesh(new T.CylinderGeometry(.055,.1,3.5,6),new T.MeshBasicMaterial({color:0xacf0f4,transparent:true,opacity:.6}));jet.position.set(1400+Math.cos(a)*9,2.8,300+Math.sin(a)*9);jet.rotation.z=Math.cos(a)*.3;plaza.g.add(jet);fountainJets.push(jet);}
   sign(plaza.g,'ساحة النخيل',1400,3.2,463,17);plaza.finish();plaza.g.scale.set(.48,1,.48);plaza.g.position.set(1400*.52,0,300*.52);compactPlaza=false;
-  // Access road from the existing east collector, ending before the pedestrian square.
-  const access=new Builder('Social district approach',1100,480);access.box('asphalt',1110,.1,480,580,.15,18);access.box('stone',1110,.2,468,580,.35,4);access.box('stone',1110,.2,492,580,.35,4);for(let x=840;x<1390;x+=20)access.box('white',x,.2,480,8,.03,.2);
-  access.box('asphalt',1400,.1,430,14,.15,100);access.box('asphalt',1400,.1,520,14,.15,80);access.box('asphalt',1620,.1,560,454,.15,14);access.finish();world.roads.push({x1:820,z1:480,x2:1400,z2:480,width:18},{x1:1400,z1:390,x2:1400,z2:560,width:14},{x1:1400,z1:560,x2:1840,z2:560,width:14});
+  const arrivals=new Builder('District arrival courts',1400,420);
+  arrivals.box('paving',1374,.039,423,38,.068,30);
+  for(let x=1359;x<=1389;x+=6)arrivals.box('white',x,.079,423,.16,.012,12);
+  world.addAccess(1400,386,1400,400,9);
+  world.addAccess(1400,423,1374,423,7);
+  arrivals.finish();
   // Hotel: physical lobby at ground level and an accessible roof with a safe pool perimeter.
   const hotel=new Builder('Hotel Horizon and skyline',-1400,-2100),roofY=48.4;
   wall(hotel,'cream',-1449,-2100,2,70,48);wall(hotel,'cream',-1351,-2100,2,70,48);wall(hotel,'cream',-1400,-2134,100,2,48);
@@ -84,9 +87,20 @@
   for(const x of [-1410,-1390])hotel.box('glass',x,2.3,-2065.2,4,4.5,.13);
   hotel.box('metal',-1365,2.5,-2117,9,5,.35);hotel.box('gold',-1365,2.6,-2116.7,.08,4.3,.1);
   sign(hotel.g,'فندق الأفق',-1400,7,-2064.5,26,'#fff3c9','#274c48');sign(hotel.g,'H O T E L   H O R I Z O N',-1400,53.2,-2133,58,'#ffcf83',null);sign(hotel.g,'مصعد السطح ↑',-1365,5.9,-2116.5,8);
-  for(let i=0;i<30;i++){const a=i*Math.PI*2/30,r=155+(i%4)*32,x=-1400+Math.cos(a)*r,z=-2100+Math.sin(a)*r,h=30+(i*17)%75;hotel.box(i%2?'roof':'mint',x,h/2,z,24,h,25);for(let y=4;y<h;y+=4)for(let dx=-8;dx<=8;dx+=5)if((i+y+dx)%3!==0){hotel.box('window',x+dx,y,z+12.6,2.4,2.1,.08);hotel.box('window',x+dx,y,z-12.6,2.4,2.1,.08);hotel.box('window',x-12.1,y,z+dx,.08,2.1,2.4);hotel.box('window',x+12.1,y,z+dx,.08,2.1,2.4);}collider(x,z,24,25);}
-  hotel.finish();world.roads.push({x1:-1480,z1:-2450,x2:-1480,z2:-2040,width:16},{x1:-1480,z1:-2040,x2:-1400,z2:-2040,width:16});
-  const hotelRoad=new Builder('Hotel approach',-1400,-2300);hotelRoad.box('asphalt',-1480,.1,-2250,16,.15,400);hotelRoad.box('asphalt',-1440,.11,-2040,96,.15,16);hotelRoad.finish();
+  world.addAccess(-1400,-2065,-1400,-2040,10);
+  for(const [column,x] of [-1600,-1535,-1260,-1195].entries())for(let row=0;row<5;row++){
+   const z=-2240+row*65,h=27+((column*13+row*17)%8)*10,streetX=[-1650,-1480,-1310,-1150][column];
+   hotel.box((row+column)%2?'roof':'mint',x,h/2,z,26,h,31);
+   const front=x+Math.sign(streetX-x)*13;
+   hotel.box('glass',front,2.6,z,.13,5.2,4);
+   world.addAccess(front,z,streetX,z,5);
+   for(let y=6;y<h;y+=4)for(let dx=-8;dx<=8;dx+=5)if((row+y+dx)%3!==0){
+    hotel.box('window',x+dx,y,z+15.58,2.4,2.1,.08);hotel.box('window',x+dx,y,z-15.58,2.4,2.1,.08);
+    hotel.box('window',x-13.08,y,z+dx,.08,2.1,2.4);hotel.box('window',x+13.08,y,z+dx,.08,2.1,2.4);
+   }
+   collider(x,z,26,31);
+  }
+  hotel.finish();
   // Circuit ribbon with red/white kerbs and eight visible checkpoint gates.
   const circuit=new Builder('Horizon driving circuit',1500,2100),checkpoints=[];
   const points=[],positions=[],normals=[],uvs=[],N=128,rx=380,rz=210;
@@ -94,14 +108,23 @@
   const indices=[];for(let i=0;i<N;i++){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);const a=i/N*Math.PI*2;for(const s of [-1,1])circuit.box(i%4<2?'white':'orange',1500+Math.cos(a)*(rx+s*17),.2,2100+Math.sin(a)*(rz+s*17),14,.25,1.4,-a-Math.PI/2);}
   const trackGeo=new T.BufferGeometry();trackGeo.setAttribute('position',new T.Float32BufferAttribute(positions,3));trackGeo.setAttribute('normal',new T.Float32BufferAttribute(normals,3));trackGeo.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));trackGeo.setIndex(indices);const track=new T.Mesh(trackGeo,mats.asphalt);track.receiveShadow=true;circuit.g.add(track);
   for(let i=0;i<8;i++){const a=Math.PI+i*Math.PI/4,x=1500+Math.cos(a)*rx,z=2100+Math.sin(a)*rz;checkpoints.push({x,z});for(const s of [-1,1])circuit.box('neon',x+Math.cos(a)*s*17,4,z+Math.sin(a)*s*17,.4,8,.4);circuit.box('metal',x,8,z,34,.3,.3,-a);}
-  circuit.box('asphalt',970,.1,2100,300,.15,24);world.roads.push({x1:820,z1:2100,x2:1120,z2:2100,width:24});
+  circuit.box('asphalt',970,.069,1985,130,.14,100);
+  for(const x of [908,1032])circuit.box('white',x,.145,1985,.2,.016,92);
+  for(const z of [1938,2032])for(const x of [935,1005])circuit.box('white',x,.145,z,50,.016,.2);
+  sign(circuit.g,'ساحة الانزلاق | DRIFT',970,5,1937,23,'#ffe0a8','#263942');
+  for(let i=0;i<12;i++){
+   const a=i*Math.PI/6;
+   circuit.add('cone','orange',970+Math.cos(a)*16,.42,1985+Math.sin(a)*16,.45,.85,.45);
+  }
   // Garage beside the circuit. The entrance is clear and fully walkable.
   wall(circuit,'roof',1010,2200,1,48,8);wall(circuit,'roof',1090,2200,1,48,8);wall(circuit,'roof',1050,2224,80,1,8);circuit.box('roof',1050,8.3,2200,82,.6,50);circuit.box('paving',1050,.15,2200,80,.3,48);sign(circuit.g,'مرآب الأفق | UPGRADE',1050,6,2175,37,'#bceeff','#253d49');
   for(const x of [1025,1075]){circuit.box('orange',x,1,2215,12,2,2);circuit.box('metal',x,4,2222,16,.3,1);for(let i=0;i<5;i++)circuit.cylinder('tire',x-5+i*2.2,1,2220,.7,.4,0,Math.PI/2);}
+  world.addAccess(1050,2178,1050,2176,10);
   circuit.finish();
   // Training targets are objects, separate from the university and social areas.
   const range=new Builder('Training range',1840,450);range.box('sand',1840,.11,470,120,.12,130);range.box('wood',1840,3.5,415,110,7,.6);collider(1840,415,110,.6);
   for(let i=0;i<7;i++){const x=1795+i*15,z=430+(i%2)*8,g=new T.Group();g.position.set(x,0,z);range.g.add(g);const post=new T.Mesh(new T.BoxGeometry(.2,3,.2),mats.wood);post.position.y=1.5;g.add(post);for(let j=0;j<4;j++){const disk=new T.Mesh(new T.CircleGeometry(1.6-j*.35,24),j%2?mats.white:mats.orange);disk.position.set(0,2.8,.02+j*.015);g.add(disk);}targets.push({root:g,mesh:g.children[1],x,z,down:0});}
+  world.addAccess(1840,535,1840,560,8);
   sign(range.g,'ميدان التدريب',1840,4.5,540,20);range.finish();
   // Distant mountain silhouettes add depth without filling the playable centre.
   const mountains=new Builder('Northern mountain silhouettes',0,0),mountainMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:1});
@@ -128,6 +151,7 @@
    if(t<fireUntil&&Math.floor(t/1800)!==fireBurst){fireBurst=Math.floor(t/1800);const bx=-1400+(Math.random()-.5)*70,by=75+Math.random()*25,bz=-2100+(Math.random()-.5)*30,color=new T.Color().setHSL(Math.random(),.7,.7);for(let i=0;i<fireCount;i++){const a=Math.random()*Math.PI*2,b=Math.acos(Math.random()*2-1),v=4+Math.random()*15;firePos.set([bx,by,bz],i*3);fireVel.set([Math.cos(a)*Math.sin(b)*v,Math.cos(b)*v,Math.sin(a)*Math.sin(b)*v],i*3);fireLife[i]=1.5+Math.random()*2;fireColors.set([color.r,color.g,color.b],i*3);}fireGeo.attributes.color.needsUpdate=true;}
    sparks.visible=t<fireUntil+4000&&fireUntil>0;if(sparks.visible){for(let i=0;i<fireCount;i++){const j=i*3;if(fireLife[i]<=0){firePos[j+1]=-10000;continue;}fireLife[i]-=dt;fireVel[j+1]-=dt*4;for(let k=0;k<3;k++)firePos[j+k]+=fireVel[j+k]*dt;}fireGeo.attributes.position.needsUpdate=true;}
   }
-  return {update,targets,fireworks,checkpoints,garage:{x:1050,z:2170},elevator:{x:-1365,z:-2110},hotelEntrance:{x:-1400,z:-2040},roof:{x:-1400,z:-2074,y:roofY,minX:-1446,maxX:-1354,minZ:-2131,maxZ:-2069},heightAt(x,z){if(x>1308&&x<1492&&z>213&&z<387)return .34;if(x>1010&&x<1090&&z>2175&&z<2225)return .32;if(x>-1448&&x<-1352&&z>-2133&&z<-2067)return .26;if(x>1780&&x<1900&&z>405&&z<535)return .19;return 0;},roofBlocked(x,z,r=1){return x-r<-1447||x+r>-1353||z-r<-2132||z+r>-2068||(x+r>-1431&&x-r<-1395&&z+r>-2117&&z-r<-2093);},materials:mats,environment};
+  return {update,targets,fireworks,checkpoints,driftPad:{x:970,z:2004,yaw:0},
+   isPaved(x,z){return Math.abs(x-970)<=65&&Math.abs(z-1985)<=50||Math.abs(Math.hypot((x-1500)/380,(z-2100)/210)-1)<.043;},garage:{x:1050,z:2170},elevator:{x:-1365,z:-2110},hotelEntrance:{x:-1400,z:-2040},roof:{x:-1400,z:-2074,y:roofY,minX:-1446,maxX:-1354,minZ:-2131,maxZ:-2069},heightAt(x,z){if(x>1308&&x<1492&&z>213&&z<387)return .34;if(x>1010&&x<1090&&z>2175&&z<2225)return .32;if(x>-1448&&x<-1352&&z>-2133&&z<-2067)return .26;if(x>1780&&x<1900&&z>405&&z<535)return .19;return 0;},roofBlocked(x,z,r=1){return x-r<-1447||x+r>-1353||z-r<-2132||z+r>-2068||(x+r>-1431&&x-r<-1395&&z+r>-2117&&z-r<-2093);},materials:mats,environment};
  };
 })();

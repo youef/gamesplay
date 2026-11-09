@@ -49,8 +49,9 @@ test('realistic stadium is isolated from campus road and buildings',()=>{
  const cx=365,halfW=135,eastCampusWallX=200;
  assert.ok(cx-halfW>eastCampusWallX,'sports precinct must not touch campus fence');
  assert.match(html,/\{n:"المبنى الترفيهي",x:-140,z:135/);
- assert.match(html,/addV\(245,ST\.z-175,-97,9\)/);
- assert.match(html,/addH\(ST\.z-175,245,ST\.x\+143,10\)/);
+ assert.match(html,/addV\(245,-164,-97,9\)/);
+ assert.match(html,/addH\(-164,245,508,14\)/);
+ assert.match(html,/addV\(487,-164,-106,9\)/);
  assert.match(html,/buildCampusStadiumPrecinct\(\{THREE,scene:S,ST,mat,lab,COL\}\)/);
  assert.match(html,/Math\.abs\(x-ST\.x\)<ST\.precinct\.halfW/);
 });

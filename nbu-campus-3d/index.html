@@ -181,7 +181,7 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 #gameSettings #atmospherePanel select{max-width:100%}
 @media(max-width:900px){#gameSettings{width:min(450px,calc(100vw - 20px))!important}#settingsToggle{font-size:12px!important;padding:8px!important}}
 </style>
-<link rel="stylesheet" href="./horizons.css?v=12"><link rel="stylesheet" href="./horizons-pro.css?v=12">
+<link rel="stylesheet" href="./horizons.css?v=13"><link rel="stylesheet" href="./horizons-pro.css?v=13">
 <meta name="description" content="عالم مفتوح بمساحة ٣٦ كم²، ١١ وجهة، وثلاث شخصيات أصلية مع سباق وتطوير مركبات وميدان تدريب وساحة وفندق.">
 </head>
 <body>
@@ -228,16 +228,19 @@ body.hudFocus #tools,body.hudFocus #bar,body.hudFocus #showTools,body.hudFocus #
 <script src="./strategy-camera.js?v=3e6d7168"></script>
 <script src="./strategy-blueprint-image.js?v=b40f73c"></script>
 <script src="./strategy-plan-json.js?v=78295c3f"></script>
-<script src="./horizons-districts.js?v=12"></script><script src="./horizons-pro.js?v=12"></script>
-<script src="./horizons-world.js?v=12"></script>
-<script src="./horizons-ui.js?v=12"></script>
+<script src="./horizons-districts.js?v=13"></script><script src="./horizons-driving.js?v=13"></script><script src="./horizons-pro.js?v=13"></script>
+<script src="./horizons-roads.js?v=13"></script>
+<script src="./horizons-world.js?v=13"></script>
+<script src="./horizons-ui.js?v=13"></script>
 <script>
 const $=i=>document.getElementById(i);
 const WORLD={...Horizons.bounds};
+const regionalRoads=HorizonsRoads.plan();
+let horizonsWorld=null;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 // ===== بيانات المباني والمعامل (عدّلها بحرية) =====
 const B=[
-{n:"كلية الطب",x:-70,z:-135,w:60,d:40,h:22,c:0xcfd8e4,ds:"s",labs:[["معمل التشريح","مجسمات ونماذج تشريحية للسنوات الأولى."],["معمل الأحياء الدقيقة","مزارع وفحوصات ميكروبية."],["معمل الفسيولوجيا","تجارب وظائف الأعضاء."],["مركز المهارات الإكلينيكية","محاكاة مهارات التمريض والفحص."]]},
+{n:"كلية الطب",x:-62,z:-135,w:60,d:40,h:22,c:0xcfd8e4,ds:"s",labs:[["معمل التشريح","مجسمات ونماذج تشريحية للسنوات الأولى."],["معمل الأحياء الدقيقة","مزارع وفحوصات ميكروبية."],["معمل الفسيولوجيا","تجارب وظائف الأعضاء."],["مركز المهارات الإكلينيكية","محاكاة مهارات التمريض والفحص."]]},
 {n:"قسم الآداب",x:72,z:-138,w:60,d:38,h:20,c:0xe6d8bd,ds:"s",labs:[["معمل اللغات","تدريب سمعي ونطقي للغات."],["معمل الترجمة","برامج الترجمة والتفريغ."],["استوديو الإعلام","تسجيل ومونتاج صوتي ومرئي."]]},
 {n:"عمادة تقنية المعلومات",x:-145,z:-45,w:44,d:30,h:17.4,c:0xd3e0d9,ds:"s",labs:[["الدور الأرضي: خدمة العملاء","خدمة العملاء على مقربة من المصعد والمدخل."],["الدور الأرضي: قسم الشبكات","في الجهة اليمنى من الممر."],["الدور الأرضي: الأمن السيبراني","بجوار خدمة العملاء."],["الممر الخلفي: مركز البيانات","غرفة الخوادم الرئيسية في الجزء الخلفي من المبنى."],["المرافق الخلفية","دورات المياه وغرفة عامل النظافة وغرفة الأعمال."],["الدور الأول","الخوادم والأنظمة والدعم الفني والتدريب والمختبرات."],["الدور الثاني","مكتب العميد والاجتماعات وإدارة المشاريع والتطوير."],["السطح","التكييف والاتصالات والطاقة الشمسية وغرفة الصيانة."]]},
 {n:"عمادة شؤون المكتبات",x:-145,z:50,w:40,d:28,h:14,c:0xe0d4c8,ds:"s",labs:[["قاعة الوسائط الرقمية","قواعد بيانات ومصادر إلكترونية."],["قاعات البحث الجماعي","غرف دراسة قابلة للحجز."]]},
@@ -357,7 +360,7 @@ const addV=(x,a,b,w=9)=>campusRoad(x,a,x,b,w);
 addH(-185,-185,185,12);addH(170,-185,185,12);
 addV(-185,-185,170,12);addV(185,-185,170,12);
 // Central streets and collector branches through the campus, avoiding building footprints.
-addH(-88,-260,260,11);addH(20,-185,185,10);
+addH(-88,-260,245,11);addH(20,-185,185,10);
 addV(-100,-185,170,10);addV(130,-185,170,10);
 // Northern entrance: two physically aligned lanes at x -9 and +9, joined to north ring.
 for(const x of [-9,9])addV(x,-260,-185,7);
@@ -366,16 +369,16 @@ addH(-245,-9,9,7);
 for(const x of [-109,-91])addV(x,170,260,7);
 addH(245,-109,-91,7);
 // Eastern entrance: rotated gate means lanes at z=-97 and z=-79.
-for(const z of [-97,-79])addH(z,185,260,7);
+for(const z of [-97,-79])addH(z,185,245,7);
 addV(245,-97,-79,7);
 // Dedicated connection from the campus east gate to the separate sports grounds.
-addV(245,ST.z-175,-97,9);addH(ST.z-175,245,ST.x+143,10);addV(ST.x+122,ST.z-175,ST.z-147,8);
+addV(245,-164,-97,9);addH(-164,245,508,14);addV(487,-164,-106,9);
 // Western entrance: corresponding paired lanes connected to the cross-campus collector.
-for(const z of [-97,-79])addH(z,-260,-185,7);
+for(const z of [-97,-79])addH(z,-245,-185,7);
 addV(-245,-97,-79,7);
 // Service connectors linking the internal network to the perimeter at shared intersections.
-addH(170,-185,-100,10);addH(170,130,185,10);
-addH(-185,-100,130,10);
+addH(-9,-185,-100,8);addH(112,130,185,8);
+addH(-172,-100,130,8);addH(92,-185,-100,8);
 // السور
 const perimeterWallSegments=[];
 function wall(x1,z1,x2,z2){perimeterWallSegments.push({x1,z1,x2,z2});const w=Math.abs(x2-x1)+1.4,d=Math.abs(z2-z1)+1.4,cx=(x1+x2)/2,cz=(z1+z2)/2;box(w,4.2,d,mat(0xe6dcc6),cx,2.1,cz);box(w+.4,.4,d+.4,mat(0xb9a883),cx,4.4,cz);COL.push([cx-w/2,cz-d/2,cx+w/2,cz+d/2])}
@@ -1352,30 +1355,28 @@ B.forEach(b=>{const s=b.ds==="n"?-1:1;palm(b.x-13,b.z+s*(b.d/2+7));palm(b.x+13,b
 const lpm=mat(0x333840),lhm=mat(0xfff2c0,{emissive:0xffe08a});
 for(let t=-180;t<=180;t+=30){[[t,-180],[t,180],[-180,t],[180,t]].forEach(p=>{box(.25,6,.25,lpm,p[0],3,p[1],0);box(1.2,.25,.25,lpm,p[0],6,p[1],0);const h=new THREE.Mesh(new THREE.SphereGeometry(.4,8,6),lhm);h.position.set(p[0]+.5,5.9,p[1]);S.add(h)})}
 // امتداد المنطقة: ضاحية الملك فهد، الطريق العام، المطار
-road(-560,20,-100,20,18);
-road(-100,20,-100,-88,18);
-road(-100,20,430,20,18);
-road(430,20,430,-300,18);
-road(430,-300,500,-300,18);
 const districtPad=new THREE.Mesh(new THREE.PlaneGeometry(DIST.w,DIST.d),mat(0xdcc6a4));districtPad.rotation.x=-Math.PI/2;districtPad.position.set(DIST.x,.05,DIST.z);districtPad.receiveShadow=true;S.add(districtPad);
-const districtRoads=[[DIST.x-DIST.w/2+24,DIST.z-52,DIST.w-34,10],[DIST.x-DIST.w/2+24,DIST.z,DIST.w-34,10],[DIST.x-DIST.w/2+24,DIST.z+52,DIST.w-34,10]].forEach(r=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(r[2],r[3]),mat(0x50565d));m.rotation.x=-Math.PI/2;m.position.set(r[0]+r[2]/2,.08,r[1]);m.receiveShadow=true;S.add(m)});
 [[DIST.x-76,DIST.z-28],[DIST.x-10,DIST.z-28],[DIST.x+56,DIST.z-28],[DIST.x-76,DIST.z+36],[DIST.x-10,DIST.z+36],[DIST.x+56,DIST.z+36]].forEach((p,i)=>{const w=30,d=22,h=11+(i%2)*2;box(w,h,d,mat(0xe8dcc9),p[0],h/2,p[1]);box(w+1,.5,d+1,mat(0x9a8f7d),p[0],h+.25,p[1]);box(7,3,.3,mat(0x20486a),p[0],2.1,p[1]+d/2+.16);COL.push([p[0]-w/2,p[1]-d/2,p[0]+w/2,p[1]+d/2])});
 box(48,13,28,mat(0xd5e0c8),DIST.x+6,6.5,DIST.z-83);box(49,.5,29,mat(0x988d77),DIST.x+6,13.25,DIST.z-83);const dLab=lab("ضاحية الملك فهد","#1d3a5f",5.3);dLab.position.set(DIST.x,16,DIST.z);
 const parkPad=new THREE.Mesh(new THREE.PlaneGeometry(62,36),mat(0x6aa06e));parkPad.rotation.x=-Math.PI/2;parkPad.position.set(DIST.x+86,.06,DIST.z+77);parkPad.receiveShadow=true;S.add(parkPad);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)palm(DIST.x+80+i*18,DIST.z+78+j*10);
-const cityMarker=lab("إلى عرعر","#8d2f2f",4.5);cityMarker.position.set(CITY.x,10,CITY.z);for(let i=0;i<4;i++){box(40,8+i*2,26,mat(0xd8cfbe),CITY.x+40*i,4+i,CITY.z-52+(i%2)*20);}
+const cityMarker=lab("إلى عرعر","#8d2f2f",4.5);cityMarker.position.set(CITY.x,10,CITY.z);for(const [i,x] of [-788,-748,-708,-668].entries()){
+ const z=-34+i%2*7,w=29,d=25,h=8+i*2;
+ box(w,h,d,mat(0xd8cfbe),x,h/2,z);box(4,3,.2,mat(0x20486a),x,1.5,z+d/2+.1);
+ COL.push([x-w/2,z-d/2,x+w/2,z+d/2]);
+}
 const runway=new THREE.Mesh(new THREE.PlaneGeometry(210,32),mat(0x484f55));runway.rotation.x=-Math.PI/2;runway.position.set(AIR.x,.08,AIR.z);runway.receiveShadow=true;S.add(runway);for(let i=-90;i<=90;i+=18){const line=new THREE.Mesh(new THREE.PlaneGeometry(8,2),mat(0xf5f1da));line.rotation.x=-Math.PI/2;line.position.set(AIR.x+i,.1,AIR.z);S.add(line)}
 box(58,13,26,mat(0xcfdbe5),AIR.x-38,6.5,AIR.z+42);box(59,.5,27,mat(0xa39684),AIR.x-38,13.25,AIR.z+42);box(22,22,22,mat(0xafc4d8),AIR.x+42,11,AIR.z+44);const airLabel=lab("مطار عرعر","#1d3a5f",5);airLabel.position.set(AIR.x,18,AIR.z+10);
 // خدمات الحياة اليومية: محطات الحافلات والوقود والتقاطعات والإشارات
-const roadsideStops=[{n:"محطة الضاحية",x:-535,z:45},{n:"محطة الجامعة",x:-130,z:43},{n:"محطة الخدمات",x:260,z:43},{n:"محطة المطار",x:430,z:-250}];
+const roadsideStops=[{n:"محطة الضاحية",x:-540,z:37},{n:"محطة الجامعة",x:-130,z:43},{n:"محطة الخدمات",x:540,z:-147},{n:"محطة المطار",x:569,z:-250}];
 roadsideStops.forEach((p)=>{box(12,.22,5,mat(0xaaa89d),p.x,.12,p.z);box(10,.4,6,mat(0x278a94),p.x,4.6,p.z);[-4,4].forEach(d=>box(.4,4.2,.4,mat(0x52616d),p.x+d,2.3,p.z));box(9,1.4,.22,mat(0xd9e8ed),p.x,2.9,p.z+2.5);let tag=lab(p.n,"#205477",1.9);tag.position.set(p.x,7.2,p.z) });
 // معبر مشاة وحارات توقف بمداخل الطريق العام
 function drawCrossing(x,z,alongZ=false){for(let i=-4;i<=4;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(alongZ?5:2.5,alongZ?2.5:5),mat(0xf0e9da));m.rotation.x=-Math.PI/2;m.position.set(x+(alongZ?i*3.1:0),.11,z+(alongZ?0:i*3.1));S.add(m)}}
-drawCrossing(-100,46,true);drawCrossing(430,46,true);drawCrossing(-165,20,false);
+drawCrossing(-100,46,true);drawCrossing(365,-164,true);drawCrossing(-550,20,false);
 // محطة وقود حديثة من تصميم أصلي، نموذج تخيلي غير مطابق لمحطة فعلية
-const defaultFuel=new THREE.Group();defaultFuel.position.set(265,0,78);S.add(defaultFuel);makeFuelStation(defaultFuel);
-let fuelLab=lab("محطة الخدمات","#176c90",2.2);fuelLab.position.set(265,12,82);
+const defaultFuel=new THREE.Group();defaultFuel.position.set(560,0,-119);defaultFuel.rotation.y=Math.PI;S.add(defaultFuel);makeFuelStation(defaultFuel);
+let fuelLab=lab("محطة الخدمات","#176c90",2.2);fuelLab.position.set(560,12,-131);
 // إشارات المرور ذات دورتين متبادلتين كل 16 ثانية
-const trafficJunctions=[{x:-100,z:20},{x:430,z:20}],signalBulbs=[];
+const trafficJunctions=[{x:-100,z:20},{x:600,z:-164}],signalBulbs=[];
 trafficJunctions.forEach((j,i)=>{for(const axis of ["ew","ns"]){const o=new THREE.Group();o.position.set(j.x+(axis==="ew"?21:-20),0,j.z+(axis==="ns"?21:-20));S.add(o);
 const post=new THREE.Mesh(new THREE.BoxGeometry(.55,6,.55),mat(0x56636d));post.position.y=3;o.add(post);
 const face=new THREE.Mesh(new THREE.BoxGeometry(1.7,4.4,.65),mat(0x19222b));face.position.y=6.1;o.add(face);
@@ -1531,7 +1532,7 @@ p=new THREE.Group();p.position.set(s*.13,.45,0);ch.add(p);add(new THREE.BoxGeome
 pl.position.set(1407,0,350);
 const car=new THREE.Group();S.add(car);const carBox=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;car.add(m);return m};carBox(3.6,1.1,7.2,0xb23830,0,1.1,0);carBox(3.1,.9,3.2,0x90c7df,0,1.95,.2);carBox(2.8,.22,1.2,0x2b3440,0,2.52,.32);[-1,1].forEach(s=>{[-1,1].forEach(f=>{const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.82,.82,.55,14),mat(0x222));wheel.rotation.z=Math.PI/2;wheel.position.set(s*1.95,.7,f*2.38);wheel.castShadow=true;car.add(wheel)})});car.visible=false;
 // التحكم
-const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:-100,z:0},strategyHeight=450,mapDrag=null;const activePointers=new Map();let pinchDistance=0,pinchMoved=false,pinchCenter=null,draggedStrategyObject=null;let yaw=.12,pit=.22,dist=8.5,near=null,open=false,ph=0,fa=Math.PI,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
+const K={},joy={x:0,y:0};let strategyPan=true,strategy2D=true,strategyCenter={x:-100,z:0},strategyHeight=450,mapDrag=null;const activePointers=new Map();let pinchDistance=0,pinchMoved=false,pinchCenter=null,draggedStrategyObject=null;let yaw=.12,pit=.22,dist=8.5,near=null,open=false,ph=0,fa=Math.PI,inside=null,topView=false,autoRun=false,carMode=false,carSpeed=0,driveCourse=null,driveSlip=0,driveSliding=false,touchGas=false,touchBrake=false,drivenMeters=0,driveStartDistance=0,atAirport=false,atCity=false,nightMode=false;
 // Persist the last safe outdoor position and camera view across refreshes.
 const CAMPUS_POSITION_KEY="nbu-campus-last-player-position-v1";
 function saveCampusPosition(){
@@ -1756,7 +1757,7 @@ function exitBuilding(){if(!inside)return;if(seated){seated=false;seatOrigin=nul
 $("leave").onclick=exitBuilding;
 $("tour").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");topView=!topView;$("tour").classList.toggle("active",topView);if(topView)exitBuilding()};
 $("run").onclick=()=>{autoRun=!autoRun;$("run").classList.toggle("active",autoRun)};
-$("drive").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");if(inside)exitBuilding();carMode=!carMode;carSpeed=0;driveStartDistance=drivenMeters;car.visible=carMode;ch.visible=!carMode;$("drive").classList.toggle("active",carMode);$("driveControls").style.display=carMode?"flex":"none";$("drivingHud").style.display=carMode?"block":"none";
+$("drive").onclick=()=>{if(buildMode)return toastBuild("أنه وضع البناء أولًا");if(inside)exitBuilding();carMode=!carMode;carSpeed=0;driveCourse=null;driveSlip=0;driveSliding=false;driveStartDistance=drivenMeters;car.visible=carMode;ch.visible=!carMode;$("drive").classList.toggle("active",carMode);$("driveControls").style.display=carMode?"flex":"none";$("drivingHud").style.display=carMode?"block":"none";
 if(carMode){topView=false;$("tour").classList.remove("active");dist=Math.max(dist,16);toastBuild("🚗 يمين = انعطاف يمين، يسار = انعطاف يسار") }else{dist=8.5;storeBuild();toastBuild("تم الرجوع إلى المشي")}updateModes()};
 for(const [btn,key] of [["gasBtn","gas"],["brakeBtn","brake"]]){const el=$(btn);el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);if(key==="gas")touchGas=true;else touchBrake=true;el.classList.add("pressed")});const stop=()=>{if(key==="gas")touchGas=false;else touchBrake=false;el.classList.remove("pressed")};el.addEventListener("pointerup",stop);el.addEventListener("pointercancel",stop);el.addEventListener("lostpointercapture",stop)}
 $("trafficToggle").onclick=()=>{trafficEnabled=!trafficEnabled;agents.forEach(a=>a.mesh.visible=trafficEnabled);$("trafficToggle").classList.toggle("active",trafficEnabled);$("trafficToggle").textContent=trafficEnabled?"🚦 حركة المرور":"🚙 حركة متوقفة";toastBuild(trafficEnabled?"تم تشغيل حركة السيارات والحافلات":"تم إيقاف حركة السيارات والحافلات")};
@@ -1832,12 +1833,49 @@ function updateRoadJunctions(){
    ||z<Math.min(v.z1,v.z2)-.1||z>Math.max(v.z1,v.z2)+.1)continue;
   const key=Math.round(x*2)+":"+Math.round(z*2);if(visited.has(key))continue;
   visited.add(key);
-  const width=Math.max(5,Math.min(18,Math.min(h.width,v.width)));
-  const tile=new THREE.Mesh(new THREE.BoxGeometry(width,.055,width),roadJunctionMat);
-  tile.position.set(x,.102,z);tile.receiveShadow=false;roadJunctionLayer.add(tile);
+  if(h.kind&&v.kind)continue;
+  const tile=new THREE.Mesh(new THREE.BoxGeometry(v.width,.023,h.width),roadJunctionMat);
+  tile.position.set(x,.109,z);tile.receiveShadow=false;roadJunctionLayer.add(tile);
  }
 }
 const PLAN_HISTORY_LIMIT=45;
+// Unchanged records from the old map adopt the corrected base road. Keep player edits.
+const oldRoads=new Map([
+ [4,[-260,-88,260,-88,11]],[14,[185,-97,260,-97,7]],[15,[185,-79,260,-79,7]],
+ [17,[245,-135,245,-97,9]],[18,[245,-135,508,-135,10]],[19,[487,-135,487,-107,8]],
+ [20,[-260,-97,-185,-97,7]],[21,[-260,-79,-185,-79,7]],
+ [23,[-185,170,-100,170,10]],[24,[130,170,185,170,10]],[25,[-100,-185,130,-185,10]]
+]);
+const campusAccess=new THREE.Group(),accessMat=mat(0xccbaa0,{roughness:1});
+campusAccess.name='Campus entrance sidewalks';S.add(campusAccess);
+const campusWalks=[];
+function redrawCampusAccess(){
+ while(campusAccess.children.length){const m=campusAccess.children[0];campusAccess.remove(m);m.geometry.dispose()}
+ campusWalks.length=0;
+ const roads=roadSegments();
+ for(const b of B){
+  if(removedCampusBuildings.has(b.n))continue;
+  const angle=(b.rot||0)*Math.PI/2,sign=b.ds==='n'?-1:1;
+  const dx=Math.round(Math.sin(angle))*sign,dz=Math.round(Math.cos(angle))*sign;
+  const x=b.x+dx*b.d/2,z=b.z+dz*b.d/2;
+  let nearest=Infinity;
+  for(const r of roads){
+   if(dz&&r.z1===r.z2&&x>=Math.min(r.x1,r.x2)&&x<=Math.max(r.x1,r.x2)){
+    const length=(r.z1-z)*dz;if(length>0&&length<nearest)nearest=length;
+   }else if(dx&&r.x1===r.x2&&z>=Math.min(r.z1,r.z2)&&z<=Math.max(r.z1,r.z2)){
+    const length=(r.x1-x)*dx;if(length>0&&length<nearest)nearest=length;
+   }
+  }
+  if(nearest>105)continue;
+  const w=dx?nearest:4.5,d=dz?nearest:4.5,cx=x+dx*nearest/2,cz=z+dz*nearest/2;
+  if(B.some(other=>other!==b&&!removedCampusBuildings.has(other.n)&&(()=>{
+   const p=footprintOfBuilding(other);return Math.abs(cx-p.x)<(p.w+w)/2&&Math.abs(cz-p.z)<(p.d+d)/2;
+  })()))continue;
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,.048,d),accessMat);
+  mesh.position.set(cx,.025,cz);mesh.receiveShadow=true;campusAccess.add(mesh);
+  campusWalks.push({x,z,roadX:x+dx*nearest,roadZ:z+dz*nearest,width:4.5});
+ }
+}
 function footprintOfBuilding(b,x=b.x,z=b.z,rotation=b.rot||0){
  const w=rotation%2?b.d:b.w,d=rotation%2?b.w:b.d;
  return {x,z,w,d};
@@ -1853,6 +1891,7 @@ function syncBuildingTransforms(){
   const dz=(b.ds==="n"?-1:1)*(b.d/2+9),angle=b.rot*Math.PI/2;
   b.door={x:b.x+Math.sin(angle)*dz,z:b.z+Math.cos(angle)*dz};
  }
+ redrawCampusAccess();
 }
 function redrawFixedRoads(){
  for(const r of campusRoads){
@@ -1863,7 +1902,7 @@ function redrawFixedRoads(){
   r.mesh.position.set((r.x1+r.x2)/2,.06,(r.z1+r.z2)/2);
   const tex=r.mesh.material.map;if(tex)tex.repeat.set(horizontal?len/8:1,horizontal?1:len/8);
  }
- updateRoadJunctions();refreshCustomTrafficRoutes();
+ redrawCampusAccess();updateRoadJunctions();refreshCustomTrafficRoutes();
 }
 function restoreFixedRoads(saved){
  deletedFixedRoads.clear();
@@ -1874,7 +1913,9 @@ function restoreFixedRoads(saved){
     &&((v.x1===v.x2)!==(v.z1===v.z2))
     &&[v.x1,v.x2].every(x=>x>=WORLD.minX&&x<=WORLD.maxX)
     &&[v.z1,v.z2].every(z=>z>=WORLD.minZ&&z<=WORLD.maxZ);
-  Object.assign(r,good?{x1:v.x1,z1:v.z1,x2:v.x2,z2:v.z2,width:v.width}:r.base);
+  const fields=['x1','z1','x2','z2','width'],old=oldRoads.get(r.id);
+  const legacyBase=good&&old&&fields.every((key,i)=>v[key]===old[i]);
+  Object.assign(r,good&&!legacyBase?Object.fromEntries(fields.map(key=>[key,v[key]])):r.base);
   if(good&&v.deleted)deletedFixedRoads.add(r.id);
  }
  redrawFixedRoads();
@@ -1953,7 +1994,8 @@ function clearRoadPreview(){roadPreview.visible=false;roadDragOrigin=null;roadDr
 const snap=v=>Math.round(v/5)*5;
 // Snap to the actual permanent road centerlines as well as player-built paths.
 function roadSegments(){
- const list=campusRoads.filter(r=>!deletedFixedRoads.has(r.id)).map(r=>({x1:r.x1,z1:r.z1,x2:r.x2,z2:r.z2,width:r.width,fixed:true,id:r.id}));
+ const editable=campusRoads.filter(r=>!deletedFixedRoads.has(r.id)).map(r=>({x1:r.x1,z1:r.z1,x2:r.x2,z2:r.z2,width:r.width,fixed:true,id:r.id}));
+ const list=[...editable,...regionalRoads];
  for(const r of built)if(["road","avenue","mapRoad","mapAvenue"].includes(r.type)&&r.end)list.push({x1:r.x,z1:r.z,x2:r.end.x,z2:r.end.z,width:buildDefs[r.type].width,fixed:false});
  return list;
 }
@@ -2109,7 +2151,7 @@ function buildObject(o){
  S.add(grp);return grp;
 }
 function clearDrawn(){buildGroups.forEach(g=>{S.remove(g);g.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material&&n.material.dispose)n.material.dispose()})});buildGroups=[];buildLights=[]}
-function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));updateRoadJunctions();refreshCustomTrafficRoutes();updateBuildHud()}
+function redrawBuild(){clearDrawn();built.forEach(o=>buildGroups.push(buildObject(o)));redrawCampusAccess();updateRoadJunctions();refreshCustomTrafficRoutes();updateBuildHud()}
 function updateBuildHud(){const roads=built.filter(o=>["road","avenue","mapRoad","mapAvenue"].includes(o.type)).length,greens=built.filter(o=>["park","trees"].includes(o.type)).length,buildings=built.filter(o=>["college","lab","library","admin"].includes(o.type)).length,bridges=built.filter(o=>o.type==="bridge").length;
  const objectives=[roads>=2,greens>=3,buildings>=2,bridges>=1],done=objectives.filter(Boolean).length;
  $("buildHud").textContent=(creativeMode?"🎨 إنشاء حر":"💰 المتبقي: "+coins(balance()))+" | 🧱 "+built.length+" عنصر | ⭐ إنجازات "+done+"/4";
@@ -2152,7 +2194,9 @@ function setupCampusEditor(){
   for(const b of B){const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;border-bottom:1px solid #ccd5cf";const title=document.createElement("span");title.textContent=b.n;const action=document.createElement("button");const removed=removedCampusBuildings.has(b.n);action.textContent=removed?"↩ استعادة":"🗑️ حذف";action.style.cssText="border:0;border-radius:8px;background:"+(removed?"#168064":"#b94b43")+";color:white;padding:8px;cursor:pointer";action.onclick=()=>{if(removed)restoreCampusBuilding(b.n);else removeCampusBuilding(b.n);renderCampusEditor()};row.append(title,action);list.append(row)}
  }
 }
-function footprintBlocked(x,z,w,d){if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMaxX||z-d/2<WORLD.buildMinZ||z+d/2>WORLD.buildMaxZ)return true;
+function footprintBlocked(x,z,w,d){
+ if(roadSegments().some(r=>HorizonsRoads.intersectsFootprint(r,x,z,w,d))||horizonsWorld?.blocked(x,z,Math.min(w,d)/2))return true;
+ if(x-w/2<WORLD.buildMinX||x+w/2>WORLD.buildMaxX||z-d/2<WORLD.buildMinZ||z+d/2>WORLD.buildMaxZ)return true;
  if(Math.abs(x-ST.x)<ST.precinct.halfW+w/2&&z+d/2>ST.z-ST.precinct.north&&z-d/2<ST.z+ST.precinct.south)return true;if(Math.abs(x-DIST.x)<DIST.w/2+w/2&&Math.abs(z-DIST.z)<DIST.d/2+d/2)return true;if(Math.abs(x-AIR.x)<AIR.w/2+w/2&&Math.abs(z-AIR.z)<AIR.d/2+d/2)return true;
  for(const b of B){const p=footprintOfBuilding(b);if(!removedCampusBuildings.has(b.n)&&Math.abs(x-p.x)<(w+p.w)/2+2&&Math.abs(z-p.z)<(d+p.d)/2+2)return true;}
  for(const o of built){const q=buildDefs[o.type];if(q.path)continue;const qw=o.rot%2?q.d:q.w,qd=o.rot%2?q.w:q.d;if(Math.abs(x-o.x)<(w+qw)/2+2&&Math.abs(z-o.z)<(d+qd)/2+2)return true}return false;
@@ -2177,22 +2221,24 @@ function canBuild(o){if(built.length>=maxObjects)return "وصلت للحد ال�
     const t1=((r.x1-o.x)*dx+(r.z1-o.z)*dz)/(length*length);
     const t2=((r.x2-o.x)*dx+(r.z2-o.z)*dz)/(length*length);
     const overlap=Math.min(1,Math.max(t1,t2))-Math.max(0,Math.min(t1,t2));
-    if(cross<.017&&offset<.8&&overlap*length>2)
+    if(cross<.017&&offset<(r.width+d.width)/2&&overlap*length>2)
       return "الطريق المائل موجود على المسار نفسه؛ حدد القديم وعدّله بدل تكراره";
    }
    continue;
   }
   const horizontal=Math.abs(o.z-o.end.z)<.1&&Math.abs(r.z1-r.z2)<.1;
   const vertical=Math.abs(o.x-o.end.x)<.1&&Math.abs(r.x1-r.x2)<.1;
-  if(horizontal&&Math.abs(o.z-r.z1)<.6){
+  if(horizontal&&Math.abs(o.z-r.z1)<(r.width+d.width)/2){
    const overlap=Math.min(Math.max(o.x,o.end.x),Math.max(r.x1,r.x2))-Math.max(Math.min(o.x,o.end.x),Math.min(r.x1,r.x2));
    if(overlap>2)return "يوجد طريق على هذا المسار. استخدم أداة 🎯 تحديد / نقل لحذف الطريق القديم أو تعديله، ثم أنشئ الطريق الجديد";
   }
-  if(vertical&&Math.abs(o.x-r.x1)<.6){
+  if(vertical&&Math.abs(o.x-r.x1)<(r.width+d.width)/2){
    const overlap=Math.min(Math.max(o.z,o.end.z),Math.max(r.z1,r.z2))-Math.max(Math.min(o.z,o.end.z),Math.min(r.z1,r.z2));
    if(overlap>2)return "شارع موجود على المسار نفسه — أنشئ فرعًا بدل التكرار";
   }
  }
+  if(!["bridge","flyover"].includes(o.type)&&horizonsWorld?.sweep(o.x,o.z,o.end.x,o.end.z,d.width/2))
+   return "المسار يتداخل مع أرض أو منشأة ثابتة";
   for(let i=0,steps=Math.max(1,Math.ceil(len/2));i<=steps;i++){const t=i/steps,x=o.x+(o.end.x-o.x)*t,z=o.z+(o.end.z-o.z)*t;if(x<WORLD.buildMinX||x>WORLD.buildMaxX||z<WORLD.buildMinZ||z>WORLD.buildMaxZ)return "خارج منطقة البناء";
    for(const b of B){const fp=footprintOfBuilding(b);if(!removedCampusBuildings.has(b.n)&&Math.abs(x-fp.x)<fp.w/2+d.width/2&&Math.abs(z-fp.z)<fp.d/2+d.width/2)return "المسار يتداخل مع مبنى موجود";}
    if(Math.abs(x-ST.x)<ST.precinct.halfW+d.width/2&&z+d.width/2>ST.z-ST.precinct.north&&z-d.width/2<ST.z+ST.precinct.south)return "المسار يتداخل مع المنطقة الرياضية";
@@ -2274,8 +2320,9 @@ function plannerRoadValid(candidate,ignoreId=-1){
   const overlap=horizontal?
    Math.min(Math.max(x1,x2),Math.max(other.x1,other.x2))-Math.max(Math.min(x1,x2),Math.min(other.x1,other.x2)):
    Math.min(Math.max(z1,z2),Math.max(other.z1,other.z2))-Math.max(Math.min(z1,z2),Math.min(other.z1,other.z2));
-  if(centerDistance<.65&&overlap>2)return "شارع على هذا المسار؛ حدد الطريق القديم واحذفه أو انقله";
+  if(centerDistance<(other.width+width)/2&&overlap>2)return "شارع على هذا المسار؛ حدد الطريق القديم واحذفه أو انقله";
  }
+ if(horizonsWorld?.sweep(x1,z1,x2,z2,width/2))return "الطريق يتداخل مع أرض أو منشأة ثابتة";
  const length=Math.hypot(x2-x1,z2-z1),steps=Math.ceil(length/4);
  for(let i=0;i<=steps;i++){
   const t=i/Math.max(1,steps),x=x1+(x2-x1)*t,z=z1+(z2-z1)*t;
@@ -2656,8 +2703,8 @@ function setupBlueprintImport(){
  });
  blueprintTool.setVisible(buildMode);
 }
-restoreBuild();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupBlueprintImport();setupPlanJsonImport();setupStudents();
-function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0}
+restoreBuild();redrawCampusAccess();updateRoadJunctions();updateBuildHud();updateModes();setupSettings();setupCampusEditor();setupPlannerEditor();setupBlueprintImport();setupPlanJsonImport();setupStudents();
+function releaseControls(){activePointers.clear();pinchDistance=0;pinchMoved=false;mapDrag=null;touchGas=false;touchBrake=false;dr=null;je();for(const id of ["gasBtn","brakeBtn"])$(id).classList.remove("pressed");for(const key of Object.keys(K))K[key]=0;carSpeed=0;driveCourse=null;driveSlip=0;driveSliding=false}
 addEventListener("blur",releaseControls);document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();if(carMode)storeBuild()}});
 addEventListener("pagehide",()=>{releaseControls();if(carMode)storeBuild()});
 
@@ -2687,7 +2734,6 @@ const hit=(x,z)=>(horizonsPro?.onRoof?horizonsDistricts.roofBlocked(x,z):horizon
 const mm=$("mini").getContext("2d"),MAP_W=(WORLD.maxX-WORLD.minX),k=260/MAP_W,mx=v=>(v-WORLD.minX)*k,mz=v=>(v-WORLD.minZ)*k;
 function mini(){mm.fillStyle="#e4d0a8";mm.fillRect(0,0,260,260);
 mm.strokeStyle="#9e8d6b";mm.lineWidth=2;mm.strokeRect(mx(WORLD.minX),mz(WORLD.minZ),(WORLD.maxX-WORLD.minX)*k,(WORLD.maxZ-WORLD.minZ)*k);
-for(const r of horizonsWorld.roads){mm.strokeStyle="#6c8277";mm.lineWidth=1;mm.beginPath();mm.moveTo(mx(r.x1),mz(r.z1));mm.lineTo(mx(r.x2),mz(r.z2));mm.stroke()}
 for(const d of horizonsWorld.destinations){mm.fillStyle=d.color;mm.beginPath();mm.arc(mx(d.x),mz(d.z),3,0,Math.PI*2);mm.fill()}
 mm.strokeStyle="#7c8590";mm.lineWidth=2;mm.strokeRect(mx(-200),mz(-200),400*k,400*k);
 // Draw the current street geometry: removed roads disappear immediately, moved roads move.
@@ -2775,14 +2821,22 @@ organizeSettings();
 const legacyLandscape=new THREE.Group();legacyLandscape.name='original-campus-landscape';
 for(const mesh of [...S.children])if(mesh.isMesh&&mesh!==roadPreview)legacyLandscape.add(mesh);
 S.add(legacyLandscape);
-const horizonsWorld=Horizons.createWorld({THREE,scene:S,renderer:R});
+horizonsWorld=Horizons.createWorld({THREE,scene:S,renderer:R});
 const horizonsDistricts=createHorizonsDistricts(THREE,S,R,horizonsWorld);
+const walk=(x,z,rx,rz,w)=>horizonsWorld.addAccess(x,z,rx,rz,w);
+walk(365,-145,365,-164,12); // stadium plaza and crosswalk
+walk(462,-275,462,-265,8);walk(542,-275,542,-265,6); // airport terminal and tower
+for(const x of [-788,-748,-708,-668])walk(x,-34+([-788,-748,-708,-668].indexOf(x)%2)*7+12.5,x,20,5);
+for(const x of [-486,-420,-354]){walk(x,13,x,20,5);walk(x,77,x,82,5)}
+walk(-404,-39,-404,-22,6);
+refreshCustomTrafficRoutes();
 R.outputEncoding=THREE.sRGBEncoding;
 let horizonsUi,horizonsPro=null;
 function travelHorizons(d){if(buildMode)toggleBuilder();if(seated)leaveStand();if(inside)exitBuilding();cl();closeSettings();horizonsPro?.leaveRoof();topView=false;releaseControls();pl.position.set(d.x,0,d.z);zyad.position.set(d.x+5,0,d.z+5);yaw=Number.isFinite(d.yaw)?d.yaw:d.id==='training'?0:.12;pit=.22;dist=8.5;fa=yaw+Math.PI;strategyCenter={x:d.x,z:d.z};saveCampusPosition()}
 horizonsPro=createHorizonsPro({THREE,scene:S,car,player:pl,avatarRoot:ch,canvas:$('c'),world:horizonsWorld,districts:horizonsDistricts,camera:cam,
- state:()=>({driving:carMode,running:autoRun||K.ShiftLeft||K.ShiftRight,paused:ipadPaused,inside,seated,building:buildMode,speed:carSpeed,keys:K,steer:clamp((K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0)+joy.x,-1,1),braking:K.Space||K.KeyS||K.ArrowDown||touchBrake}),
+ state:()=>({driving:carMode,running:autoRun||K.ShiftLeft||K.ShiftRight,paused:ipadPaused,inside,seated,building:buildMode,speed:carSpeed,course:driveCourse??fa,slip:driveSlip,sliding:driveSliding,keys:K,steer:clamp((K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0)+joy.x,-1,1),braking:K.Space||horizonsPro?.handbrake||K.KeyS||K.ArrowDown||touchBrake}),
  pause:v=>{ipadPaused=v;releaseControls()},soundEnabled:()=>ipadSound,
+ isPaved:(x,z)=>horizonsWorld.isRoad(x,z)||roadSegments().some(r=>!r.kind&&HorizonsRoads.intersectsFootprint(r,x,z,.05,.05)),
  toast:t=>horizonsUi?.toast(t),travel:travelHorizons,
  drive:()=>{if(horizonsPro.onRoof)return horizonsUi.toast('انزل إلى البهو أولًا');if(buildMode)toggleBuilder();if(seated)leaveStand();$('drive').click()},
  setAimView:()=>{pit=.1;topView=false},setRoofView:()=>{yaw=.55;pit=.28;dist=10;topView=false;atmosphere.hour=23;atmosphere.auto=false;$("atmTime").value="23"},face:v=>{fa=v},
@@ -2791,7 +2845,8 @@ horizonsPro=createHorizonsPro({THREE,scene:S,car,player:pl,avatarRoot:ch,canvas:
 R.shadowMap.enabled=atmosphere.quality!=="low";sun.shadow.mapSize.set(1024,1024);
 document.getElementById('atmQuality').addEventListener('change',()=>{R.shadowMap.enabled=atmosphere.quality!=="low";R.shadowMap.needsUpdate=true});
 let horizonsSecond=null;
-horizonsUi=createHorizonsUI({world:horizonsWorld,
+horizonsUi=createHorizonsUI({world:horizonsWorld,roads:roadSegments,walkways:()=>[...horizonsWorld.accesses,...campusWalks],
+ campusBuildings:()=>B.filter(b=>!removedCampusBuildings.has(b.n)).map(b=>footprintOfBuilding(b)),
  state:()=>({position:pl.position,driving:carMode,running:autoRun,overview:topView}),
  pause:value=>{ipadPaused=value;releaseControls()},
  setCharacter:id=>{
@@ -2818,7 +2873,8 @@ horizonsUi=createHorizonsUI({world:horizonsWorld,
  run:()=>{$('run').click()},camera:()=>{$('tour').click()},
  travel:travelHorizons
 });
-const requestedSpawn=new URLSearchParams(location.search).get('spawn');if(requestedSpawn){const d=horizonsWorld.destinations.find(d=>d.id===requestedSpawn);if(d)travelHorizons(d);}
+const requestedSpawn=new URLSearchParams(location.search).get('spawn');
+if(requestedSpawn){const d=requestedSpawn==='drift'?horizonsDistricts.driftPad:horizonsWorld.destinations.find(d=>d.id===requestedSpawn);if(d)travelHorizons(d);}
 let last=0,lastMiniDraw=-Infinity;
 (function loop(t){requestAnimationFrame(loop);if(t-last<1000/(ipadPaused?12:atmosphere.quality==="low"?24:30))return;const dt=ipadPaused?0:Math.min(.05,(t-last)/1e3||0);last=t;
 legacyLandscape.visible=!!inside||seated||buildMode||topView||Math.hypot(pl.position.x,pl.position.z)<1550||(playerMode==="split"&&Math.hypot(zyad.position.x,zyad.position.z)<1550);
@@ -2830,20 +2886,32 @@ if(!ipadPaused)updateAtmosphere(t,dt);updateStadium(t,dt);if(inside&&inside.n===
 const ix=(K.ArrowRight||K.KeyD?1:0)-(K.ArrowLeft||K.KeyA?1:0)+joy.x,iy=(K.ArrowDown||K.KeyS?1:0)-(K.ArrowUp||K.KeyW?1:0)+joy.y,l=Math.hypot(ix,iy);let mv=false;
 if(carMode&&!open&&!inside&&!buildMode&&!seated){
  const gas=clamp((K.ArrowUp||K.KeyW?1:0)+(touchGas?1:0)-joy.y,0,1),brake=clamp((K.ArrowDown||K.KeyS?1:0)+(touchBrake?1:0)+joy.y,0,1),steer=clamp(ix,-1,1);
- carSpeed+=gas*horizonsPro.acceleration*dt-brake*horizonsPro.braking*dt;if(K.Space)carSpeed*=Math.max(0,1-dt*5);
- if(!gas&&!brake)carSpeed=Math.max(0,carSpeed-12*dt);
- carSpeed=clamp(carSpeed,-9,horizonsPro.maxSpeed);
- if(Math.abs(carSpeed)>.25)fa-=steer*dt*(.35+Math.abs(carSpeed)/35)*1.45*horizonsPro.steering*Math.sign(carSpeed);
- const step=carSpeed*dt,nx=clamp(pl.position.x+Math.sin(fa)*step,WORLD.minX+5,WORLD.maxX-5),nz=clamp(pl.position.z+Math.cos(fa)*step,WORLD.minZ+5,WORLD.maxZ-5);
+ const limits=horizonsPro.driveLimits,handbrake=!!(K.Space||horizonsPro.handbrake||touchGas&&touchBrake);
+ const drive=HorizonsDriving.advance({speed:carSpeed,heading:fa,course:driveCourse??fa},{gas,brake,steer,handbrake},dt,limits);
+ const nx=clamp(pl.position.x+drive.dx,WORLD.minX+5,WORLD.maxX-5),nz=clamp(pl.position.z+drive.dz,WORLD.minZ+5,WORLD.maxZ-5);
  const nearbyVehicle=trafficEnabled&&agents.some(a=>a.mesh.visible!==false&&Math.hypot(a.mesh.position.x-nx,a.mesh.position.z-nz)<(a.bus?8:6));
- if(wallSweepBlocked(pl.position.x,pl.position.z,nx,nz,2.3)||hit(nx,pl.position.z)||hit(pl.position.x,nz)||nearbyVehicle){carSpeed=0}else{pl.position.x=nx;pl.position.z=nz;drivenMeters+=Math.abs(step);mv=Math.abs(step)>.001}
+ const collisionRadius=limits.track+.3,halfAxle=1.55;
+ let collision=nearbyVehicle||wallSweepBlocked(pl.position.x,pl.position.z,nx,nz,collisionRadius)||hit(nx,nz);
+ for(const axle of [-halfAxle,halfAxle]){
+  if(collision)break;
+  const sx=pl.position.x+Math.sin(fa)*axle,sz=pl.position.z+Math.cos(fa)*axle;
+  const ex=nx+Math.sin(drive.heading)*axle,ez=nz+Math.cos(drive.heading)*axle;
+  collision=wallSweepBlocked(sx,sz,ex,ez,collisionRadius)||hit(ex,ez);
+ }
+ let step=0;
+ if(collision){carSpeed=0;driveCourse=fa;driveSlip=0;driveSliding=false;}
+ else{
+  carSpeed=drive.speed;fa=drive.heading;driveCourse=drive.course;driveSlip=drive.slip;driveSliding=drive.drifting;
+  step=Math.hypot(pl.position.x-nx,pl.position.z-nz);
+  pl.position.x=nx;pl.position.z=nz;drivenMeters+=step;mv=step>.001;
+ }
  yaw=fa+Math.PI;
  $("speedValue").textContent=Math.round(Math.abs(carSpeed)*3.6);$("distanceValue").textContent=" · "+Math.round(drivenMeters).toLocaleString("ar-SA")+" م";
  if(!atAirport&&drivenMeters-driveStartDistance>30&&Math.hypot(pl.position.x-AIR.x,pl.position.z-AIR.z)<110){atAirport=true;storeBuild()}
  if(!atCity&&drivenMeters-driveStartDistance>30&&pl.position.x<-570&&Math.abs(pl.position.z-CITY.z)<130){atCity=true;storeBuild()}
  if(Math.floor(drivenMeters/150)>Math.floor((drivenMeters-step)/150))storeBuild();
  if(mv)hint.style.opacity=0;
-}else if(l>.08&&!open&&!buildMode&&!seated){const n=Math.min(1,l),sp=(horizonsPro.crouching?3:K.ShiftLeft||K.ShiftRight||autoRun?12:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
+}else if(l>.08&&!open&&!buildMode&&!seated){const n=Math.min(1,l),sp=(horizonsPro.crouching?3:K.ShiftLeft||K.ShiftRight||autoRun?horizonsPro.sprint:7)*n;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);let dx=(rx*ix+fx*-iy)/l,dz=(rz*ix+fz*-iy)/l;
  const nx=pl.position.x+dx*sp*dt,nz=pl.position.z+dz*sp*dt;
  if(inside){
  if(inside.n==="عمادة تقنية المعلومات"&&itCampus){
@@ -2868,8 +2936,9 @@ if(playerMode==="split"&&!buildMode&&!carMode&&!inside){
  if(separation<5&&teamMeetingArmed){teamMeetingArmed=false;teamMeetCount++;toastBuild("🤝 فواز وزياد التقيا! مهمة التعاون رقم "+teamMeetCount)}
  if(hud)hud.textContent="🤝 المسافة بين فواز وزياد: "+Math.round(separation)+" م · لقاءات ناجحة: "+teamMeetCount+(teamMeetingArmed?" · اقتربا إلى 5 م":" · ابتعدا 18 م لإعادة المهمة");
  }else if(playerMode==="single"&&singleStudent==="zyad"){zyadAvatar.rotation.z=0;zyad.position.copy(pl.position);zyad.rotation.copy(pl.rotation)}
- horizonsPro.update(t,dt);horizonsDistricts.update(t,dt,pl.position,atmosphere.hour,buildMode||topView,playerMode==="split"?zyad.position:null);
- const p=pl.position;S.fog.far=buildMode?Math.max(1350,strategyHeight*5):atmosphere.weather==="fog"?185:atmosphere.weather==="dust"?310:atmosphere.quality==="low"?650:1100;car.position.set(p.x,carMode&&bridgeKit?bridgeKit.heightAt(p.x,p.z,built,car.position.y):0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");sun.target.position.copy(p);
+ horizonsDistricts.update(t,dt,pl.position,atmosphere.hour,buildMode||topView,playerMode==="split"?zyad.position:null);
+ const p=pl.position;S.fog.far=buildMode?Math.max(1350,strategyHeight*5):atmosphere.weather==="fog"?185:atmosphere.weather==="dust"?310:atmosphere.quality==="low"?650:1100;car.position.set(p.x,carMode&&bridgeKit?bridgeKit.heightAt(p.x,p.z,built,car.position.y):0,p.z);car.rotation.y=fa;car.visible=carMode&&!inside&&!buildMode;ch.visible=!carMode&&(playerMode==="split"||singleStudent==="fawaz");
+ horizonsPro.update(t,dt,mv,ph);sun.target.position.copy(p);
 if(buildMode){cam.up.set(0,0,-1);const h=strategyHeight,cz=strategyCenter.z;cam.position.set(strategyCenter.x,h,cz+(strategy2D?.001:h*.42));cam.lookAt(strategyCenter.x,0,cz)}else if(seated&&!inside){
  cam.up.set(0,1,0);
  const target=stadiumViewMode==="ball"?new THREE.Vector3(ST.x+stadiumMatch.ballX,1.6,ST.z+stadiumMatch.ballZ):new THREE.Vector3(ST.x,1.4,ST.z);
