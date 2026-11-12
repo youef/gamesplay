@@ -1,34 +1,121 @@
-name: Build Abtal Al Huroof Android TV APK
+name: Build Abtal Al Huroof universal Android TV APK
 on:
   push:
-    branches: [ main, 'feature/abtal-*' ]
+    branches: [main, 'feature/abtal-*']
     paths:
       - 'abtal-alhuroof-tv/**'
       - '.github/workflows/build-tv-apk.yml'
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Install Java 17 for Android SDK tools
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - name: Install same legacy SDK as Al Ezz TV
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          test -d "$SDK_ROOT"
+          SDK_MANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f -print -quit)"
+          test -x "$SDK_MANAGER"
+          "$SDK_MANAGER" "platforms;android-33" "build-tools;33.0.2"
+      - name: Java 11 for AGP 7.4.2 (Al Ezz legacy toolchain)
+        uses: actions/setup-java@v4
         with:
-          packages: platform-tools
+          distribution: temurin
+          java-version: '11'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
-      - name: Assemble Android 4.4 compatible APK
+          gradle-version: '7.6'
+      - name: Build Android 4.4 and older TV compatible APK
         working-directory: abtal-alhuroof-tv
         run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Validate legacy signatures / SDK / APK structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          BT="$SDK_ROOT/build-tools/33.0.2"
+          APK="abtal-alhuroof-tv/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$BT/zipalign" -c -v 4 "$APK"
+          "$BT/aapt" dump badging "$APK" > /tmp/abtal-badging.txt
+          cat /tmp/abtal-badging.txt | head -n 22
+          grep -q "package: name='sa.youef.abtalalhuroof'" /tmp/abtal-badging.txt
+          grep -q "sdkVersion:'19'" /tmp/abtal-badging.txt
+          grep -q "targetSdkVersion:'28'" /tmp/abtal-badging.txt
+          "$BT/apksigner" verify --verbose --print-certs --min-sdk-version 19 "$APK" | tee /tmp/abtal-signatures.txt
+          grep -q "Verified using v1 scheme (JAR signing): true" /tmp/abtal-signatures.txt
+          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/abtal-signatures.txt
+          unzip -p "$APK" META-INF/MANIFEST.MF >/dev/null
+          if unzip -Z1 "$APK" | grep -q '^lib/'; then
+            echo "::error::Unexpected native libraries make APK CPU-dependent"; exit 1
+          fi
+          mkdir -p dist
+          cp "$APK" dist/Abtal-AlHuroof-TV-Android44-Universal-v1.1.apk
+          cp /tmp/abtal-badging.txt /tmp/abtal-signatures.txt dist/
+          sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Abtal-AlHuroof-TV-Android-4.4-APK
-          path: abtal-alhuroof-tv/app/build/outputs/apk/debug/app-debug.apk
+          name: Abtal-AlHuroof-TV-Android44-Universal-v1.1
+          path: dist/
+          retention-days: 90
           if-no-files-found: error
+
+  install-on-android-44:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Java for Android emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: Abtal-AlHuroof-TV-Android44-Universal-v1.1
+          path: dist
+      - name: Install, launch and press remote keys on Android 4.4
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 19
+          arch: x86
+          target: default
+          profile: Nexus 5
+          disable-animations: true
+          script: |
+            set -eu
+            APK="dist/Abtal-AlHuroof-TV-Android44-Universal-v1.1.apk"
+            adb install -r "$APK"
+            adb shell pm path sa.youef.abtalalhuroof | grep 'base.apk'
+            adb shell am start -n sa.youef.abtalalhuroof/.MainActivity
+            sleep 6
+            for key in 22 23 20 23 4 19 23; do adb shell input keyevent "$key"; done
+            sleep 2
+            adb shell dumpsys activity activities > android44-state.txt
+            adb logcat -d -t 2000 > android44-logcat.txt
+            if grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalalhuroof' android44-logcat.txt; then
+              echo "App crash detected in emulator"; exit 1
+            fi
+            adb shell screencap -p /sdcard/abtal.png
+            adb pull /sdcard/abtal.png android44-screen.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Abtal-TV-Android44-Emulator-Report
+          path: |
+            android44-state.txt
+            android44-logcat.txt
+            android44-screen.png
+          if-no-files-found: ignore

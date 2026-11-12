@@ -1,3 +1,19 @@
-plugins {
-    id 'com.android.application' version '8.6.1' apply false
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Same Android Gradle Plugin line used by the working Al Ezz TV legacy build.
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+tasks.register('clean', Delete) {
+    delete rootProject.buildDir
 }

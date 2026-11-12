@@ -1,22 +1,38 @@
-plugins { id 'com.android.application' }
+apply plugin: 'com.android.application'
 
 android {
     namespace 'sa.youef.abtalalhuroof'
-    compileSdk 35
+    compileSdkVersion 33
+    buildToolsVersion '33.0.2'
     defaultConfig {
         applicationId 'sa.youef.abtalalhuroof'
-        minSdk 19
-        targetSdk 28
-        versionCode 1
-        versionName '1.0.0'
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode 2
+        versionName '1.1.0-legacy-tv'
+        // No native libraries: one universal APK runs on ARMv7/ARM64/x86/x86_64.
+    }
+    signingConfigs {
+        debug {
+            // Crucial for Android KitKat / API19 and matching Al Ezz TV.
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
     }
     buildTypes {
-        debug { minifyEnabled false }
-        release { minifyEnabled false }
+        debug {
+            debuggable false
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+        release {
+            debuggable false
+            minifyEnabled false
+            // Use a persistent private release keystore for real upgrade support.
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    buildFeatures { buildConfig false }
 }
