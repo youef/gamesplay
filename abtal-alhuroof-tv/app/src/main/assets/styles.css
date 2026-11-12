@@ -28,3 +28,58 @@
 .quiz-head{height:70px}
 .question-panel{height:187px}
 .question-visual:not(.letters) .pic{-webkit-transform:scale(1.65);transform:scale(1.65)}
+
+
+/* V2 legendary fantasy worlds - legacy WebView friendly; no CSS grid, filters not required */
+.world-home {background:radial-gradient(ellipse at 50% -40%, #79cafa 0%,#347ac5 35%,#323381 75%,#11164d 100%)}
+.world-arabic {background:radial-gradient(ellipse at 50% 0%,#8458c8,#602e9a 54%,#151952 100%)}
+.world-math {background:radial-gradient(ellipse at 50% 0%,#329cdf,#1c518e 54%,#121e56 100%)}
+.world-english {background:radial-gradient(ellipse at 50% 0%,#32b78d,#177470 54%,#112c50 100%)}
+.world-science {background:radial-gradient(ellipse at 50% 0%,#4bcf98,#2b7492 54%,#13244c 100%)}
+.world-brain {background:radial-gradient(ellipse at 50% 0%,#a26af3,#593aab 54%,#241454 100%)}
+.world-adventure {background:radial-gradient(ellipse at 50% 0%,#f3a657,#9b559e 54%,#301a64 100%)}
+.home-banner {background:linear-gradient(112deg,#43258f 0%,#8a3ac6 42%,#1787be 100%);border-color:#fff6ac;box-shadow:0 6px #422076,0 13px 28px #13095f77, inset 0 0 25px #ffdc8c28;}
+.home-banner:after {content:"";position:absolute;bottom:-42px;left:315px;width:330px;height:116px;background:#d3fffa1b;border-radius:70%;pointer-events:none}
+.hero-heading {font-size:36px;color:#fffced;text-shadow:0 3px #512276,0 0 18px #f8e4ff}
+.hero-kicker {font-size:16px;letter-spacing:.5px}
+.hero-desc {font-size:16px;margin-bottom:9px}
+.home-buttons{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.home-buttons .hero-cta{font-size:17px;padding:7px 18px;margin-left:12px;white-space:nowrap}
+.home-buttons .daily-cta{background:linear-gradient(#a9fff0,#4ad6c1);border-color:#dffff7;color:#155063;box-shadow:0 5px #15969c}
+.subject {border-color:#f1e8ff;background-clip:padding-box;transition:box-shadow .12s}
+.subject .subject-title{font-size:25px}
+.subject-count {font-weight:bold;color:#fff1a9}
+.feature{border:2px solid #ffffffb9;box-shadow:0 5px #131653,inset 0 0 20px #fff4b51b}
+.feature-name{font-size:15px}
+.nav-item.sel {border-color:#fff5a5!important;box-shadow:0 0 0 5px #ffdf54,0 0 26px 5px #ffcd48aa,0 8px 13px #0b135b!important;-webkit-transform:translateY(-2px);transform:translateY(-2px)}
+.nav-item.sel .feature-icon,.nav-item.sel .mode-icon{-webkit-animation:bounce-icon .65s ease-in-out infinite alternate;animation:bounce-icon .65s ease-in-out infinite alternate}
+@-webkit-keyframes bounce-icon{from{-webkit-transform:translateY(0)}to{-webkit-transform:translateY(-5px)}}
+@keyframes bounce-icon{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+.section-heading{margin:16px 4px 11px}
+.mode-list .mode-tile{height:155px;padding:13px 12px;max-width:calc((100% - 34px)/3)}
+.mode-icon{font-size:58px;min-width:78px}
+.mode-title{font-size:20px;line-height:25px}
+.mode-sub{font-size:14px;line-height:18px}
+.mode-index{font-size:11px;top:10px;left:11px;color:#fff5a8}
+.mode-tile{border-color:#ffffffcf}
+.scroll-panel{height:476px;overflow-y:auto;padding:7px 12px 60px 4px}
+.scroll-panel:focus{outline:none}
+.quiz-tool{font-size:15px;white-space:nowrap;background:#195a9b;color:white;border:2px solid #d4f4ff;border-radius:13px;padding:10px 11px;font-weight:bold;min-width:93px;text-align:center}
+.quiz-hint{position:absolute;bottom:63px;left:30px;border:2px solid #f8e582;border-radius:14px;padding:7px 15px;background:#215b90;color:white;font-size:17px;z-index:5}
+.quiz-head{height:73px}
+.quiz-head .quiz-mode{font-size:22px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quiz-head .pill{font-size:18px;padding:6px 10px;min-height:40px}
+.question-panel{height:180px}
+.question-text{font-size:31px;line-height:1.36;max-width:765px}
+.question-sub{font-size:15px}
+.question-visual{min-width:245px;font-size:85px}
+.answer-head{height:40px;padding:7px 6px 4px}
+.answer{height:104px;font-size:29px}
+.answer .num{font-size:12px;padding:4px 7px}
+.question-hint{font-size:13px;padding:4px 6px}
+.gift-grid .gift-card{display:block}
+.gift-grid .gift-card.sel{opacity:1!important;-webkit-filter:none!important;filter:none!important}
+.reset-question{text-align:center;font-size:48px;font-weight:900;margin:112px 0 54px;text-shadow:0 5px #20266f}
+.reset-buttons{-webkit-justify-content:center;justify-content:center}
+.world-science .mode-tile:nth-child(2n),.world-brain .mode-tile:nth-child(2n){background:linear-gradient(132deg,#0e9b98,#2d5d99)}
+.footer{background:#0c1644e8;color:#e5f3ff}
