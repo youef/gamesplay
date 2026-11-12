@@ -160,7 +160,7 @@ E.question=function(k,ctx){
   a=sample(ctx,simpleWords);return q('اجمع المقطعين: '+a[1]+' + '+a[2],a[3],a[0],simpleWords.map(function(v){return v[0];}),ctx);
  case 'arabic-odd':
   a=sample(ctx,[['🍎 تفاح','🍌 موز','🍇 عنب','🚗 سيارة'],['🐱 قطة','🦁 أسد','🐘 فيل','🍌 موز'],['🚗 سيارة','✈️ طائرة','🚢 سفينة','🍎 تفاح'],['📚 كتاب','✏️ قلم','📖 دفتر','🐟 سمك']]);
-  return {text:'أي صورة لا تنتمي إلى المجموعة؟',visual:'🧠',options:a,correct:a[3],say:a[3]};
+  return {text:'أي صورة لا تنتمي إلى المجموعة؟',visual:'🧠',options:ctx.shuffle(a),correct:a[3],say:a[3]};
  case 'arabic-category':
   a=sample(ctx,animals.concat(fruits.map(function(v){return [v[0],v[1],v[2],'فاكهة'];})));answer=a.length>4?'حيوان':'فاكهة';return q('هذه الصورة من أي مجموعة؟',a[2],answer,['حيوان','فاكهة','وسيلة نقل','أداة مدرسية'],ctx);
  case 'arabic-syllables':
@@ -168,8 +168,8 @@ E.question=function(k,ctx){
  case 'math-before':n=2+ctx.rnd(30);return numeric('ما العدد الذي يسبق '+n+' ؟',String(n),n-1,0,40,ctx);
  case 'math-after':n=1+ctx.rnd(30);return numeric('ما العدد الذي يأتي بعد '+n+' ؟',String(n),n+1,0,40,ctx);
  case 'math-tens':n=1+ctx.rnd(8);return numeric('عدّ بالعشرات: ماذا بعد '+n*10+' ؟',n*10+' ، ؟',n*10+10,10,100,ctx);
- case 'math-even':n=2+ctx.rnd(20);n=n-(n%2);return numeric('أي عدد زوجي يأتي بعد '+n+' ؟',n+' ، ؟',n+2,1,40,ctx);
- case 'math-odd':n=1+ctx.rnd(20);n=n%2?n:n+1;return numeric('أي عدد فردي يأتي بعد '+n+' ؟',n+' ، ؟',n+2,1,45,ctx);
+ case 'math-even':n=2+ctx.rnd(20);n=n-(n%2);return numeric('ما العدد الزوجي التالي بعد '+n+' ؟',n+' ، ؟',n+2,1,40,ctx);
+ case 'math-odd':n=1+ctx.rnd(20);n=n%2?n:n+1;return numeric('ما العدد الفردي التالي بعد '+n+' ؟',n+' ، ؟',n+2,1,45,ctx);
  case 'math-between':n=1+ctx.rnd(30);return numeric('ما العدد بينهما؟',n+' ، ؟ ، '+(n+2),n+1,0,40,ctx);
  case 'math-bigger':n=2+ctx.rnd(30);m=n+1+ctx.rnd(9);return q('اختر العدد الأكبر',n+'   ↔   '+m,String(m),[String(n),String(n-1),String(m-1),String(m+1)],ctx,'قارن الرقمين','ar','letters');
  case 'math-smaller':n=1+ctx.rnd(30);m=n+1+ctx.rnd(9);return q('اختر العدد الأصغر',n+'   ↔   '+m,String(n),[String(m),String(n+1),String(m+1)],ctx,'قارن الرقمين','ar','letters');
@@ -199,13 +199,13 @@ E.question=function(k,ctx){
  case 'science-seasons':a=sample(ctx,season);return q('في أي فصل: '+a[1]+'؟',a[2],a[0],season.map(function(v){return v[0];}),ctx);
  case 'science-senses':a=sample(ctx,senses);return q('ما العضو الذي به '+a[1]+'؟',a[2],a[0],senses.map(function(v){return v[0];}),ctx);
  case 'science-body':a=sample(ctx,body);return q('بماذا تساعدنا '+a[0]+'؟',a[2],a[3],body.map(function(v){return v[3];}),ctx);
- case 'science-plants':a=sample(ctx,[['ماء','💧'],['ضوء الشمس','☀️'],['هواء','🌳'],['تربة','🌹']]);return q('ما الذي تحتاجه النبتة للنمو؟',a[1],a[0],['ماء','ضوء الشمس','هواء','تربة','بلاستيك','حلوى'],ctx);
+ case 'science-plants':a=sample(ctx,[['ماء','💧'],['ضوء الشمس','☀️'],['هواء','🌳'],['تربة','🌹']]);b=ctx.rnd(2)===0? a[0] : sample(ctx,['بلاستيك','حلوى','شاشة','لعبة']);return q('هل تحتاج النبتة إلى '+b+' لتنمو؟',a[1],b===a[0]?'نعم':'لا',['نعم','لا'],ctx);
  case 'science-life':a=sample(ctx,activities);return q(a[0],a[3],a[1],a[2],ctx,'اختر التصرف الصحيح');
  case 'science-transport':a=sample(ctx,vehicles);return q('أين تتحرك '+a[0]+' عادة؟',a[2],a[1],['الجو','البر','البحر','الماء'],ctx);
  case 'science-safety':a=sample(ctx,activities.slice(0,4).concat(activities.slice(8)));return q(a[0],a[3],a[1],a[2],ctx);
- case 'science-food':a=sample(ctx,[['فواكه','🍎'],['خضار','🥕'],['ماء','💧'],['حليب','🥛']]);return q('ما الخيار المفيد من هذه المجموعة؟',a[1],a[0],['فواكه','خضار','ماء','حليب','مشروبات غازية فقط','حلوى فقط'],ctx);
+ case 'science-food':a=sample(ctx,[['فواكه','🍎'],['خضار','🥕'],['ماء','💧'],['حليب','🥛']]);return q('ما اسم هذه الصورة؟',a[1],a[0],['فواكه','خضار','ماء','حليب','حلوى','عصير'],ctx);
  case 'brain-pattern':a=sample(ctx,logic);return q('أكمل النمط التالي',a[0],a[1],a[2],ctx,'انظر إلى ترتيب الأشكال','ar','letters');
- case 'brain-odd':a=sample(ctx,[['🍎','🍇','🍌','🚗'],['🐟','🐪','🐱','📖'],['🚗','🚐','✈️','🍋'],['🔺','🟩','🔵','🐶']]);return {text:'ابحث عن الصورة المختلفة',visual:'🧠',options:a,correct:a[3],say:a[3]};
+ case 'brain-odd':a=sample(ctx,[['🍎','🍇','🍌','🚗'],['🐟','🐪','🐱','📖'],['🚗','🚐','✈️','🍋'],['🔺','🟩','🔵','🐶']]);return {text:'ابحث عن الصورة المختلفة',visual:'🧠',options:ctx.shuffle(a),correct:a[3],say:a[3]};
  case 'brain-memorylook':a=sample(ctx,[['🍎 🍌 🍎','🍌',['🍋','🍇','🍓'],'🍎'],['🐱 🐱 🦁','🦁',['🐟','🐶','🐪'],'🦁'],['⭐ 🌙 ⭐','🌙',['☀️','🍎','🌈'],'🌙']]);return q('انظر جيدًا: أي رمز ظهر مرة واحدة؟',a[0],a[1],a[2],ctx,'استخدم قوة الملاحظة','ar','letters');
  case 'brain-categories':a=sample(ctx,animals.concat(fruits));answer=a.length>3?'حيوان':'فاكهة';return q('إلى أي عائلة تنتمي الصورة؟',a[2],answer,['حيوان','فاكهة','وسيلة نقل','شكل هندسي'],ctx);
  case 'brain-direction':a=sample(ctx,[['→','يمين'],['←','يسار'],['↑','أعلى'],['↓','أسفل']]);return q('ما اتجاه السهم؟',a[0],a[1],['يمين','يسار','أعلى','أسفل'],ctx,'حدد الاتجاه الصحيح','ar','letters');
