@@ -27,14 +27,14 @@ P.creators=[
 P.all=P.animals.concat(P.fruits).concat(P.creators);
 P.credits={
  lion:'Martin Fisch · CC BY-SA 2.0',
- cat:'Fansileqio · CC0 1.0',
- dog:'Mohanraj55 · CC0 1.0',
+ cat:'Maryam AlAkini · CC BY 4.0',
+ dog:'Ltshears · CC BY 3.0',
  elephant:'Stuart Bassil · CC BY 2.0',
  horse:'MarkBuckawicki · CC0 1.0',
- fish:'Mohanraj55 · CC0 1.0',
+ fish:'Nightgane · CC0 1.0',
  apple:'Nopple · CC0 1.0',
  banana:'Mgmoscatello · CC BY-SA 3.0',
- orange:'Kuttykrishnan Photos · CC0 1.0',
+ orange:'Raul Petri · CC0 1.0',
  grapes:'Couleur · CC0 1.0',
  aboflah:'قناة أبو فلة · CC BY 3.0 (تحتاج مراجعة الترخيص)',
  mrbeast:'Steven Khan · CC BY 4.0',

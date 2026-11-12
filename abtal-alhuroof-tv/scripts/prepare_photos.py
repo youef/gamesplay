@@ -11,16 +11,18 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 ROOT=Path(__file__).resolve().parents[1]
 DEST=ROOT/'app/src/main/assets/photos'
 DEST.mkdir(parents=True,exist_ok=True)
+REFRESH={'cat','dog','fish','orange'}
+READY=DEST/'clear_photo_upgrade_v2.ready'
 FILES={
  'lion':'Lion_(cc).jpg',
- 'cat':'A_pic_of_cat.jpg',
- 'dog':'Dog_photos.jpg',
+ 'cat':'A_white_cat_facing.jpg',
+ 'dog':'GoldenRetrieverPortrait.jpg',
  'elephant':'Elephant.jpg',
  'horse':'Horse_Profile.JPG',
- 'fish':'Fish_photo.jpg',
+ 'fish':'Pet_store_gold_fish_in_tank_1.jpg',
  'apple':'Nopple_apple.jpg',
  'banana':'Banana_picture.jpg',
- 'orange':'Orange_fruit_(Citrus_×_sinensis).jpg',
+ 'orange':'Orange_Basket_(Unsplash).jpg',
  'grapes':'Grapes_1.jpg',
  'aboflah':'أبو_فلة.jpg',
  'mrbeast':'MrBeast_2023.jpg',
@@ -54,7 +56,7 @@ def get_file(title):
  raise RuntimeError('Could not fetch licensed photo '+title+': '+repr(error))
 for key,title in FILES.items():
  dest=DEST/(key+'.jpg')
- if dest.is_file() and dest.stat().st_size>3000:
+ if dest.is_file() and dest.stat().st_size>3000 and (READY.is_file() or key not in REFRESH):
   with Image.open(dest) as check:
    check.verify()
   print('CACHED',key,dest.stat().st_size)
@@ -72,4 +74,5 @@ for key,title in FILES.items():
   raise RuntimeError('Photo compression outside target range '+str(dest))
  print('PHOTO',key, title, dest.stat().st_size,flush=True)
  time.sleep(1.35)  # Be polite to Wikimedia and avoid rate limiting on CI.
+READY.write_text('v2.2 clearer educational photos\n',encoding='utf-8')
 print('PASS: '+str(len(FILES))+' verified offline licensed photography JPEGs')

@@ -7,14 +7,14 @@ Photos are resized and padded onto a 380×260 dark background for **offline** An
 | Bundled file | Wikimedia Commons filename | Author / original source | Licence |
 |---|---|---|---|
 | lion.jpg | [Lion (cc).jpg](https://commons.wikimedia.org/wiki/File:Lion_(cc).jpg) | Martin Fisch / Flickr | CC BY-SA 2.0 |
-| cat.jpg | [A pic of cat.jpg](https://commons.wikimedia.org/wiki/File:A_pic_of_cat.jpg) | Fansileqio | CC0 1.0 |
-| dog.jpg | [Dog photos.jpg](https://commons.wikimedia.org/wiki/File:Dog_photos.jpg) | Mohanraj55 | CC0 1.0 |
+| cat.jpg | [A white cat facing.jpg](https://commons.wikimedia.org/wiki/File:A_white_cat_facing.jpg) | Maryam AlAkini | CC BY 4.0 |
+| dog.jpg | [GoldenRetrieverPortrait.jpg](https://commons.wikimedia.org/wiki/File:GoldenRetrieverPortrait.jpg) | Ltshears | CC BY 3.0 |
 | elephant.jpg | [Elephant.jpg](https://commons.wikimedia.org/wiki/File:Elephant.jpg) | Stuart Bassil | CC BY 2.0 |
 | horse.jpg | [Horse Profile.JPG](https://commons.wikimedia.org/wiki/File:Horse_Profile.JPG) | MarkBuckawicki | CC0 1.0 |
-| fish.jpg | [Fish photo.jpg](https://commons.wikimedia.org/wiki/File:Fish_photo.jpg) | Mohanraj55 | CC0 1.0 |
+| fish.jpg | [Pet store gold fish in tank 1.jpg](https://commons.wikimedia.org/wiki/File:Pet_store_gold_fish_in_tank_1.jpg) | Nightgane | CC0 1.0 |
 | apple.jpg | [Nopple apple.jpg](https://commons.wikimedia.org/wiki/File:Nopple_apple.jpg) | Nopple | CC0 1.0 |
 | banana.jpg | [Banana picture.jpg](https://commons.wikimedia.org/wiki/File:Banana_picture.jpg) | Mgmoscatello | CC BY-SA 3.0 |
-| orange.jpg | [Orange fruit (Citrus × sinensis).jpg](https://commons.wikimedia.org/wiki/File:Orange_fruit_(Citrus_%C3%97_sinensis).jpg) | Kuttykrishnan Photos | CC0 1.0 |
+| orange.jpg | [Orange Basket (Unsplash).jpg](https://commons.wikimedia.org/wiki/File:Orange_Basket_(Unsplash).jpg) | Raul Petri | CC0 1.0 |
 | grapes.jpg | [Grapes 1.jpg](https://commons.wikimedia.org/wiki/File:Grapes_1.jpg) | Couleur / Pixabay | CC0 1.0 |
 | aboflah.jpg | [أبو فلة.jpg](https://commons.wikimedia.org/wiki/File:%D8%A3%D8%A8%D9%88_%D9%81%D9%84%D8%A9.jpg) | قناة أبو فلة | CC BY 3.0 — YouTube licence as stated on Commons; **license review pending on Commons**, verify before wider distribution |
 | mrbeast.jpg | [MrBeast 2023.jpg](https://commons.wikimedia.org/wiki/File:MrBeast_2023.jpg) | Steven Khan | CC BY 4.0 |
