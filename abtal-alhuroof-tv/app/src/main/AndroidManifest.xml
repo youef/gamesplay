@@ -3,7 +3,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <application android:label="أكاديمية الأبطال TV" android:icon="@drawable/ic_launcher" android:banner="@drawable/tv_banner" android:allowBackup="true" android:theme="@android:style/Theme.Holo.Light.NoActionBar" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
-        <activity android:name=".MainActivity" android:label="أبطال الحروف" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden|screenSize" android:keepScreenOn="true">
+        <activity android:name="sa.youef.abtalalhuroof.MainActivity" android:label="أبطال الحروف" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden|screenSize" android:keepScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
