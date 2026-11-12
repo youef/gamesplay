@@ -24,3 +24,7 @@
 .question-visual .pic{margin:2px 4px}
 .answer .pic{margin-left:12px}
 .gift-image .pic,.feature-icon .pic{width:64px;height:64px}
+
+.quiz-head{height:70px}
+.question-panel{height:187px}
+.question-visual:not(.letters) .pic{-webkit-transform:scale(1.65);transform:scale(1.65)}
