@@ -56,7 +56,7 @@ jobs:
           "$BT/zipalign" -c -v 4 "$APK"
           "$BT/aapt" dump badging "$APK" > /tmp/abtal-badging.txt
           cat /tmp/abtal-badging.txt | head -n 22
-          grep -q "package: name='sa.youef.abtalalhuroof'" /tmp/abtal-badging.txt
+          grep -q "package: name='sa.youef.abtalacademy.tv'" /tmp/abtal-badging.txt
           grep -q "sdkVersion:'19'" /tmp/abtal-badging.txt
           grep -q "targetSdkVersion:'31'" /tmp/abtal-badging.txt
           "$BT/apksigner" verify --verbose --print-certs --min-sdk-version 19 "$APK" | tee /tmp/abtal-signatures.txt
@@ -67,12 +67,12 @@ jobs:
             echo "::error::Unexpected native libraries make APK CPU-dependent"; exit 1
           fi
           mkdir -p dist
-          cp "$APK" dist/Abtal-AlHuroof-TV-Android44-Ultimate-v2.0.apk
+          cp "$APK" dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
           cp /tmp/abtal-badging.txt /tmp/abtal-signatures.txt dist/
           sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Abtal-AlHuroof-TV-Android44-Ultimate-v2.0
+          name: Abtal-Academy-TV-Android44-SafeInstall-v2.1
           path: dist/
           retention-days: 90
           if-no-files-found: error
@@ -90,7 +90,7 @@ jobs:
           java-version: '17'
       - uses: actions/download-artifact@v4
         with:
-          name: Abtal-AlHuroof-TV-Android44-Ultimate-v2.0
+          name: Abtal-Academy-TV-Android44-SafeInstall-v2.1
           path: dist
       - name: Install, launch and press remote keys on Android 4.4
         uses: reactivecircus/android-emulator-runner@v2
@@ -102,15 +102,17 @@ jobs:
           disable-animations: true
           script: |
             set -eu
-            adb install -r dist/Abtal-AlHuroof-TV-Android44-Ultimate-v2.0.apk
-            adb shell pm path sa.youef.abtalalhuroof | grep 'package:'
-            adb shell am start -n sa.youef.abtalalhuroof/.MainActivity
+            adb install -r dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
+            # A second installation with the same APK must also work without an uninstall.
+            adb install -r dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
+            adb shell pm path sa.youef.abtalacademy.tv | grep 'package:'
+            adb shell am start -n sa.youef.abtalacademy.tv/.MainActivity
             sleep 6
             for key in 22 23 20 23 4 19 23; do adb shell input keyevent "$key"; done
             sleep 2
             adb shell dumpsys activity activities > android44-state.txt
             adb logcat -d -t 2000 > android44-logcat.txt
-            ! grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalalhuroof' android44-logcat.txt
+            ! grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalacademy.tv' android44-logcat.txt
             adb shell screencap -p /data/local/tmp/abtal.png || true
             adb pull /data/local/tmp/abtal.png android44-screen.png || true
       - uses: actions/upload-artifact@v4
