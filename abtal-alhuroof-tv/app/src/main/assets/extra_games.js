@@ -3,6 +3,9 @@
 'use strict';
 var E={};
 E.modes={
+ 'hunt-letter':['اصطد الحروف','اجمع الحروف المطلوبة من بطاقات سحرية','🔠','arabic'],
+ 'hunt-number':['كنز الأرقام','ابحث عن العدد الصحيح في شبكة الكنوز','🔢','math'],
+ 'hunt-animal':['صيد صور الحيوانات','اكتشف الحيوان المختبئ بين الصور','🦁','adventure'],
  'arabic-last':['حرف النهاية','ما آخر حرف في الكلمة؟','📚','arabic'],
  'arabic-middle':['حرف الوسط','اكتشف حرف وسط الكلمة','✏️','arabic'],
  'arabic-order':['ترتيب الحروف','ما الحرف التالي في الأبجدية؟','🔠','arabic'],
@@ -73,10 +76,10 @@ E.groups={
  list:['brain-pattern','brain-odd','brain-memorylook','brain-categories','brain-direction','brain-compare','brain-story']}
 };
 E.additional={
- arabic:['arabic-last','arabic-middle','arabic-order','arabic-vowels','arabic-tanween','arabic-long','arabic-sun','arabic-words-count','arabic-opposites','arabic-join','arabic-odd','arabic-category','arabic-syllables'],
- math:['math-before','math-after','math-tens','math-even','math-odd','math-between','math-bigger','math-smaller','math-double','math-half','math-story','math-places','math-time','math-numberword'],
+ arabic:['arabic-last','arabic-middle','arabic-order','arabic-vowels','arabic-tanween','arabic-long','arabic-sun','arabic-words-count','arabic-opposites','arabic-join','arabic-odd','arabic-category','arabic-syllables','hunt-letter'],
+ math:['math-before','math-after','math-tens','math-even','math-odd','math-between','math-bigger','math-smaller','math-double','math-half','math-story','math-places','math-time','math-numberword','hunt-number'],
  english:['english-upper','english-lower','english-animals','english-fruits','english-body','english-shape','english-spellmissing','english-first','english-translate','english-next','english-opposites','english-truefalse'],
- adventure:['hero-riddle','challenge-truefalse','challenge-speed','challenge-super']
+ adventure:['hero-riddle','challenge-truefalse','challenge-speed','challenge-super','hunt-animal']
 };
 var animals=[
  ['أسد','Lion','🦁','الغابة','زئير'],['قطة','Cat','🐱','المنزل','مواء'],['كلب','Dog','🐶','المنزل','نباح'],['سمكة','Fish','🐟','الماء','لا صوت واضح'],
