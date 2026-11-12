@@ -83,3 +83,15 @@
 .reset-buttons{-webkit-justify-content:center;justify-content:center}
 .world-science .mode-tile:nth-child(2n),.world-brain .mode-tile:nth-child(2n){background:linear-gradient(132deg,#0e9b98,#2d5d99)}
 .footer{background:#0c1644e8;color:#e5f3ff}
+
+/* Interactive 3x3 learning hunt board: remote selection and stars */
+.hunt-question{height:127px}
+.hunt-question .question-text{font-size:29px}
+.hunt-question .question-visual{font-size:64px;min-width:115px}
+.hunt-question .question-visual .pic{-webkit-transform:scale(1);transform:scale(1)}
+.hunt-grid{width:1000px;height:344px;margin:10px auto 2px;display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-justify-content:center;justify-content:center}
+.hunt-tile{width:292px;height:100px;margin:3px 12px 6px;background:linear-gradient(#6a4bc8,#3b2a85);border:3px solid #bcbaff;border-radius:20px;box-shadow:0 5px #1b2153;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-size:53px;font-weight:900}
+.hunt-tile:nth-child(3n+2){background:linear-gradient(#dc658d,#8c438a)}
+.hunt-tile:nth-child(3n){background:linear-gradient(#329fce,#2373a7)}
+.hunt-tile.hunt-done{background:linear-gradient(#f7df61,#cf9b34);border-color:#fff4b2}
+.hunt-tile .pic{width:64px;height:64px}
