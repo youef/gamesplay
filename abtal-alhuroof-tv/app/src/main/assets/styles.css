@@ -130,3 +130,11 @@
 .hunt-photo-img{height:82px;width:208px;object-fit:cover;border-radius:12px;border:3px solid #fff2b2}
 .memory-photo{height:136px;width:174px;object-fit:cover;border-radius:13px}
 .photo-answer-note{font-size:13px;color:#ffefba}
+
+/* Finale: proper attribution and photographic hero cards */
+.home-preview{width:79px;height:55px;max-width:79px;border-radius:10px;border:2px solid #fff6bc;object-fit:cover;box-shadow:0 4px 10px #07145b}
+.photo-credits-inline{font-size:15px;color:#ffe6a1;margin:12px 0 10px;line-height:22px}
+.answer.correct{-webkit-animation:glow-win .25s ease-out 1;animation:glow-win .25s ease-out 1}
+@-webkit-keyframes glow-win{from{-webkit-transform:scale(.96);opacity:.7}to{-webkit-transform:scale(1);opacity:1}}
+@keyframes glow-win{from{transform:scale(.96);opacity:.7}to{transform:scale(1);opacity:1}}
+.feature .feature-icon .home-preview{margin:0 auto;display:block}

@@ -25,6 +25,21 @@ P.creators=[
  {id:'markrober',ar:'مارك روبر',en:'Mark Rober',tag:'تجارب واختراعات',desc:'مهندس وصانع فيديوهات العلوم والتجارب'}
 ];
 P.all=P.animals.concat(P.fruits).concat(P.creators);
+P.credits={
+ lion:'Martin Fisch · CC BY-SA 2.0',
+ cat:'Fansileqio · CC0 1.0',
+ dog:'Mohanraj55 · CC0 1.0',
+ elephant:'Stuart Bassil · CC BY 2.0',
+ horse:'MarkBuckawicki · CC0 1.0',
+ fish:'Mohanraj55 · CC0 1.0',
+ apple:'Nopple · CC0 1.0',
+ banana:'Mgmoscatello · CC BY-SA 3.0',
+ orange:'Kuttykrishnan Photos · CC0 1.0',
+ grapes:'Couleur · CC0 1.0',
+ aboflah:'قناة أبو فلة · CC BY 3.0 (تحتاج مراجعة الترخيص)',
+ mrbeast:'Steven Khan · CC BY 4.0',
+ markrober:'LKP2024 · CC BY 4.0'
+};
 P.byId={};for(var i=0;i<P.all.length;i++)P.byId[P.all[i].id]=P.all[i];
 P.img=function(id,extra){var a=P.byId[id],label=a?a.ar:'صورة';
  return '<img class="'+(extra||'real-photo')+'" src="photos/'+String(id).replace(/[^a-z0-9-]/g,'')+'.jpg" alt="'+label+'" onerror="this.style.display=\'none\'">';
