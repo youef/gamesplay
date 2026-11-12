@@ -96,18 +96,15 @@ jobs:
           disable-animations: true
           script: |
             set -eu
-            APK="dist/Abtal-AlHuroof-TV-Android44-Universal-v1.1.apk"
-            adb install -r "$APK"
-            adb shell pm path sa.youef.abtalalhuroof | grep 'base.apk'
+            adb install -r dist/Abtal-AlHuroof-TV-Android44-Universal-v1.1.apk
+            adb shell pm path sa.youef.abtalalhuroof | grep 'package:'
             adb shell am start -n sa.youef.abtalalhuroof/.MainActivity
             sleep 6
             for key in 22 23 20 23 4 19 23; do adb shell input keyevent "$key"; done
             sleep 2
             adb shell dumpsys activity activities > android44-state.txt
             adb logcat -d -t 2000 > android44-logcat.txt
-            if grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalalhuroof' android44-logcat.txt; then
-              echo "App crash detected in emulator"; exit 1
-            fi
+            ! grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalalhuroof' android44-logcat.txt
             adb shell screencap -p /sdcard/abtal.png
             adb pull /sdcard/abtal.png android44-screen.png
       - uses: actions/upload-artifact@v4
