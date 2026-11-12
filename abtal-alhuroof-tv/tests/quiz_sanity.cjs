@@ -10,7 +10,7 @@ vm.runInNewContext(pack,sandbox,{filename:'extra_games.js'});
 const e=sandbox.window.ABTAL_EXPANSION;
 assert(e && e.question && e.modes);
 const count=Object.keys(e.modes).length+22;
-assert(count>=75,'Expected at least 75 activities, got '+count);
+assert(count>=75,'Expected at least 80 activities, got '+count);
 const ids=Object.keys(e.modes);
 const ar=[['أ','أسد','🦁'],['ب','بطة','🦆'],['ت','تمر','🌴']];
 const english=[
@@ -34,6 +34,7 @@ function options(correct,pool,count){
 const ctx={rnd,pick,shuffle,options,ar,english,colors:[],words:[],shapes:[]};
 let generated=0;
 for(const id of ids){
+ if(id.startsWith('hunt-'))continue; // Interactive 3x3 minigames have their own engine, not multiple-choice questions.
  let variety=new Set();
  for(let k=0;k<65;k++){
    const q=e.question(id,ctx);
