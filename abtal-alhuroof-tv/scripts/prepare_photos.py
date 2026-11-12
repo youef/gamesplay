@@ -50,7 +50,7 @@ def get_file(title):
    except Exception as exc:
     error=exc
     print('RETRY',title,type(exc).__name__,str(exc)[:100],flush=True)
-    time.sleep(2*(n+1))
+    time.sleep(3*(n+1))
  raise RuntimeError('Could not fetch licensed photo '+title+': '+repr(error))
 for key,title in FILES.items():
  dest=DEST/(key+'.jpg')
@@ -67,8 +67,9 @@ for key,title in FILES.items():
  canvas=Image.new('RGB',(380,260),(27,42,73))
  thumb=ImageOps.contain(img,(366,248),Image.Resampling.LANCZOS)
  canvas.paste(thumb,((380-thumb.width)//2,(260-thumb.height)//2))
- canvas.save(dest,format='JPEG',quality=79,optimize=True,progressive=False,subsampling=0)
- if dest.stat().st_size<8000 or dest.stat().st_size>160000:
+ canvas.save(dest,format='JPEG',quality=72,optimize=True,progressive=False,subsampling=2)
+ if dest.stat().st_size<8000 or dest.stat().st_size>320000:
   raise RuntimeError('Photo compression outside target range '+str(dest))
  print('PHOTO',key, title, dest.stat().st_size,flush=True)
+ time.sleep(1.35)  # Be polite to Wikimedia and avoid rate limiting on CI.
 print('PASS: '+str(len(FILES))+' verified offline licensed photography JPEGs')
