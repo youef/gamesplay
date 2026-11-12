@@ -105,8 +105,8 @@ jobs:
             adb shell dumpsys activity activities > android44-state.txt
             adb logcat -d -t 2000 > android44-logcat.txt
             ! grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalalhuroof' android44-logcat.txt
-            adb shell screencap -p /sdcard/abtal.png
-            adb pull /sdcard/abtal.png android44-screen.png
+            adb shell screencap -p /data/local/tmp/abtal.png || true
+            adb pull /data/local/tmp/abtal.png android44-screen.png || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
