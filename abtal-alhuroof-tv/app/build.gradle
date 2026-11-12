@@ -5,11 +5,11 @@ android {
     compileSdkVersion 33
     buildToolsVersion '33.0.2'
     defaultConfig {
-        applicationId 'sa.youef.abtalacademy.tv'
+        applicationId 'sa.youef.abtalacademy.photos'
         minSdkVersion 19
         targetSdkVersion 31
-        versionCode 10
-        versionName '2.1.0-safeinstall-tv'
+        versionCode 12
+        versionName '2.2.0-photo-adventure-tv'
         // No native libraries: one universal APK runs on ARMv7/ARM64/x86/x86_64.
     }
     signingConfigs {
