@@ -17,9 +17,10 @@ const sandbox={window:windowMock,document:documentMock,localStorage:{
 vm.runInNewContext(fs.readFileSync(path.join(root,'pictograms.js'),'utf8'),sandbox);
 windowMock.PICTOGRAM_MAP=sandbox.PICTOGRAM_MAP;windowMock.PICTOGRAM_KEYS=sandbox.PICTOGRAM_KEYS;
 vm.runInNewContext(fs.readFileSync(path.join(root,'extra_games.js'),'utf8'),sandbox);
+vm.runInNewContext(fs.readFileSync(path.join(root,'photo_games.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(path.join(root,'game.js'),'utf8'),sandbox);
 assert(app.innerHTML.includes('مغامرة'), 'Home screen did not render');
-assert(app.innerHTML.includes('87'), 'Activity count should show 87');
+assert(app.innerHTML.includes('101'), 'Activity count should show 87');
 assert(typeof app.onClick==='function', 'Touch/select handler missing');
 assert(typeof windowMock.tvKey==='function', 'TV D-pad handler missing');
 function click(action){
@@ -27,7 +28,7 @@ function click(action){
  app.onClick({target:n});
  assert(app.innerHTML.length>200,'Rendered screen unexpectedly empty after '+action);
 }
-for(const group of ['arabic','math','english','science','brain','adventure']){
+for(const group of ['arabic','math','english','science','brain','adventure','photos']){
  click('category:'+group);
  assert(app.innerHTML.indexOf('mode:')>=0,'Category has no game options: '+group);
 }
@@ -37,9 +38,20 @@ for(const id of Object.keys(windowMock.ABTAL_EXPANSION.modes)){
  assert(app.innerHTML.includes(expected),'No playable board or answers for '+id);
  click('backmode');
 }
+for(const id of Object.keys(windowMock.ABTAL_PHOTOS.modes)){
+ click('mode:'+id);
+ const special=['photo-album','photo-memory','hunt-photo'].includes(id);
+ const expected=id==='photo-album'?'album-card':id==='photo-memory'?'memory-card':id==='hunt-photo'?'hunt-tile':'answer:';
+ assert(app.innerHTML.includes(expected),'Photo game did not render: '+id);
+ click('backmode');
+}
+click('mode:photo-album');
+assert(app.innerHTML.includes('photos/lion.jpg'),'Gallery missing actual image');
+click('photoopen:mrbeast');assert(app.innerHTML.includes('photos/mrbeast.jpg'),'Creator detail missing actual image');
+click('backmode');
 click('settings');click('heroes');click('gifts');click('achievements');click('daily');
 assert(app.innerHTML.includes('answer:'),'Daily challenge not playable');
 click('backmode');click('settings');click('reset');
 assert(app.innerHTML.includes('resetno')&&app.innerHTML.includes('resetyes'),'Reset must require TV confirmation');
 click('resetno');
-console.log('PASS: offline UI rendered, 87 modes opened, remote/back navigation, six categories, rewards and parent-safe reset.');
+console.log('PASS: offline UI rendered, 101 modes opened, remote/back navigation, six categories, rewards and parent-safe reset.');

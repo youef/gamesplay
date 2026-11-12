@@ -7,19 +7,37 @@ on:
       - '.github/workflows/build-tv-apk.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Verify 87 educational games, UI navigation and question quality
+      - name: Download and optimise licensed real photos for offline TV
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --disable-pip-version-check Pillow
+          python3 abtal-alhuroof-tv/scripts/prepare_photos.py
+      - name: Preserve verified offline photos in GitHub repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f abtal-alhuroof-tv/app/src/main/assets/photos/*.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets: add licensed offline photos for kids TV [skip ci]'
+            git push origin "HEAD:$GITHUB_REF_NAME" || echo '::warning::Could not persist photos to repository; they remain bundled in this APK'
+          fi
+      - name: Verify 101 educational games, real-photo UI and question quality
         shell: bash
         run: |
           set -euo pipefail
           node abtal-alhuroof-tv/tests/quiz_sanity.cjs
           node abtal-alhuroof-tv/tests/ui_smoke.cjs
+          node abtal-alhuroof-tv/tests/photo_sanity.cjs
       - name: Install Java 17 for Android SDK tools
         uses: actions/setup-java@v4
         with:
@@ -56,9 +74,12 @@ jobs:
           "$BT/zipalign" -c -v 4 "$APK"
           "$BT/aapt" dump badging "$APK" > /tmp/abtal-badging.txt
           cat /tmp/abtal-badging.txt | head -n 22
-          grep -q "package: name='sa.youef.abtalacademy.tv'" /tmp/abtal-badging.txt
+          grep -q "package: name='sa.youef.abtalacademy.photos'" /tmp/abtal-badging.txt
           grep -q "sdkVersion:'19'" /tmp/abtal-badging.txt
           grep -q "targetSdkVersion:'31'" /tmp/abtal-badging.txt
+          for img in lion cat dog elephant horse fish apple banana orange grapes aboflah mrbeast markrober; do
+            unzip -Z1 "$APK" | grep -qx "assets/photos/$img.jpg" || { echo "::error::Real-photo asset missing: $img"; exit 1; }
+          done
           "$BT/apksigner" verify --verbose --print-certs --min-sdk-version 19 "$APK" | tee /tmp/abtal-signatures.txt
           grep -q "Verified using v1 scheme (JAR signing): true" /tmp/abtal-signatures.txt
           grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/abtal-signatures.txt
@@ -67,12 +88,12 @@ jobs:
             echo "::error::Unexpected native libraries make APK CPU-dependent"; exit 1
           fi
           mkdir -p dist
-          cp "$APK" dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
+          cp "$APK" dist/Abtal-Academy-TV-Android44-PHOTO-v2.2.apk
           cp /tmp/abtal-badging.txt /tmp/abtal-signatures.txt dist/
           sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Abtal-Academy-TV-Android44-SafeInstall-v2.1
+          name: Abtal-Academy-TV-Android44-PHOTO-v2.2
           path: dist/
           retention-days: 90
           if-no-files-found: error
@@ -90,7 +111,7 @@ jobs:
           java-version: '17'
       - uses: actions/download-artifact@v4
         with:
-          name: Abtal-Academy-TV-Android44-SafeInstall-v2.1
+          name: Abtal-Academy-TV-Android44-PHOTO-v2.2
           path: dist
       - name: Install, launch and press remote keys on Android 4.4
         uses: reactivecircus/android-emulator-runner@v2
@@ -102,11 +123,11 @@ jobs:
           disable-animations: true
           script: |
             set -eu
-            adb install -r dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
+            adb install -r dist/Abtal-Academy-TV-Android44-PHOTO-v2.2.apk
             # A second installation with the same APK must also work without an uninstall.
-            adb install -r dist/Abtal-Academy-TV-Android44-SafeInstall-v2.1.apk
-            adb shell pm path sa.youef.abtalacademy.tv | grep 'package:'
-            adb shell am start -n sa.youef.abtalacademy.tv/sa.youef.abtalalhuroof.MainActivity
+            adb install -r dist/Abtal-Academy-TV-Android44-PHOTO-v2.2.apk
+            adb shell pm path sa.youef.abtalacademy.photos | grep 'package:'
+            adb shell am start -n sa.youef.abtalacademy.photos/sa.youef.abtalalhuroof.MainActivity
             sleep 6
             for key in 22 23 20 23 4 19 23; do adb shell input keyevent "$key"; done
             sleep 2
@@ -114,7 +135,7 @@ jobs:
             adb logcat -d -t 2000 > android44-logcat.txt
             # Only fail on an actual game process crash. Android 4.4 emulator may
             # log unrelated system-service exceptions (e.g. ContactsProviderWorker).
-            if grep -F 'Process: sa.youef.abtalacademy.tv' android44-logcat.txt; then echo 'Game process crash detected'; exit 1; fi
+            if grep -F 'Process: sa.youef.abtalacademy.photos' android44-logcat.txt; then echo 'Game process crash detected'; exit 1; fi
             adb shell screencap -p /data/local/tmp/abtal.png || true
             adb pull /data/local/tmp/abtal.png android44-screen.png || true
       - uses: actions/upload-artifact@v4

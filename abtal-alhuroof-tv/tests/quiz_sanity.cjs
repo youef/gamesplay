@@ -51,6 +51,7 @@ for(const id of ids){
 const total=ids.length;
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.indexOf('extra_games.js')<html.indexOf('game.js'),'Expansion loaded after main engine');
+assert(html.indexOf('photo_games.js')<html.indexOf('game.js'),'Photo pack must load before engine');
 assert(original.includes('function tvKey(code)'),'TV remote handling missing');
 assert(original.includes("viewAs('categories')"),'TV MENU handling missing');
 console.log('PASS: '+count+' game types ('+total+' added), '+generated+' randomized questions, unique answers, ES5 core syntax, TV navigation hooks.');
