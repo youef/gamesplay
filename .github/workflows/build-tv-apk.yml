@@ -112,7 +112,11 @@ jobs:
             sleep 2
             adb shell dumpsys activity activities > android44-state.txt
             adb logcat -d -t 2000 > android44-logcat.txt
-            ! grep -E 'FATAL EXCEPTION|Process: sa.youef.abtalacademy.tv' android44-logcat.txt
+            # Only fail on an actual game process crash. Android 4.4 emulator may
+            # log unrelated system-service exceptions (e.g. ContactsProviderWorker).
+            if grep -F 'Process: sa.youef.abtalacademy.tv' android44-logcat.txt; then
+              echo 'Game process crash detected'; exit 1
+            fi
             adb shell screencap -p /data/local/tmp/abtal.png || true
             adb pull /data/local/tmp/abtal.png android44-screen.png || true
       - uses: actions/upload-artifact@v4
