@@ -18,3 +18,9 @@
 .btn-row>*:not(:last-child){margin-left:19px}
 .quiz-head{height:65px}.question-panel{height:192px}.answer-head{height:43px;padding:9px 7px 4px}.answer{height:98px}.question-hint{font-size:14px;padding:6px 8px}
 .question-visual.letters{direction:ltr;unicode-bidi:embed}
+
+/* Offline color illustrations for Android 4.4 devices with limited emoji fonts. */
+.pic{display:inline-block;width:64px;height:64px;vertical-align:middle;background-image:url('emoji-atlas.png');background-size:512px 704px;background-repeat:no-repeat;flex-shrink:0}
+.question-visual .pic{margin:2px 4px}
+.answer .pic{margin-left:12px}
+.gift-image .pic,.feature-icon .pic{width:64px;height:64px}
