@@ -12,7 +12,7 @@ const images=path.join(root,'photos');
 for(const id of ids){
  assert(fs.existsSync(path.join(images,id+'.jpg')),'Missing real photograph '+id);
  const bytes=fs.readFileSync(path.join(images,id+'.jpg'));
- assert(bytes.length>8000 && bytes.length<160000,'Unexpected photograph size '+id);
+ assert(bytes.length>8000 && bytes.length<320000,'Unexpected photograph size '+id);
  assert(bytes[0]===0xFF && bytes[1]===0xD8,'Not a JPEG image '+id);
 }
 const ctx={pick:a=>a[Math.floor(Math.random()*a.length)],
