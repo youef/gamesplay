@@ -66,6 +66,9 @@ public class MainActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_NUMPAD_ENTER: case KeyEvent.KEYCODE_BACK:
             case KeyEvent.KEYCODE_MENU: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case KeyEvent.KEYCODE_1: case KeyEvent.KEYCODE_2:
+            case KeyEvent.KEYCODE_3: case KeyEvent.KEYCODE_4:
+            case KeyEvent.KEYCODE_INFO:
                 web.loadUrl("javascript:window.tvKey("+code+")");
                 return true;
             default: return false;
